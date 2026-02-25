@@ -1,1 +1,101 @@
-/* You can add global styles to this file, and also import other style files */
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
+
+// ─── Design token palette ──────────────────────────────────────────────────────
+:root {
+  --color-black: #020202;
+  --color-evergreen: #0d2818;
+  --color-black-forest: #04471c;
+  --color-sea-green: #058c42;
+  --color-malachite: #16db65;
+
+  // Semantic aliases
+  --color-bg: var(--color-black);
+  --color-surface: var(--color-evergreen);
+  --color-surface-alt: var(--color-black-forest);
+  --color-accent: var(--color-malachite);
+  --color-accent-muted: var(--color-sea-green);
+  --color-text: #f0f0f0;
+  --color-text-muted: #a0a0a0;
+}
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$green-palette,
+        tertiary: mat.$cyan-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  color-scheme: dark;
+
+  // Set a default background, font and text colors for the application using
+  // Angular Material's system-level CSS variables. Learn more about these
+  // variables at https://material.angular.dev/guide/system-variables
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  height: 100%;
+}
+
+// ─── Box model reset ───────────────────────────────────────────────────────────
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+// ─── Breakpoints (mobile-first) ────────────────────────────────────────────────
+// Usage in component SCSS:
+//   @use 'styles' as s;   ← if needed, or just use the variables directly
+// Prefer writing base styles for mobile, then override with min-width queries.
+//
+//   .card { padding: 12px; }                        ← mobile (default)
+//   @media (min-width: 600px) { .card { padding: 24px; } }  ← tablet+
+//   @media (min-width: 1024px) { .card { padding: 32px; } } ← desktop+
+
+// ─── App shell ─────────────────────────────────────────────────────────────────
+app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh; // dvh accounts for mobile browser chrome (address bar)
+}
+
+// ─── Utility: constrain content width on large screens ─────────────────────────
+.content-container {
+  width: 100%;
+  padding: 0 16px; // comfortable tap margin on mobile
+
+  @media (min-width: 600px) {
+    padding: 0 24px;
+  }
+
+  @media (min-width: 1024px) {
+    max-width: 1200px;
+    margin-inline: auto; // centre on wide screens
+    padding: 0 32px;
+  }
+}
+
+// ─── Utility: full-page centered layout (used for login, home hero) ────────────
+.page-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 24px 16px;
+  text-align: center;
+}

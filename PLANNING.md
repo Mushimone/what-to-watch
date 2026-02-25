@@ -65,16 +65,13 @@
 
 ### `profiles`
 
-Automatically created on first login via Supabase trigger.
-
-- `id` (uuid, FK → auth.users)
-- `email`
-- `created_at`
+> **Not needed for this project.** Supabase manages users in its internal `auth.users` table.
+> Only create a `profiles` table if you later need to store extra user data (display name, custom avatar, etc.).
 
 ### `watchlist_items`
 
 - `id` (uuid, primary key)
-- `user_id` (uuid, FK → profiles)
+- `user_id` (uuid, FK → **auth.users(id)** ON DELETE CASCADE)
 - `title` (text)
 - `type` (enum: movie | series | anime)
 - `genres` (text[])
