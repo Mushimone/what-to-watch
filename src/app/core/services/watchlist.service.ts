@@ -1,12 +1,92 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { WatchlistItem } from '../models/watchlist-item.model';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WatchlistService {
   constructor(private supabase: SupabaseService) {}
+
+  mockData: WatchlistItem[] = [
+    {
+      id: '1',
+      user_id: 'user123',
+      title: 'Inception',
+      type: 'movie',
+      added_at: new Date().toISOString(),
+      watched: false,
+      genres: ['Action', 'Sci-Fi'],
+      duration_minutes: 148,
+      episode_count: null,
+      poster_url: 'https://www.themoviedb.org/t/p/w1280/o67j9kC53yJfjAArFs224Diwapa.jpg',
+      external_id: '12345',
+      external_source: 'tmdb',
+    },
+    {
+      id: '2',
+      user_id: 'user123',
+      title: 'Stranger Things',
+      type: 'series',
+      added_at: new Date().toISOString(),
+      watched: true,
+      genres: ['Drama', 'Fantasy', 'Horror'],
+      duration_minutes: null,
+      episode_count: 25,
+      poster_url: 'https://www.themoviedb.org/t/p/w1280/x2LSRK2Cm7MZhjluni1msVJ3wDF.jpg',
+      external_id: '67890',
+      external_source: 'tmdb',
+    },
+    {
+      id: '3',
+      user_id: 'user123',
+      title: 'The Witcher',
+      type: 'anime',
+      added_at: new Date().toISOString(),
+      watched: false,
+      genres: ['Action', 'Adventure', 'Fantasy'],
+      duration_minutes: null,
+      episode_count: 16,
+      poster_url: 'https://www.themoviedb.org/t/p/w1280/zrPpUlehQaBf8YX2NrVrKK8IEpf.jpg',
+      external_id: '112233',
+      external_source: 'tmdb',
+    },
+    {
+      id: '4',
+      user_id: 'user123',
+      title: 'The Mandalorian',
+      type: 'series',
+      added_at: new Date().toISOString(),
+      watched: true,
+      genres: ['Action', 'Adventure', 'Sci-Fi'],
+      duration_minutes: null,
+      episode_count: 16,
+      poster_url: 'https://www.themoviedb.org/t/p/w1280/zrPpUlehQaBf8YX2NrVrKK8IEpf.jpg',
+      external_id: '445566',
+      external_source: 'tmdb',
+    },
+    {
+      id: '5',
+      user_id: 'user123',
+      title: 'Attack on Titan',
+      type: 'anime',
+      added_at: new Date().toISOString(),
+      watched: false,
+      genres: ['Action', 'Adventure', 'Fantasy'],
+      duration_minutes: null,
+      episode_count: 75,
+      poster_url: 'https://www.themoviedb.org/t/p/w1280/zrPpUlehQaBf8YX2NrVrKK8IEpf.jpg',
+      external_id: '778899',
+      external_source: 'tmdb',
+    },
+  ];
+  private watchlistItemsSubject = new BehaviorSubject<WatchlistItem[]>([
+    ...this.mockData,
+    ...this.mockData,
+    ...this.mockData,
+  ]);
+  watchlistItems$ = this.watchlistItemsSubject.asObservable();
 
   public async getWatchlist() {
     const client = this.supabase.getClient();
@@ -19,6 +99,7 @@ export class WatchlistService {
       console.error('Error fetching watchlist:', error);
       return [];
     }
+    this.watchlistItemsSubject.next(data);
     return data;
   }
 
@@ -34,6 +115,11 @@ export class WatchlistService {
       console.error('Error adding to watchlist:', error);
       return null;
     }
+    this.watchlistItemsSubject.next(
+      [...this.watchlistItemsSubject.value, data ? data[0] : null].filter(
+        Boolean,
+      ) as WatchlistItem[],
+    );
     return data;
   }
 
@@ -43,6 +129,9 @@ export class WatchlistService {
       console.error('Error removing from watchlist:', error);
       return false;
     }
+    this.watchlistItemsSubject.next(
+      this.watchlistItemsSubject.value.filter((item) => item.id !== id),
+    );
     return true;
   }
 
@@ -56,6 +145,10 @@ export class WatchlistService {
       console.error('Error updating watched status:', error);
       return false;
     }
+    const updatedItems = this.watchlistItemsSubject.value.map((item) =>
+      item.id === id ? { ...item, watched } : item,
+    );
+    this.watchlistItemsSubject.next(updatedItems);
     return true;
   }
 }

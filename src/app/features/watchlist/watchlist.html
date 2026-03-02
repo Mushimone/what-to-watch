@@ -1,1 +1,31 @@
-<p>watchlist works!</p>
+<div class="watchlist-page">
+  <mat-tab-group>
+    <mat-tab label="Watchlist">
+      <div class="watchlist-container">
+        @if (watchlistItems$ | async; as items) {
+          @if (items.length === 0) {
+            <p>Your watchlist is empty. Start adding some movies and TV shows!</p>
+          } @else {
+            <ul>
+              @for (item of items; track item.id) {
+                <li>
+                  <div class="card">
+                    <img [src]="item.poster_url" alt="{{ item.title }} poster" class="poster" />
+                    <h2>{{ item.title }}</h2>
+                    <div class="details">
+                      <p>{{ item.genres.join(', ') }}</p>
+                      <button (click)="removeFromWatchlist(item.id)">Remove</button>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        } @else {
+          <p>Loading your watchlist...</p>
+        }
+      </div>
+    </mat-tab>
+    <mat-tab label="Add"></mat-tab>
+  </mat-tab-group>
+</div>
