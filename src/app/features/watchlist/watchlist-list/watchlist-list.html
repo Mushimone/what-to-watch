@@ -1,0 +1,50 @@
+      <div class="watchlist-container">
+        @if (displayedItems$ | async; as items) {
+          @if (items.length === 0) {
+            <p>Your watchlist is empty. Start adding some movies and TV shows!</p>
+          } @else {
+            <div class="filters-container">
+              <div class="left-chips">
+                <mat-chip-listbox>
+                  @for (option of filterChips; track option) {
+                    <mat-chip-option [selected]="activeFilter() === option" (click)="applyFilter(option)">{{ option }}</mat-chip-option>
+                  }
+                </mat-chip-listbox>
+              </div>
+            <div class="sort-by">
+              <mat-form-field appearance="fill">
+                <mat-label>Sort by</mat-label>
+                <mat-select (selectionChange)="changeSort($event.value)">
+                  <mat-option value="added_desc">Recently Added</mat-option>
+                  <mat-option value="added_asc">Oldest Added</mat-option>
+                  <mat-option value="title_asc">Title (A-Z)</mat-option>
+                  <mat-option value="title_desc">Title (Z-A)</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            </div>
+            <ul>
+              @for (item of items; track item.id) {
+                <li>
+                  <div class="card" > 
+                    <img [class.watched]="item.watched" [src]="item.poster_url" alt="{{ item.title }} poster" class="poster" />
+                    <div class="details">
+                      <div class="watched-toggle">
+                        <mat-icon (click)="toggleWatched(item)">{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
+                      </div>
+                      <span class="type-badge">{{ item.type }}</span>
+                      <h2 class="item-title">{{ item.title }}</h2>
+                      <p class="genres">{{ item.genres.join(', ') }}</p>
+                      <div class="actions">
+                        <button mat-button="tonal" (click)="removeFromWatchlist(item.id)">Remove</button>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        } @else {
+          <p>Loading your watchlist...</p>
+        }
+      </div>

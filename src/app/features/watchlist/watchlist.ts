@@ -1,98 +1,12 @@
-import { Component, inject, signal } from '@angular/core';
-import { WatchlistService } from '../../core/services/watchlist.service';
-import { WatchlistItem } from '../../core/models/watchlist-item.model';
+import { Component } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { AsyncPipe } from '@angular/common';
-import { combineLatest, Observable, map } from 'rxjs';
-import { toObservable } from '@angular/core/rxjs-interop';
-import { MatIconModule } from '@angular/material/icon';
+import { WatchlistList } from './watchlist-list/watchlist-list';
+import { WatchlistAdd } from './watchlist-add/watchlist-add';
 
 @Component({
   selector: 'app-watchlist',
-  imports: [
-    MatTabsModule,
-    MatButtonModule,
-    MatChipsModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    AsyncPipe,
-    MatIconModule,
-  ],
+  imports: [MatTabsModule, WatchlistList, WatchlistAdd],
   templateUrl: './watchlist.html',
   styleUrl: './watchlist.scss',
 })
-export class Watchlist {
-  private watchlist = inject(WatchlistService);
-  filterChips = ['Movies', 'Series', 'Anime'];
-  activeFilter = signal('All');
-  activeSort = signal('added_desc');
-  watchlistItems$ = this.watchlist.watchlistItems$;
-  displayedItems$ = combineLatest([
-    this.watchlistItems$,
-    toObservable(this.activeFilter),
-    toObservable(this.activeSort),
-  ]).pipe(
-    map(([items, filter, sort]: [WatchlistItem[], string, string]) => {
-      return this.applyFilterAndSort(items, filter, sort);
-    }),
-  );
-
-  private applyFilterAndSort(
-    items: WatchlistItem[],
-    filter: string,
-    sort: string,
-  ): WatchlistItem[] {
-    const filteredItems = this.filterItems(items, filter);
-    return this.sortItems(filteredItems, sort);
-  }
-
-  ngOnInit() {
-    // this.watchlist.getWatchlist();
-  }
-
-  removeFromWatchlist(id: string) {
-    this.watchlist.removeFromWatchlist(id);
-  }
-
-  toggleWatched(item: WatchlistItem) {
-    this.watchlist.toggleWatchedStatus(item.id, !item.watched);
-  }
-  applyFilter(filterValue: string) {
-    if (filterValue === this.activeFilter()) {
-      this.activeFilter.set('All');
-      return;
-    }
-    this.activeFilter.set(filterValue);
-  }
-  changeSort(sortValue: string) {
-    this.activeSort.set(sortValue);
-  }
-  private filterItems(items: WatchlistItem[], filter: string): WatchlistItem[] {
-    if (filter === 'Movies') {
-      return items.filter((item) => item.type === 'movie');
-    } else if (filter === 'Series') {
-      return items.filter((item) => item.type === 'series');
-    } else if (filter === 'Anime') {
-      return items.filter((item) => item.type === 'anime');
-    }
-    return items;
-  }
-
-  private sortItems(items: WatchlistItem[], sort: string): WatchlistItem[] {
-    const sortedItems = [...items];
-    if (sort === 'added_desc') {
-      sortedItems.sort((a, b) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime());
-    } else if (sort === 'added_asc') {
-      sortedItems.sort((a, b) => new Date(a.added_at).getTime() - new Date(b.added_at).getTime());
-    } else if (sort === 'title_asc') {
-      sortedItems.sort((a, b) => a.title.localeCompare(b.title));
-    } else if (sort === 'title_desc') {
-      sortedItems.sort((a, b) => b.title.localeCompare(a.title));
-    }
-    return sortedItems;
-  }
-}
+export class Watchlist {}
