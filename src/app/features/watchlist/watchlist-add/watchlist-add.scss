@@ -1,13 +1,24 @@
+.search-container {
+  width: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.search-field {
+  width: 100%;
+}
+
 .result-option {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 4px 0;
+  padding: 10px 0;
+  min-height: 68px;
 }
 
 .result-poster {
-  width: 36px;
-  height: 54px;
+  width: 53px;
+  height: 80px;
   object-fit: cover;
   border-radius: 4px;
   flex-shrink: 0;
@@ -18,10 +29,12 @@
   flex-direction: column;
   gap: 2px;
   overflow: hidden;
+  flex: 1;
+  min-width: 0;
 }
 
 .result-title {
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -32,4 +45,38 @@
   font-size: 0.75rem;
   color: var(--color-text-muted);
   text-transform: capitalize;
+}
+
+.top-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.result-rating {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.star-icon {
+  margin-right: 4px;
+}
+
+// Make the autocomplete panel fill as much vertical space as possible
+::ng-deep .mat-mdc-autocomplete-panel {
+  max-height: 70dvh !important;
+}
+
+// Ensure each option accommodates the taller content
+::ng-deep .mat-mdc-option {
+  height: auto !important;
+  min-height: 68px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
 }

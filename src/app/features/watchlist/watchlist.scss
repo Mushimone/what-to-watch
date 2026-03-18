@@ -1,0 +1,9 @@
+.watchlist-page {
+  padding: 0;
+}
+
+// give tab body breathing room on mobile
+::ng-deep .mat-mdc-tab-body-content {
+  padding: 0;
+  overflow-x: hidden;
+}

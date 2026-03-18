@@ -110,15 +110,15 @@ export class WatchlistService {
       .insert({
         ...item,
         user_id: this.supabase.getCurrentUser()?.id,
-      });
+      })
+      .select()
+      .single();
     if (error) {
       console.error('Error adding to watchlist:', error);
       return null;
     }
     this.watchlistItemsSubject.next(
-      [...this.watchlistItemsSubject.value, data ? data[0] : null].filter(
-        Boolean,
-      ) as WatchlistItem[],
+      data ? [...this.watchlistItemsSubject.value, data] : this.watchlistItemsSubject.value
     );
     return data;
   }

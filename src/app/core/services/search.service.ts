@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { TmdbSearchResponse } from '../models/tmdb.model';
-import { map } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { SearchResult } from '../models/watchlist-item.model';
 @Injectable({
   providedIn: 'root',
@@ -15,7 +15,7 @@ export class SearchService {
   tmdbTvGenreMap: Record<number, string> = {};
   tmdbMovieGenreMap: Record<number, string> = {};
 
-  searchTmdb(query: string): any {
+  searchTmdb(query: string): Observable<SearchResult[]> {
     const params = {
       api_key: environment.tmdb.apiKey,
       query: query,
@@ -44,6 +44,8 @@ export class SearchService {
         : null,
       external_id: result.id.toString(),
       external_source: 'tmdb',
+      release_date: result.media_type === 'movie' ? result.release_date : result.first_air_date,
+      vote_average: result.vote_average,
     }));
   }
 

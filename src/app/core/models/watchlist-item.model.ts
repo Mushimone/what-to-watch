@@ -28,4 +28,6 @@ export interface SearchResult {
   poster_url: string | null;
   external_id: string;
   external_source: ExternalSource;
+  release_date?: string;
+  vote_average?: number;
 }
