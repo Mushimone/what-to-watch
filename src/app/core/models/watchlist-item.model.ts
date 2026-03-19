@@ -16,6 +16,7 @@ export interface WatchlistItem {
   external_source: ExternalSource;
   watched: boolean;
   added_at: string;
+  release_date?: string;
 }
 
 /** Shape of a search result before it is saved to the watchlist */

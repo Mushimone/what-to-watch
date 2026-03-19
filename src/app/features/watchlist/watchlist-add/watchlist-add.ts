@@ -78,10 +78,14 @@ export class WatchlistAdd {
   async onResultSelected(event: MatAutocompleteSelectedEvent) {
     const result: SearchResult = event.option.value;
     const item = { ...result, watched: false };
-    console.log('[watchlist-add] sending to addToWatchlist:', item);
     const success = await this.watchlistService.addToWatchlist(item);
-    console.log('[watchlist-add] addToWatchlist returned:', success);
-    if (success !== null) {
+    if (success === 'duplicate') {
+      this.snackBar.open(`"${result.title}" is already in your watchlist.`, 'OK', {
+        duration: 3000,
+      });
+      this.searchControl.setValue('');
+      this.resetSearch$.next();
+    } else if (success !== null) {
       this.snackBar.open(`"${result.title}" added to your watchlist!`, 'OK', { duration: 3000 });
       this.searchControl.setValue('');
       this.resetSearch$.next();

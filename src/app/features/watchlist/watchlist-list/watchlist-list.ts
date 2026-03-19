@@ -51,7 +51,7 @@ export class WatchlistList {
   }
 
   ngOnInit() {
-    // this.watchlist.getWatchlist();
+    this.watchlist.getWatchlist();
   }
 
   removeFromWatchlist(id: string) {

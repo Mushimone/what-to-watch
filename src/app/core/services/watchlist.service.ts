@@ -9,83 +9,7 @@ import { BehaviorSubject } from 'rxjs';
 export class WatchlistService {
   constructor(private supabase: SupabaseService) {}
 
-  mockData: WatchlistItem[] = [
-    {
-      id: '1',
-      user_id: 'user123',
-      title: 'Inception',
-      type: 'movie',
-      added_at: new Date(2020, 9, 10).toISOString(),
-      watched: false,
-      genres: ['Action', 'Sci-Fi'],
-      duration_minutes: 148,
-      episode_count: null,
-      poster_url: 'https://www.themoviedb.org/t/p/w1280/o67j9kC53yJfjAArFs224Diwapa.jpg',
-      external_id: '12345',
-      external_source: 'tmdb',
-    },
-    {
-      id: '2',
-      user_id: 'user123',
-      title: 'Stranger Things',
-      type: 'series',
-      added_at: new Date(2020, 9, 11).toISOString(),
-      watched: true,
-      genres: ['Drama', 'Fantasy', 'Horror'],
-      duration_minutes: null,
-      episode_count: 25,
-      poster_url: 'https://www.themoviedb.org/t/p/w1280/x2LSRK2Cm7MZhjluni1msVJ3wDF.jpg',
-      external_id: '67890',
-      external_source: 'tmdb',
-    },
-    {
-      id: '3',
-      user_id: 'user123',
-      title: 'The Witcher',
-      type: 'anime',
-      added_at: new Date(2020, 9, 12).toISOString(),
-      watched: false,
-      genres: ['Action', 'Adventure', 'Fantasy'],
-      duration_minutes: null,
-      episode_count: 16,
-      poster_url: 'https://www.themoviedb.org/t/p/w1280/zrPpUlehQaBf8YX2NrVrKK8IEpf.jpg',
-      external_id: '112233',
-      external_source: 'tmdb',
-    },
-    {
-      id: '4',
-      user_id: 'user123',
-      title: 'The Mandalorian',
-      type: 'series',
-      added_at: new Date(2020, 9, 13).toISOString(),
-      watched: true,
-      genres: ['Action', 'Adventure', 'Sci-Fi'],
-      duration_minutes: null,
-      episode_count: 16,
-      poster_url: 'https://www.themoviedb.org/t/p/w1280/zrPpUlehQaBf8YX2NrVrKK8IEpf.jpg',
-      external_id: '445566',
-      external_source: 'tmdb',
-    },
-    {
-      id: '5',
-      user_id: 'user123',
-      title: 'Attack on Titan',
-      type: 'anime',
-      added_at: new Date().toISOString(),
-      watched: false,
-      genres: ['Action', 'Adventure', 'Fantasy'],
-      duration_minutes: null,
-      episode_count: 75,
-      poster_url: 'https://www.themoviedb.org/t/p/w1280/zrPpUlehQaBf8YX2NrVrKK8IEpf.jpg',
-      external_id: '778899',
-      external_source: 'tmdb',
-    },
-  ];
-  private watchlistItemsSubject = new BehaviorSubject<WatchlistItem[]>([
-    ...this.mockData,
-    ...this.mockData,
-    ...this.mockData,
-  ]);
+  private watchlistItemsSubject = new BehaviorSubject<WatchlistItem[]>([]);
   watchlistItems$ = this.watchlistItemsSubject.asObservable();
 
   public async getWatchlist() {
@@ -114,11 +38,14 @@ export class WatchlistService {
       .select()
       .single();
     if (error) {
+      if (error.code === '23505') {
+        return 'duplicate' as const;
+      }
       console.error('Error adding to watchlist:', error);
       return null;
     }
     this.watchlistItemsSubject.next(
-      data ? [...this.watchlistItemsSubject.value, data] : this.watchlistItemsSubject.value
+      data ? [...this.watchlistItemsSubject.value, data] : this.watchlistItemsSubject.value,
     );
     return data;
   }
