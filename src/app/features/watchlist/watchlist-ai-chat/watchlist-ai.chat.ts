@@ -1,4 +1,14 @@
-import { Component, inject, Input, OnChanges, SimpleChanges, signal } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  ElementRef,
+  inject,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -26,9 +36,13 @@ export type ChatMode = 'list' | 'add';
   templateUrl: './watchlist-ai-chat.html',
   styleUrls: ['./watchlist-ai-chat.scss'],
 })
-export class WatchlistAiChatComponent implements OnChanges {
+export class WatchlistAiChatComponent implements OnChanges, AfterViewChecked {
+  @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
+
   private gemini = inject(GeminiService);
   private watchlist = inject(WatchlistService);
+
+  private _shouldScroll = false;
 
   /** Passed by the parent — changes whenever the user switches tabs */
   @Input() mode: ChatMode = 'list';
@@ -61,6 +75,14 @@ export class WatchlistAiChatComponent implements OnChanges {
    * ngOnChanges fires whenever an @Input changes after the first render.
    * We use it to rebuild context (and reset chat) when the user switches tabs.
    */
+  ngAfterViewChecked(): void {
+    if (this._shouldScroll) {
+      this._shouldScroll = false;
+      const el = this.messagesContainer?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    }
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['mode'] && !changes['mode'].firstChange) {
       this.watchlist.watchlistItems$.pipe(take(1)).subscribe((items) => {
@@ -75,6 +97,7 @@ export class WatchlistAiChatComponent implements OnChanges {
     if (!text || this.isLoading()) return;
 
     this.inputText = '';
+    this._shouldScroll = true;
     this.displayMessages.update((msgs) => [...msgs, { role: 'user', text }]);
 
     const userTurn: GeminiContent = { role: 'user', parts: [{ text }] };
@@ -85,6 +108,7 @@ export class WatchlistAiChatComponent implements OnChanges {
       next: (modelReply) => {
         this.history.push({ role: 'model', parts: [{ text: modelReply }] });
         this.displayMessages.update((msgs) => [...msgs, { role: 'model', text: modelReply }]);
+        this._shouldScroll = true;
         this.isLoading.set(false);
       },
       error: () => {
@@ -95,6 +119,7 @@ export class WatchlistAiChatComponent implements OnChanges {
             text: 'Something went wrong. Please try again.',
           },
         ]);
+        this._shouldScroll = true;
         this.isLoading.set(false);
       },
     });
