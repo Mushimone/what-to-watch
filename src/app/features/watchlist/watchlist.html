@@ -1,5 +1,5 @@
 <div class="watchlist-page">
-  <mat-tab-group>
+  <mat-tab-group (selectedTabChange)="onTabChange($event)">
     <mat-tab label="Watchlist">
       <app-watchlist-list></app-watchlist-list>
     </mat-tab>
@@ -7,4 +7,7 @@
       <app-watchlist-add></app-watchlist-add>
     </mat-tab>
   </mat-tab-group>
+
+  <!-- FAB + chat panel — outside tab group so it floats over everything -->
+  <app-watchlist-ai-chat [mode]="chatMode"></app-watchlist-ai-chat>
 </div>

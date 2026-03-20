@@ -136,10 +136,18 @@ AppComponent
 - Service: Postgres error code `23505` mapped to return value `'duplicate' as const`
 - Component: checks `=== 'duplicate'` before `!== null` to show distinct snackbar messages
 
-### Gemini Integration (planned)
+### Gemini Integration (implemented)
 
-- Send a prompt with unwatched titles (title + type + genres) as context
-- Avoid sending on every keystroke — trigger on explicit user action
+- FAB button (bottom-right, `position: fixed`) opens a chat overlay panel
+- Single `WatchlistAiChatComponent` placed outside the `mat-tab-group` — floats over both tabs
+- `@Input() mode: 'list' | 'add'` controls which system prompt is used:
+  - `list` mode: suggest from UNWATCHED titles using knowledge of tone/atmosphere, not just genre tags
+  - `add` mode: suggest NEW titles not already in the list, based on WATCHED taste profile
+- Context rebuilt each time the panel **opens** (setter pattern) — avoids empty-on-init race condition
+- Conversation history stored in component as `GeminiContent[]` (API array) + `displayMessages` signal (display array)
+- `thinkingBudget: 0` set in `generationConfig` to disable chain-of-thought for fast chat responses
+- Model: `gemini-2.5-flash` (current stable alias)
+- `ngOnChanges` resets `displayMessages` when mode changes (tab switch) — fresh conversation per context
 
 ### Supabase Row-Level Security (RLS)
 
@@ -148,16 +156,46 @@ AppComponent
 
 ---
 
+## Security Notes
+
+- **Supabase anon key** is safe to be in source — RLS enforces per-user access at the DB layer
+- **TMDB key** exposure is low risk (free tier, quota abuse at worst)
+- **Gemini key** is billing-linked — keep `environment.ts` out of public repos (add to `.gitignore` before making repo public, commit `environment.example.ts` as template)
+- **OAuth redirect** uses explicit `window.location.origin + '/'` — update to hardcoded production URL before deploying
+- **XSS** — no risk: Angular `{{ }}` interpolation escapes all Gemini responses; `innerHTML` is not used anywhere
+- **CSRF** — not applicable: Supabase auth uses JWT bearer tokens, not cookies
+
+---
+
 ## Open Questions / Decisions to Revisit
 
 - [x] ~~How to handle duration for anime?~~ → Store `episode_count` only
 - [x] ~~Auth race condition on OAuth redirect~~ → Fixed: `onAuthStateChange` only, guards filter `undefined`
 - [x] ~~AniList integration~~ → Dropped; TMDB covers anime sufficiently
+- [x] ~~Store Gemini conversation history client-side or in Supabase?~~ → Client-side only (in-memory, resets on close)
 - [ ] Fetch `duration_minutes` / `episode_count` via TMDB detail endpoint on selection or skip entirely?
-- [ ] Store Gemini conversation history client-side or in Supabase?
 - [ ] How many results to show in autocomplete? (currently returns all TMDB page 1 results, no client-side cap)
 - [ ] Should "watched" items be hidden by default or just filterable?
 - [ ] Pagination or infinite scroll for large lists?
+
+---
+
+## What's Left to Build
+
+### Remaining core features
+
+- [ ] **Watched filter** — toggle to hide/show watched items in browse (add `showWatched` signal to `combineLatest` chain)
+- [ ] **Genre filter** — chip-based filter by genre string; genres are already stored on each item
+- [ ] **Mobile card actions** — hover overlay is invisible on touch; replace with always-visible bottom strip or tap-to-reveal
+- [ ] **Random Pick** — button that picks a random unwatched title from the current filtered view
+
+### Nice to have
+
+- [ ] **Markdown rendering in chat** — Gemini returns bullet points as `* text`; render them properly instead of raw text
+- [ ] **Auto-scroll chat to bottom** — messages panel should scroll to latest message after each reply
+- [ ] **Scroll to new message** — use `ViewChild` + `scrollIntoView` or `ElementRef.nativeElement.scrollTop`
+- [ ] **`duration_minutes` / `episode_count`** — second TMDB detail call per add (GET `/movie/{id}` or `/tv/{id}`)
+- [ ] **Deploy** — update OAuth redirect URL to production domain before going live
 - [ ] TMDB requires attribution — plan for a small footer note
 
 ---

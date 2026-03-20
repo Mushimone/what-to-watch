@@ -17,6 +17,7 @@ export interface WatchlistItem {
   watched: boolean;
   added_at: string;
   release_date?: string;
+  vote_average?: number;
 }
 
 /** Shape of a search result before it is saved to the watchlist */

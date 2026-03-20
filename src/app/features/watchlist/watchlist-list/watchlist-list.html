@@ -1,8 +1,4 @@
       <div class="watchlist-container">
-        @if (displayedItems$ | async; as items) {
-          @if (items.length === 0) {
-            <p>Your watchlist is empty. Start adding some movies and TV shows!</p>
-          } @else {
             <div class="filters-container">
               <div class="left-chips">
                 <mat-chip-listbox>
@@ -12,32 +8,54 @@
                 </mat-chip-listbox>
               </div>
             <div class="sort-by">
-              <mat-form-field appearance="fill">
-                <mat-label>Sort by</mat-label>
-                <mat-select (selectionChange)="changeSort($event.value)">
-                  <mat-option value="added_desc">Recently Added</mat-option>
-                  <mat-option value="added_asc">Oldest Added</mat-option>
-                  <mat-option value="title_asc">Title (A-Z)</mat-option>
-                  <mat-option value="title_desc">Title (Z-A)</mat-option>
-                </mat-select>
-              </mat-form-field>
+              <button mat-icon-button [matMenuTriggerFor]="sortMenu" [matTooltip]="activeSortLabel" aria-label="Sort options">
+                <mat-icon>swap_vert</mat-icon>
+              </button>
+              <mat-menu #sortMenu="matMenu">
+                @for (option of sortOptions; track option.value) {
+                  <button mat-menu-item (click)="changeSort(option.value)" [class.active-sort]="activeSort() === option.value">
+                    @if (activeSort() === option.value) {
+                      <mat-icon>check</mat-icon>
+                    }
+                    {{ option.label }}
+                  </button>
+                }
+              </mat-menu>
             </div>
             </div>
-            <ul>
+        @if (displayedItems$ | async; as items) {
+          @if( isLoading()){
+            <p>Loading your watchlist...</p>
+          }
+          @else if (items.length === 0 && activeFilter() === 'All') {
+            <p>Your watchlist is empty. Start adding some movies and TV shows!</p>
+          } 
+          @else if (items.length === 0 && activeFilter() !== 'All') {
+            <p>No items match your filter.</p>
+          }
+          @else {
+            <ul class="watchlist-grid">
               @for (item of items; track item.id) {
                 <li>
                   <div class="card" > 
                     <img [class.watched]="item.watched" [src]="item.poster_url" alt="{{ item.title }} poster" class="poster" />
                     <div class="details">
-                      <div class="watched-toggle">
-                        <mat-icon (click)="toggleWatched(item)">{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
+                      <div class="card-actions">
+                        <button class="card-icon-btn" (click)="toggleWatched(item)" [title]="item.watched ? 'Mark unwatched' : 'Mark watched'">
+                          <mat-icon>{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
+                        </button>
+                        <button class="card-icon-btn delete" (click)="removeFromWatchlist(item.id)" title="Remove">
+                          <mat-icon>delete</mat-icon>
+                        </button>
                       </div>
                       <span class="type-badge">{{ item.type }}</span>
                       <h2 class="item-title">{{ item.title }}</h2>
+                      @if (item.vote_average) {
+                        <p class="vote-average">
+                          <mat-icon class="star-icon">star</mat-icon> {{ item.vote_average | number:'1.1-1' }}
+                        </p>
+                      }
                       <p class="genres">{{ item.genres.join(', ') }}</p>
-                      <div class="actions">
-                        <button mat-button="tonal" (click)="removeFromWatchlist(item.id)">Remove</button>
-                      </div>
                     </div>
                   </div>
                 </li>

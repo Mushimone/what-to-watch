@@ -30,7 +30,9 @@ export class SupabaseService {
     return this.supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        // Use explicit origin so this never silently redirects to an unexpected URL.
+        // Update to your production URL before deploying.
+        redirectTo: `${window.location.origin}/`,
       },
     });
   }

@@ -19,7 +19,7 @@
       }
       @else if (state.status === 'success') {
         @for (result of $any(state.results); track result.external_id) {
-        <mat-option [value]="result" class>
+        <mat-option [value]="result" class  >
           <div class="result-option">
             @if (result.poster_url) {
               <img [src]="result.poster_url" class="result-poster" alt="" />

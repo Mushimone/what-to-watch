@@ -1,11 +1,11 @@
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { WatchlistService } from '../../../core/services/watchlist.service';
 import { combineLatest, map } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
@@ -17,9 +17,10 @@ import { WatchlistItem } from '../../../core/models/watchlist-item.model';
     MatTabsModule,
     MatButtonModule,
     MatChipsModule,
-    MatFormFieldModule,
-    MatSelectModule,
+    MatMenuModule,
+    MatTooltipModule,
     AsyncPipe,
+    DecimalPipe,
     MatIconModule,
   ],
   templateUrl: './watchlist-list.html',
@@ -27,9 +28,22 @@ import { WatchlistItem } from '../../../core/models/watchlist-item.model';
 })
 export class WatchlistList {
   private watchlist = inject(WatchlistService);
-  filterChips = ['Movies', 'Series', 'Anime'];
+  filterChips = ['Movies', 'Series', 'Anime', 'Not Watched'];
+  sortOptions = [
+    { value: 'added_desc', label: 'Recently Added' },
+    { value: 'added_asc', label: 'Oldest Added' },
+    { value: 'title_asc', label: 'Title (A–Z)' },
+    { value: 'title_desc', label: 'Title (Z–A)' },
+    { value: 'rating_desc', label: 'Rating (High to Low)' },
+    { value: 'rating_asc', label: 'Rating (Low to High)' },
+  ];
+
+  get activeSortLabel(): string {
+    return this.sortOptions.find((o) => o.value === this.activeSort())?.label ?? 'Sort';
+  }
   activeFilter = signal('All');
   activeSort = signal('added_desc');
+  isLoading = signal(true);
   watchlistItems$ = this.watchlist.watchlistItems$;
   displayedItems$ = combineLatest([
     this.watchlistItems$,
@@ -50,8 +64,9 @@ export class WatchlistList {
     return this.sortItems(filteredItems, sort);
   }
 
-  ngOnInit() {
-    this.watchlist.getWatchlist();
+  async ngOnInit() {
+    await this.watchlist.getWatchlist();
+    this.isLoading.set(false);
   }
 
   removeFromWatchlist(id: string) {
@@ -77,7 +92,9 @@ export class WatchlistList {
     } else if (filter === 'Series') {
       return items.filter((item) => item.type === 'series');
     } else if (filter === 'Anime') {
-      return items.filter((item) => item.type === 'anime');
+      return items.filter((item) => item.type === 'series' && item.genres.includes('Animation'));
+    } else if (filter === 'Not Watched') {
+      return items.filter((item) => !item.watched);
     }
     return items;
   }
@@ -92,6 +109,10 @@ export class WatchlistList {
       sortedItems.sort((a, b) => a.title.localeCompare(b.title));
     } else if (sort === 'title_desc') {
       sortedItems.sort((a, b) => b.title.localeCompare(a.title));
+    } else if (sort === 'rating_desc') {
+      sortedItems.sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0));
+    } else if (sort === 'rating_asc') {
+      sortedItems.sort((a, b) => (a.vote_average ?? 0) - (b.vote_average ?? 0));
     }
     return sortedItems;
   }

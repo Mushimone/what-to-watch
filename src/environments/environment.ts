@@ -14,6 +14,6 @@ export const environment = {
     apiUrl: 'https://graphql.anilist.co',
   },
   gemini: {
-    apiKey: 'YOUR_GEMINI_API_KEY',
+    apiKey: 'AIzaSyCHmH-lLghhqKndwgMSfOVgVM8UksgBbsM',
   },
 };
