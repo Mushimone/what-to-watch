@@ -8,7 +8,7 @@ import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 })
 export class SupabaseService {
   private supabase: SupabaseClient;
-  private _currentUser$ = new BehaviorSubject<User | null>(null);
+  private _currentUser$ = new BehaviorSubject<User | null | undefined>(undefined);
   currentUser$ = this._currentUser$.asObservable();
 
   constructor() {
@@ -17,9 +17,6 @@ export class SupabaseService {
   }
 
   private initAuthListener() {
-    this.supabase.auth.getSession().then(({ data: { session } }) => {
-      this._currentUser$.next(session?.user ?? null);
-    });
     this.supabase.auth.onAuthStateChange((event, session) => {
       this._currentUser$.next(session?.user ?? null);
     });
@@ -33,7 +30,9 @@ export class SupabaseService {
     return this.supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        // Use explicit origin so this never silently redirects to an unexpected URL.
+        // Update to your production URL before deploying.
+        redirectTo: `${window.location.origin}/`,
       },
     });
   }

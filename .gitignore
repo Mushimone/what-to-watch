@@ -46,3 +46,7 @@ Thumbs.db
 # Local environment file with real API keys — never commit this
 .env
 src/environments/environment.local.ts
+# Uncomment the lines below once you rotate keys and move secrets to Vercel env vars
+# src/environments/environment.ts
+# src/environments/environment.prod.ts
+src/environments/environment.ts

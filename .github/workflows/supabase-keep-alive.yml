@@ -1,0 +1,24 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    # Runs every day at 12:00 UTC
+    - cron: '0 12 * * *'
+  workflow_dispatch: # Allows manual trigger for testing
+
+jobs:
+  ping_supabase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping Database via REST API
+        run: |
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
+            "https://dgjpkelrxttlivivzayl.supabase.co/rest/v1/watchlist?select=id&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+          if [ "$STATUS_CODE" != "200" ]; then
+            echo "Supabase keepalive failed with status ${STATUS_CODE}"
+            exit 1
+          fi
+          echo "Supabase keepalive succeeded with status ${STATUS_CODE}"

@@ -16,6 +16,8 @@ export interface WatchlistItem {
   external_source: ExternalSource;
   watched: boolean;
   added_at: string;
+  release_date?: string;
+  vote_average?: number;
 }
 
 /** Shape of a search result before it is saved to the watchlist */
@@ -28,4 +30,6 @@ export interface SearchResult {
   poster_url: string | null;
   external_id: string;
   external_source: ExternalSource;
+  release_date?: string;
+  vote_average?: number;
 }

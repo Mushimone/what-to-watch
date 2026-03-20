@@ -1,1 +1,20 @@
-<p>watchlist works!</p>
+<div class="watchlist-page">
+  <div class="page-header">
+    <span class="page-title">What to Watch</span>
+    <button mat-icon-button (click)="logout()" aria-label="Sign out" matTooltip="Sign out">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </div>
+
+  <mat-tab-group (selectedTabChange)="onTabChange($event)">
+    <mat-tab label="Watchlist">
+      <app-watchlist-list></app-watchlist-list>
+    </mat-tab>
+    <mat-tab label="Add">
+      <app-watchlist-add></app-watchlist-add>
+    </mat-tab>
+  </mat-tab-group>
+
+  <!-- FAB + chat panel — outside tab group so it floats over everything -->
+  <app-watchlist-ai-chat [mode]="chatMode"></app-watchlist-ai-chat>
+</div>

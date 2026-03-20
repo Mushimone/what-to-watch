@@ -6,6 +6,7 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./features/home/home').then((m) => m.Home),
+    canActivate: [redirectIfAuthGuard],
   },
   {
     path: 'login',

@@ -1,0 +1,45 @@
+
+<div class="search-container">
+<mat-form-field appearance="outline" class="search-field">
+  <mat-label>Search for movies or TV shows</mat-label>
+  <input matInput [formControl]="searchControl" placeholder="Type a title" [matAutocomplete]="auto" />
+  <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayWith" (optionSelected)="onResultSelected($event)">
+    @if (searchStatus$ | async; as state) {
+      @if (state.status === 'idle'){
+        <mat-option disabled>Start typing to search...</mat-option>
+      }
+      @else if (state.status === 'loading') {
+        <mat-option disabled>Searching...</mat-option>
+      }
+      @else if (state.status === 'error') {
+        <mat-option disabled>Error occurred. Please try again.</mat-option>
+      }
+      @else if (state.status === 'no-results') {
+        <mat-option disabled>No results found.</mat-option>
+      }
+      @else if (state.status === 'success') {
+        @for (result of $any(state.results); track result.external_id) {
+        <mat-option [value]="result" class  >
+          <div class="result-option">
+            @if (result.poster_url) {
+              <img [src]="result.poster_url" class="result-poster" alt="" />
+            }
+            <div class="result-info">
+              <div class="top-info">
+                <span class="result-title">{{ result.title }}{{ result.release_date ? ' (' + (result.release_date | date:'yyyy') + ')' : '' }}</span>
+                <span class="result-rating">
+                  <mat-icon class="star-icon">star</mat-icon>
+                  {{ result.vote_average | number:'1.1-1' }}
+                </span>
+              </div>
+              <span class="result-meta">{{ result.type }} · {{ result.genres.slice(0, 2).join(', ') }}</span>
+            </div>
+          </div>
+        </mat-option>
+      }
+      }
+    }
+   
+  </mat-autocomplete>
+</mat-form-field>
+</div>
