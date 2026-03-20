@@ -46,3 +46,4 @@ Thumbs.db
 # Local environment file with real API keys — never commit this
 .env
 src/environments/environment.local.ts
+src/environments/environment.ts
