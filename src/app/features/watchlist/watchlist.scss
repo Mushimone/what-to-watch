@@ -9,6 +9,22 @@
   padding: 8px 8px 0 16px;
 }
 
+// ── Desktop side-by-side layout ────────────────────────────────────────────
+.desktop-layout {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  height: calc(100dvh - 56px); // fill below header
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.desktop-col {
+  overflow-y: auto;
+
+  &--add {
+    border-left: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
 // give tab body breathing room on mobile
 ::ng-deep .mat-mdc-tab-body-content {
   padding: 0;

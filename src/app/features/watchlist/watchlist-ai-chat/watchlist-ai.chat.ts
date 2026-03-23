@@ -1,5 +1,4 @@
 import {
-  AfterViewChecked,
   Component,
   ElementRef,
   inject,
@@ -36,13 +35,18 @@ export type ChatMode = 'list' | 'add';
   templateUrl: './watchlist-ai-chat.html',
   styleUrls: ['./watchlist-ai-chat.scss'],
 })
-export class WatchlistAiChatComponent implements OnChanges, AfterViewChecked {
+export class WatchlistAiChatComponent implements OnChanges {
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
 
   private gemini = inject(GeminiService);
   private watchlist = inject(WatchlistService);
 
-  private _shouldScroll = false;
+  private scrollToBottom(): void {
+    setTimeout(() => {
+      const el = this.messagesContainer?.nativeElement;
+      if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    }, 0);
+  }
 
   /** Passed by the parent — changes whenever the user switches tabs */
   @Input() mode: ChatMode = 'list';
@@ -75,14 +79,6 @@ export class WatchlistAiChatComponent implements OnChanges, AfterViewChecked {
    * ngOnChanges fires whenever an @Input changes after the first render.
    * We use it to rebuild context (and reset chat) when the user switches tabs.
    */
-  ngAfterViewChecked(): void {
-    if (this._shouldScroll) {
-      this._shouldScroll = false;
-      const el = this.messagesContainer?.nativeElement;
-      if (el) el.scrollTop = el.scrollHeight;
-    }
-  }
-
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['mode'] && !changes['mode'].firstChange) {
       this.watchlist.watchlistItems$.pipe(take(1)).subscribe((items) => {
@@ -97,8 +93,8 @@ export class WatchlistAiChatComponent implements OnChanges, AfterViewChecked {
     if (!text || this.isLoading()) return;
 
     this.inputText = '';
-    this._shouldScroll = true;
     this.displayMessages.update((msgs) => [...msgs, { role: 'user', text }]);
+    this.scrollToBottom();
 
     const userTurn: GeminiContent = { role: 'user', parts: [{ text }] };
     this.history.push(userTurn);
@@ -108,8 +104,8 @@ export class WatchlistAiChatComponent implements OnChanges, AfterViewChecked {
       next: (modelReply) => {
         this.history.push({ role: 'model', parts: [{ text: modelReply }] });
         this.displayMessages.update((msgs) => [...msgs, { role: 'model', text: modelReply }]);
-        this._shouldScroll = true;
         this.isLoading.set(false);
+        this.scrollToBottom();
       },
       error: () => {
         this.displayMessages.update((msgs) => [
@@ -119,8 +115,8 @@ export class WatchlistAiChatComponent implements OnChanges, AfterViewChecked {
             text: 'Something went wrong. Please try again.',
           },
         ]);
-        this._shouldScroll = true;
         this.isLoading.set(false);
+        this.scrollToBottom();
       },
     });
   }

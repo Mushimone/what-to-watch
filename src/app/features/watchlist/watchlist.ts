@@ -1,4 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -27,7 +29,19 @@ export class Watchlist {
   private supabase = inject(SupabaseService);
   private router = inject(Router);
 
+  isDesktop = signal(false);
   chatMode: ChatMode = 'list';
+
+  constructor() {
+    inject(BreakpointObserver)
+      .observe('(min-width: 900px)')
+      .pipe(takeUntilDestroyed())
+      .subscribe((state) => {
+        this.isDesktop.set(state.matches);
+        // On desktop both panels are always visible — list context is always correct.
+        if (state.matches) this.chatMode = 'list';
+      });
+  }
 
   onTabChange(event: MatTabChangeEvent): void {
     this.chatMode = event.index === 1 ? 'add' : 'list';
