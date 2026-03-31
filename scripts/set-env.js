@@ -1,22 +1,58 @@
 /**
- * Vercel build hook — patches only the Gemini API key in environment.prod.ts.
- * Set GEMINI_API_KEY in Vercel → Settings → Environment Variables.
- * If the variable is absent (local build) the file is left unchanged.
+ * Generates environment.ts and environment.prod.ts from environment variables.
+ *
+ * Local dev:  keys are read from a .env file (never committed).
+ * CI / Vercel: keys are set as environment variables in the platform settings.
+ *
+ * Run via:  node scripts/set-env.js
+ * Add to package.json scripts so it runs before `ng serve` / `ng build`.
  */
 const fs = require('fs');
 const path = require('path');
 
-const key = process.env.GEMINI_API_KEY;
-if (!key) {
-  console.log('GEMINI_API_KEY not set — skipping environment patch');
-  process.exit(0);
+// Load .env if it exists (local development only)
+const dotenvPath = path.join(__dirname, '../.env');
+if (fs.existsSync(dotenvPath)) {
+  fs.readFileSync(dotenvPath, 'utf8')
+    .split('\n')
+    .forEach((line) => {
+      const [key, ...rest] = line.trim().split('=');
+      if (key && rest.length) process.env[key] = rest.join('=').trim();
+    });
 }
 
-const envFile = path.join(__dirname, '../src/environments/environment.prod.ts');
-const original = fs.readFileSync(envFile, 'utf8');
-const patched = original.replace(
-  /gemini:\s*\{[^}]*apiKey:\s*'[^']*'/,
-  `gemini: {\n    apiKey: '${key}'`,
-);
-fs.writeFileSync(envFile, patched, 'utf8');
-console.log('✓ Gemini API key injected from GEMINI_API_KEY env var');
+const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'TMDB_API_KEY', 'GEMINI_API_KEY'];
+const missing = required.filter((k) => !process.env[k]);
+if (missing.length) {
+  console.error(`Missing required env vars: ${missing.join(', ')}`);
+  console.error('Copy environment.example.ts and fill in values, or create a .env file.');
+  process.exit(1);
+}
+
+const { SUPABASE_URL, SUPABASE_ANON_KEY, TMDB_API_KEY, GEMINI_API_KEY } = process.env;
+
+const template = (production) => `\
+export const environment = {
+  production: ${production},
+  supabase: {
+    url: '${SUPABASE_URL}',
+    anonKey: '${SUPABASE_ANON_KEY}',
+  },
+  tmdb: {
+    apiKey: '${TMDB_API_KEY}',
+    baseUrl: 'https://api.themoviedb.org/3',
+    imageBaseUrl: 'https://image.tmdb.org/t/p/w500',
+  },
+  anilist: {
+    apiUrl: 'https://graphql.anilist.co',
+  },
+  gemini: {
+    apiKey: '${GEMINI_API_KEY}',
+  },
+};
+`;
+
+const envDir = path.join(__dirname, '../src/environments');
+fs.writeFileSync(path.join(envDir, 'environment.ts'), template(false), 'utf8');
+fs.writeFileSync(path.join(envDir, 'environment.prod.ts'), template(true), 'utf8');
+console.log('✓ environment.ts and environment.prod.ts generated from env vars');
