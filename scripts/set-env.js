@@ -29,7 +29,12 @@ if (missing.length) {
   process.exit(1);
 }
 
-const { SUPABASE_URL, SUPABASE_ANON_KEY, TMDB_API_KEY, GEMINI_API_KEY } = process.env;
+const escape = (v) => v.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+const SUPABASE_URL = escape(process.env.SUPABASE_URL);
+const SUPABASE_ANON_KEY = escape(process.env.SUPABASE_ANON_KEY);
+const TMDB_API_KEY = escape(process.env.TMDB_API_KEY);
+const GEMINI_API_KEY = escape(process.env.GEMINI_API_KEY);
 
 const template = (production) => `\
 export const environment = {
