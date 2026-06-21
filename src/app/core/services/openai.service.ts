@@ -28,7 +28,12 @@ export class OpenAiService {
           messages,
         },
         {
-          headers: { Authorization: `Bearer ${environment.mimo.apiKey}` },
+          // MiMo accepts the OpenAI-style Bearer header (its docs show the official
+          // OpenAI SDK working); 'api-key' is sent too to match the curl examples.
+          headers: {
+            Authorization: `Bearer ${environment.mimo.apiKey}`,
+            'api-key': environment.mimo.apiKey,
+          },
         },
       )
       .pipe(map((response) => response.choices[0]?.message?.content ?? ''));
