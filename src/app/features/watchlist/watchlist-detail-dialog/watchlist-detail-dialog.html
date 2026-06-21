@@ -1,14 +1,15 @@
 @if (item(); as item) {
-  <div class="detail">
+  <div class="dialog-root">
     <button class="close-btn" mat-icon-button mat-dialog-close aria-label="Close">
       <mat-icon>close</mat-icon>
     </button>
 
-    @if (item.poster_url) {
-      <img [src]="item.poster_url" alt="{{ item.title }} poster" class="detail-poster" />
-    }
+    <div class="detail">
+      @if (item.poster_url) {
+        <img [src]="item.poster_url" alt="{{ item.title }} poster" class="detail-poster" />
+      }
 
-    <div class="detail-body">
+      <div class="detail-body">
       <span class="type-badge">{{ item.type }}</span>
 
       <h2 class="detail-title">
@@ -93,6 +94,7 @@
           <mat-icon>delete</mat-icon>
           Remove
         </button>
+      </div>
       </div>
     </div>
   </div>

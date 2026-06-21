@@ -87,22 +87,24 @@ export class WatchlistDetailDialog {
         {
           role: 'system',
           content:
-            'You recommend movies and TV shows. Given one title the user likes, suggest 3 to 5 ' +
-            'similar titles they would enjoy. Use your knowledge of plot, tone and themes — not ' +
-            'just genre labels. Format as a markdown bullet list, each item "**Title** — one-line ' +
-            'reason". Do not suggest any title that is already in the user\'s list. Be concise.',
+            'You recommend movies and TV shows. Given one title the user likes, suggest exactly 4 ' +
+            'similar titles they would enjoy, matching on plot, tone and themes — not just genre ' +
+            'labels. Prefer well-known, findable titles.\n' +
+            'Output ONLY a markdown bullet list, nothing before or after it. Each bullet must be ' +
+            'exactly: "**Title (Year)** — reason." where the reason is a single sentence of at ' +
+            'most 15 words. Never repeat the source title or any title in the exclusion list.',
         },
         {
           role: 'user',
           content:
-            `I like "${it.title}" (${it.type}` +
+            `Title I like: "${it.title}" (${it.type}` +
             `${it.genres.length ? `, ${it.genres.join(', ')}` : ''}` +
-            `${it.director ? `, directed by ${it.director}` : ''}). ` +
-            `Recommend similar titles. Already in my list (do not suggest these): ${owned}.`,
+            `${it.director ? `, directed by ${it.director}` : ''}).\n` +
+            `Do not suggest any of these (already in my list): ${owned}.`,
         },
       ];
 
-      this.openai.chat(messages).subscribe({
+      this.openai.chat(messages, { maxTokens: 400 }).subscribe({
         next: (reply) => {
           this.similar.set(reply);
           this.similarLoading.set(false);

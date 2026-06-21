@@ -1,17 +1,23 @@
-.detail {
+.dialog-root {
   position: relative;
+}
+
+.detail {
   display: flex;
   align-items: flex-start;
   gap: 1.25rem;
   padding: 1.5rem;
   max-width: 640px;
+  // Long content (overview + AI suggestions) scrolls inside the dialog.
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .close-btn {
   position: absolute;
   top: 6px;
   right: 6px;
-  z-index: 1;
+  z-index: 2;
 }
 
 .detail-poster {
