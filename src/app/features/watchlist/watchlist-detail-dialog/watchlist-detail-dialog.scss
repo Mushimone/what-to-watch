@@ -1,0 +1,186 @@
+.detail {
+  position: relative;
+  display: flex;
+  gap: 1.25rem;
+  max-width: 640px;
+}
+
+.close-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 1;
+}
+
+.detail-poster {
+  flex-shrink: 0;
+  width: 180px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.detail-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.type-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background-color: var(--color-accent);
+  color: var(--color-black);
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.detail-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+
+  .detail-year {
+    font-weight: 400;
+    color: var(--color-text-muted);
+  }
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-muted);
+
+  mat-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.vote-average {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  color: #f5c518; // IMDb-style gold
+
+  .star-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    color: #f5c518;
+  }
+}
+
+.detail-director {
+  margin: 0;
+  font-size: 0.9rem;
+
+  .label {
+    color: var(--color-text-muted);
+    margin-right: 6px;
+  }
+}
+
+.detail-genres {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.detail-overview {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+
+  &.muted {
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+}
+
+.section-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.small {
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.watch-section,
+.similar-section {
+  width: 100%;
+  margin-top: 0.4rem;
+}
+
+.provider-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.provider-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.similar-content {
+  font-size: 0.88rem;
+  line-height: 1.5;
+
+  :first-child {
+    margin-top: 0;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.1rem;
+  }
+}
+
+.detail-actions {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 560px) {
+  .detail {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .detail-poster {
+    width: 140px;
+  }
+}

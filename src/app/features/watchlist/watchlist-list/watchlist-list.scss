@@ -110,6 +110,11 @@ li {
   font-size: 0.95rem;
   font-weight: 600;
   line-height: 1.2;
+
+  .item-year {
+    font-weight: 400;
+    color: var(--color-text-muted);
+  }
 }
 
 .genres {

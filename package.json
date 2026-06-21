@@ -8,7 +8,8 @@
     "prebuild": "node scripts/set-env.js",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "backfill": "node scripts/backfill-details.js"
   },
   "prettier": {
     "printWidth": 100,

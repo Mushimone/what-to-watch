@@ -1,9 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { TmdbSearchResponse } from '../models/tmdb.model';
+import {
+  TmdbDetails,
+  TmdbEnrichment,
+  TmdbSearchResponse,
+  TmdbWatchProvider,
+  TmdbWatchProvidersResponse,
+} from '../models/tmdb.model';
 import { map, Observable } from 'rxjs';
-import { SearchResult } from '../models/watchlist-item.model';
+import { MediaType, SearchResult } from '../models/watchlist-item.model';
 @Injectable({
   providedIn: 'root',
 })
@@ -12,6 +18,8 @@ export class SearchService {
     this.getTmdbGenres();
   }
   url = 'https://api.themoviedb.org/3/search/multi';
+  /** Region used for streaming-availability lookups. */
+  readonly watchRegion = 'IT';
   tmdbTvGenreMap: Record<number, string> = {};
   tmdbMovieGenreMap: Record<number, string> = {};
 
@@ -47,6 +55,51 @@ export class SearchService {
       release_date: result.media_type === 'movie' ? result.release_date : result.first_air_date,
       vote_average: result.vote_average,
     }));
+  }
+
+  /**
+   * Fetches runtime, director and overview for a single title from the TMDb
+   * details endpoint — none of which are returned by `search/multi`.
+   */
+  getTmdbDetails(externalId: string, type: MediaType): Observable<TmdbEnrichment> {
+    const endpoint = type === 'movie' ? 'movie' : 'tv';
+    const url = `https://api.themoviedb.org/3/${endpoint}/${externalId}`;
+    const params = {
+      api_key: environment.tmdb.apiKey,
+      append_to_response: 'credits',
+    };
+    return this.http.get<TmdbDetails>(url, { params }).pipe(
+      map((details) => this.mapToEnrichment(details, type)),
+    );
+  }
+
+  /**
+   * Returns the "flatrate" (subscription) streaming providers for a title in
+   * the configured region. Empty array when nothing is available there.
+   */
+  getWatchProviders(externalId: string, type: MediaType): Observable<TmdbWatchProvider[]> {
+    const endpoint = type === 'movie' ? 'movie' : 'tv';
+    const url = `https://api.themoviedb.org/3/${endpoint}/${externalId}/watch/providers`;
+    const params = { api_key: environment.tmdb.apiKey };
+    return this.http
+      .get<TmdbWatchProvidersResponse>(url, { params })
+      .pipe(map((response) => response.results?.[this.watchRegion]?.flatrate ?? []));
+  }
+
+  private mapToEnrichment(details: TmdbDetails, type: MediaType): TmdbEnrichment {
+    const duration_minutes =
+      type === 'movie'
+        ? (details.runtime ?? null)
+        : (details.episode_run_time?.[0] ?? null);
+    const director =
+      type === 'movie'
+        ? (details.credits?.crew.find((member) => member.job === 'Director')?.name ?? null)
+        : (details.created_by?.[0]?.name ?? null);
+    return {
+      duration_minutes,
+      director,
+      overview: details.overview || null,
+    };
   }
 
   private getGenreNameById(id: number, mediaType: 'movie' | 'tv'): string {

@@ -8,6 +8,9 @@
                 </mat-chip-listbox>
               </div>
             <div class="sort-by">
+              <button mat-icon-button (click)="openTimePicker()" matTooltip="I have time…" aria-label="Find something to watch by available time">
+                <mat-icon>schedule</mat-icon>
+              </button>
               <button mat-icon-button [matMenuTriggerFor]="sortMenu" [matTooltip]="activeSortLabel" aria-label="Sort options">
                 <mat-icon>swap_vert</mat-icon>
               </button>
@@ -27,29 +30,37 @@
           @if( isLoading()){
             <p>Loading your watchlist...</p>
           }
-          @else if (items.length === 0 && activeFilter() === 'All') {
+          @else if (totalCount() === 0) {
             <p>Your watchlist is empty. Start adding some movies and TV shows!</p>
-          } 
-          @else if (items.length === 0 && activeFilter() !== 'All') {
+          }
+          @else if (items.length === 0 && activeFilter() === 'Not Watched') {
+            <p>You've watched everything! Toggle the filter to see your full list.</p>
+          }
+          @else if (items.length === 0) {
             <p>No items match your filter.</p>
           }
           @else {
             <ul class="watchlist-grid">
               @for (item of items; track item.id) {
                 <li>
-                  <div class="card" > 
+                  <div class="card" (click)="openDetail(item)">
                     <img [class.watched]="item.watched" [src]="item.poster_url" alt="{{ item.title }} poster" class="poster" />
                     <div class="details">
                       <div class="card-actions">
-                        <button class="card-icon-btn" (click)="toggleWatched(item)" [title]="item.watched ? 'Mark unwatched' : 'Mark watched'">
+                        <button class="card-icon-btn" (click)="$event.stopPropagation(); toggleWatched(item)" [title]="item.watched ? 'Mark unwatched' : 'Mark watched'">
                           <mat-icon>{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
                         </button>
-                        <button class="card-icon-btn delete" (click)="removeFromWatchlist(item.id)" title="Remove">
+                        <button class="card-icon-btn delete" (click)="$event.stopPropagation(); removeFromWatchlist(item.id)" title="Remove">
                           <mat-icon>delete</mat-icon>
                         </button>
                       </div>
                       <span class="type-badge">{{ item.type }}</span>
-                      <h2 class="item-title">{{ item.title }}</h2>
+                      <h2 class="item-title">
+                        {{ item.title }}
+                        @if (item.release_date) {
+                          <span class="item-year">({{ item.release_date.slice(0, 4) }})</span>
+                        }
+                      </h2>
                       @if (item.vote_average) {
                         <p class="vote-average">
                           <mat-icon class="star-icon">star</mat-icon> {{ item.vote_average | number:'1.1-1' }}

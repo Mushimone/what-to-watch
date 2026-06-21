@@ -2,7 +2,7 @@ import { Pipe, PipeTransform, inject } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 /**
- * Converts a small, trusted subset of Markdown (as produced by the Gemini API)
+ * Converts a small, trusted subset of Markdown (as produced by the AI model)
  * into safe HTML for use with [innerHTML].
  *
  * Supported syntax:
@@ -60,7 +60,7 @@ export class MarkdownPipe implements PipeTransform {
     return this.sanitizer.bypassSecurityTrustHtml(blocks.join(''));
   }
 
-  /** Apply inline-level transforms (bold only — Gemini rarely uses italics). */
+  /** Apply inline-level transforms (bold only — the model rarely uses italics). */
   private inline(text: string): string {
     return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   }

@@ -2,14 +2,17 @@ import { AsyncPipe, DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { WatchlistService } from '../../../core/services/watchlist.service';
 import { combineLatest, map } from 'rxjs';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { WatchlistItem } from '../../../core/models/watchlist-item.model';
+import { WatchlistDetailDialog } from '../watchlist-detail-dialog/watchlist-detail-dialog';
+import { WatchlistTimePickerDialog } from '../watchlist-time-picker-dialog/watchlist-time-picker-dialog';
 
 @Component({
   selector: 'app-watchlist-list',
@@ -28,6 +31,7 @@ import { WatchlistItem } from '../../../core/models/watchlist-item.model';
 })
 export class WatchlistList {
   private watchlist = inject(WatchlistService);
+  private dialog = inject(MatDialog);
   filterChips = ['Movies', 'Series', 'Anime', 'Not Watched'];
   sortOptions = [
     { value: 'added_desc', label: 'Recently Added' },
@@ -36,15 +40,21 @@ export class WatchlistList {
     { value: 'title_desc', label: 'Title (Z–A)' },
     { value: 'rating_desc', label: 'Rating (High to Low)' },
     { value: 'rating_asc', label: 'Rating (Low to High)' },
+    { value: 'duration_desc', label: 'Duration (Long to Short)' },
+    { value: 'duration_asc', label: 'Duration (Short to Long)' },
   ];
 
   get activeSortLabel(): string {
     return this.sortOptions.find((o) => o.value === this.activeSort())?.label ?? 'Sort';
   }
-  activeFilter = signal('All');
+  activeFilter = signal('Not Watched');
   activeSort = signal('added_desc');
   isLoading = signal(true);
   watchlistItems$ = this.watchlist.watchlistItems$;
+  /** Total count regardless of the active filter — drives empty-state messaging. */
+  totalCount = toSignal(this.watchlistItems$.pipe(map((items) => items.length)), {
+    initialValue: 0,
+  });
   displayedItems$ = combineLatest([
     this.watchlistItems$,
     toObservable(this.activeFilter),
@@ -113,7 +123,38 @@ export class WatchlistList {
       sortedItems.sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0));
     } else if (sort === 'rating_asc') {
       sortedItems.sort((a, b) => (a.vote_average ?? 0) - (b.vote_average ?? 0));
+    } else if (sort === 'duration_desc') {
+      sortedItems.sort((a, b) => this.compareDuration(a, b, 'desc'));
+    } else if (sort === 'duration_asc') {
+      sortedItems.sort((a, b) => this.compareDuration(a, b, 'asc'));
     }
     return sortedItems;
+  }
+
+  // Items without a known runtime always sort to the bottom, regardless of direction.
+  private compareDuration(a: WatchlistItem, b: WatchlistItem, direction: 'asc' | 'desc'): number {
+    const aMin = a.duration_minutes;
+    const bMin = b.duration_minutes;
+    if (aMin == null && bMin == null) return 0;
+    if (aMin == null) return 1;
+    if (bMin == null) return -1;
+    return direction === 'desc' ? bMin - aMin : aMin - bMin;
+  }
+
+  openDetail(item: WatchlistItem) {
+    this.dialog.open(WatchlistDetailDialog, {
+      data: item,
+      width: '680px',
+      maxWidth: '95vw',
+      autoFocus: false,
+    });
+  }
+
+  openTimePicker() {
+    this.dialog.open(WatchlistTimePickerDialog, {
+      width: '480px',
+      maxWidth: '95vw',
+      autoFocus: false,
+    });
   }
 }

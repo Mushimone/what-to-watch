@@ -1,0 +1,56 @@
+<h2 mat-dialog-title>How much time do you have?</h2>
+
+<mat-dialog-content>
+  <div class="time-input-row">
+    <mat-form-field appearance="outline" class="minutes-field">
+      <mat-label>Minutes</mat-label>
+      <input
+        matInput
+        type="number"
+        min="1"
+        [(ngModel)]="minutesValue"
+        (keydown.enter)="search()"
+        placeholder="e.g. 90"
+        autocomplete="off"
+      />
+    </mat-form-field>
+    <button mat-flat-button color="primary" (click)="search()" [disabled]="!minutes()">
+      Find
+    </button>
+  </div>
+
+  @if (searched()) {
+    @if (matches().length) {
+      <ul class="time-results">
+        @for (item of matches(); track item.id) {
+          <li class="time-result" (click)="open(item)">
+            @if (item.poster_url) {
+              <img [src]="item.poster_url" [alt]="item.title + ' poster'" class="result-poster" />
+            }
+            <div class="result-info">
+              <span class="result-title">
+                {{ item.title }}
+                @if (item.release_date) {
+                  <span class="result-year">({{ item.release_date.slice(0, 4) }})</span>
+                }
+              </span>
+              <span class="result-meta">
+                <span class="type-badge">{{ item.type }}</span>
+                <span class="result-runtime">
+                  <mat-icon>schedule</mat-icon>
+                  {{ runtimeLabel(item.duration_minutes) }}{{ item.type === 'movie' ? '' : ' / ep' }}
+                </span>
+              </span>
+            </div>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="empty">Nothing in your unwatched list fits that time. Try a longer window.</p>
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Close</button>
+</mat-dialog-actions>

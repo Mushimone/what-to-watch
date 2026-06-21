@@ -62,6 +62,30 @@ export class WatchlistService {
     return true;
   }
 
+  /**
+   * Backfills enrichment fields (runtime/director/overview) for items added
+   * before they were fetched, so they display fully and become duration-sortable.
+   */
+  public async updateDetails(
+    id: string,
+    details: Partial<Pick<WatchlistItem, 'duration_minutes' | 'director' | 'overview'>>,
+  ) {
+    const { error } = await this.supabase
+      .getClient()
+      .from('watchlist_items')
+      .update(details)
+      .eq('id', id);
+    if (error) {
+      console.error('Error updating item details:', error);
+      return false;
+    }
+    const updatedItems = this.watchlistItemsSubject.value.map((item) =>
+      item.id === id ? { ...item, ...details } : item,
+    );
+    this.watchlistItemsSubject.next(updatedItems);
+    return true;
+  }
+
   public async toggleWatchedStatus(id: string, watched: boolean) {
     const { error } = await this.supabase
       .getClient()

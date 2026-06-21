@@ -14,9 +14,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { take } from 'rxjs';
-import { GeminiContent } from '../../../core/models/gemini.models';
+import { OpenAiMessage } from '../../../core/models/openai.models';
 import { WatchlistItem } from '../../../core/models/watchlist-item.model';
-import { GeminiService } from '../../../core/services/gemini.service';
+import { OpenAiService } from '../../../core/services/openai.service';
 import { WatchlistService } from '../../../core/services/watchlist.service';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
@@ -38,7 +38,7 @@ export type ChatMode = 'list' | 'add';
 export class WatchlistAiChatComponent implements OnChanges {
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
 
-  private gemini = inject(GeminiService);
+  private openai = inject(OpenAiService);
   private watchlist = inject(WatchlistService);
 
   private scrollToBottom(): void {
@@ -72,7 +72,7 @@ export class WatchlistAiChatComponent implements OnChanges {
   isLoading = signal(false);
   inputText = '';
 
-  history: GeminiContent[] = [];
+  history: OpenAiMessage[] = [];
   displayMessages = signal<{ role: 'user' | 'model'; text: string }[]>([]);
 
   /**
@@ -96,13 +96,13 @@ export class WatchlistAiChatComponent implements OnChanges {
     this.displayMessages.update((msgs) => [...msgs, { role: 'user', text }]);
     this.scrollToBottom();
 
-    const userTurn: GeminiContent = { role: 'user', parts: [{ text }] };
+    const userTurn: OpenAiMessage = { role: 'user', content: text };
     this.history.push(userTurn);
 
     this.isLoading.set(true);
-    this.gemini.chat(this.history).subscribe({
+    this.openai.chat(this.history).subscribe({
       next: (modelReply) => {
-        this.history.push({ role: 'model', parts: [{ text: modelReply }] });
+        this.history.push({ role: 'assistant', content: modelReply });
         this.displayMessages.update((msgs) => [...msgs, { role: 'model', text: modelReply }]);
         this.isLoading.set(false);
         this.scrollToBottom();
@@ -165,7 +165,7 @@ ${[...watched, ...unwatched].map(fmt).join('\n') || 'Nothing added yet'}
     `.trim();
 
     this.history = [
-      { role: 'user', parts: [{ text: this.mode === 'list' ? listContext : addContext }] },
+      { role: 'system', content: this.mode === 'list' ? listContext : addContext },
     ];
   }
 }

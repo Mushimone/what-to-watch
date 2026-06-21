@@ -12,8 +12,10 @@ import {
   debounceTime,
   distinctUntilChanged,
   filter,
+  firstValueFrom,
   map,
   merge,
+  of,
   startWith,
   Subject,
   switchMap,
@@ -77,7 +79,14 @@ export class WatchlistAdd {
 
   async onResultSelected(event: MatAutocompleteSelectedEvent) {
     const result: SearchResult = event.option.value;
-    const item = { ...result, watched: false };
+    // Enrich with runtime/director/overview — not returned by search/multi.
+    // Fall back to the bare result if the details call fails.
+    const enrichment = await firstValueFrom(
+      this.searchService
+        .getTmdbDetails(result.external_id, result.type)
+        .pipe(catchError(() => of(null))),
+    );
+    const item = { ...result, ...(enrichment ?? {}), watched: false };
     const success = await this.watchlistService.addToWatchlist(item);
     if (success === 'duplicate') {
       this.snackBar.open(`"${result.title}" is already in your watchlist.`, 'OK', {

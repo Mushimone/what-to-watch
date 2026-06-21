@@ -12,7 +12,9 @@ export const environment = {
   anilist: {
     apiUrl: 'https://graphql.anilist.co',
   },
-  gemini: {
-    apiKey: 'YOUR_GEMINI_API_KEY',
+  mimo: {
+    apiKey: 'YOUR_MIMO_API_KEY',
+    model: 'YOUR_MIMO_MODEL',
+    baseUrl: 'https://token-plan-ams.xiaomimimo.com/v1',
   },
 };
