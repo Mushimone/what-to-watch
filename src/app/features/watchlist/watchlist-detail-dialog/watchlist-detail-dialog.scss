@@ -1,14 +1,16 @@
 .detail {
   position: relative;
   display: flex;
+  align-items: flex-start;
   gap: 1.25rem;
+  padding: 1.5rem;
   max-width: 640px;
 }
 
 .close-btn {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: 6px;
+  right: 6px;
   z-index: 1;
 }
 
@@ -41,6 +43,7 @@
 
 .detail-title {
   margin: 0;
+  padding-right: 2rem; // clear the absolute close button
   font-size: 1.35rem;
   font-weight: 700;
   line-height: 1.2;
@@ -167,10 +170,10 @@
 }
 
 .detail-actions {
-  margin-top: auto;
-  padding-top: 0.5rem;
+  margin-top: 0.5rem;
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-start;
   gap: 0.5rem;
 }
 
