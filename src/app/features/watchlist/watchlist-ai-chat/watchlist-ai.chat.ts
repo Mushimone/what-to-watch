@@ -100,7 +100,7 @@ export class WatchlistAiChatComponent implements OnChanges {
     this.history.push(userTurn);
 
     this.isLoading.set(true);
-    this.openai.chat(this.history).subscribe({
+    this.openai.chat(this.history, { maxTokens: 800 }).subscribe({
       next: (modelReply) => {
         this.history.push({ role: 'assistant', content: modelReply });
         this.displayMessages.update((msgs) => [...msgs, { role: 'model', text: modelReply }]);
@@ -124,16 +124,24 @@ export class WatchlistAiChatComponent implements OnChanges {
   buildContext(items: WatchlistItem[]): void {
     const watched = items.filter((i) => i.watched);
     const unwatched = items.filter((i) => !i.watched);
-    const fmt = (i: WatchlistItem) => `- ${i.title} (${i.type}, ${i.genres.join(', ')})`;
+    const fmt = (i: WatchlistItem) => {
+      const year = i.release_date?.slice(0, 4);
+      const meta = [year, i.type, i.genres.join('/')].filter(Boolean).join(', ');
+      const dir = i.director ? `, dir. ${i.director}` : '';
+      return `- ${i.title} (${meta}${dir})`;
+    };
 
     const sharedRules = `
 IMPORTANT RULES:
 - Suggest titles based on the WATCHED and UNWATCHED lists below, before suggesting outside of those, find something that matches from the UNWATCHED list if possible or explicitly say if the vibe I'm asking for isn't represented in that list.
 - Use your full knowledge of each title — its plot, tone, pacing, atmosphere and themes — NOT just the genre tags.
 - Genre tags are approximate labels from a database; a title tagged "Action" may be full of suspense, a "Drama" may be very funny.
+- The year and director are given to help you identify the exact title (e.g. distinguish remakes) — use them to pick the right one, not as the basis for your recommendation.
 - When the user describes a mood, feeling or vibe (e.g. "something suspenseful", "light and funny", "mind-bending"), reason about which titles on the list match that feeling based on what you know about them.
 - Never say a mood isn't represented just because the genre label doesn't contain that word.
-- Keep replies short, friendly and direct. Format suggestions as bullet points with a one-sentence reason.
+- Keep replies short and friendly. Suggest at most 4 titles unless the user asks for more, and lead with your single best pick.
+- Format each suggestion as a "-" bullet starting with the title in **bold**, followed by a one-sentence reason.
+- Use ONLY plain text, "-" bullet points and **bold**. Do NOT use headings, tables, links, italics or code blocks — they will not render.
 - Never suggest any actions like adding directly a movie to the watchlist — the user has to do that manually. Always phrase suggestions as recommendations, not instructions.
 - Respond in the language the user is using, and mirror their style. If they write in a casual style, respond in kind — if they use slang or emojis, you can too. If they write formally, match that tone instead.
     `.trim();
