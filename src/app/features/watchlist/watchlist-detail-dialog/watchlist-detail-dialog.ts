@@ -98,8 +98,10 @@ export class WatchlistDetailDialog {
           role: 'user',
           content:
             `Title I like: "${it.title}" (${it.type}` +
+            `${it.release_date ? `, ${it.release_date.slice(0, 4)}` : ''}` +
             `${it.genres.length ? `, ${it.genres.join(', ')}` : ''}` +
-            `${it.director ? `, directed by ${it.director}` : ''}).\n` +
+            `${it.director ? `, directed by ${it.director}` : ''}).` +
+            `${it.overview ? `\nFor reference, its plot: ${it.overview.slice(0, 240)}` : ''}\n` +
             `Do not suggest any of these (already in my list): ${owned}.`,
         },
       ];

@@ -124,51 +124,63 @@ export class WatchlistAiChatComponent implements OnChanges {
   buildContext(items: WatchlistItem[]): void {
     const watched = items.filter((i) => i.watched);
     const unwatched = items.filter((i) => !i.watched);
+    const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n).trimEnd()}…` : s);
     const fmt = (i: WatchlistItem) => {
       const year = i.release_date?.slice(0, 4);
       const meta = [year, i.type, i.genres.join('/')].filter(Boolean).join(', ');
       const dir = i.director ? `, dir. ${i.director}` : '';
-      return `- ${i.title} (${meta}${dir})`;
+      const rating = i.vote_average ? ` ★${i.vote_average.toFixed(1)}` : '';
+      const overview = i.overview ? `\n   ${clip(i.overview, 160)}` : '';
+      return `- ${i.title} (${meta}${dir})${rating}${overview}`;
     };
 
-    const sharedRules = `
-IMPORTANT RULES:
-- Suggest titles based on the WATCHED and UNWATCHED lists below, before suggesting outside of those, find something that matches from the UNWATCHED list if possible or explicitly say if the vibe I'm asking for isn't represented in that list.
-- Use your full knowledge of each title — its plot, tone, pacing, atmosphere and themes — NOT just the genre tags.
-- Genre tags are approximate labels from a database; a title tagged "Action" may be full of suspense, a "Drama" may be very funny.
-- The year and director are given to help you identify the exact title (e.g. distinguish remakes) — use them to pick the right one, not as the basis for your recommendation.
-- When the user describes a mood, feeling or vibe (e.g. "something suspenseful", "light and funny", "mind-bending"), reason about which titles on the list match that feeling based on what you know about them.
-- Never say a mood isn't represented just because the genre label doesn't contain that word.
-- Keep replies short and friendly. Suggest at most 4 titles unless the user asks for more, and lead with your single best pick.
-- Format each suggestion as a "-" bullet starting with the title in **bold**, followed by a one-sentence reason.
-- Use ONLY plain text, "-" bullet points and **bold**. Do NOT use headings, tables, links, italics or code blocks — they will not render.
-- Never suggest any actions like adding directly a movie to the watchlist — the user has to do that manually. Always phrase suggestions as recommendations, not instructions.
-- Respond in the language the user is using, and mirror their style. If they write in a casual style, respond in kind — if they use slang or emojis, you can too. If they write formally, match that tone instead.
-    `.trim();
+    // Shared recommendation method — the "how to think" half of the prompt.
+    const method = `
+HOW TO RECOMMEND:
+1. First infer my taste from the WATCHED list — recurring tones, themes, pacing, eras, directors, and what I rated highly (★). Treat that as my profile.
+2. Work out what I'm actually asking for: a mood/vibe, a time constraint, something similar to a title, help deciding, or just browsing options.
+3. Match against BOTH my request and my taste profile, using your real knowledge of each title's plot, tone and atmosphere. Genre tags are rough; the year, director, ★rating and short synopsis are only there to help you identify the exact title and gauge what I like.
+4. Be adaptive and decisive about the shape of your answer:
+   - If I'm asking what to watch / for help picking / for a specific mood: lead with ONE confident top pick on its own line as "**Watch this: Title (Year)**" and a reason, then offer 2–3 shorter alternates.
+   - If I'm clearly browsing or asking for options/a list: give a ranked shortlist of up to 4, best first.
+5. Every reason must connect the pick to what I asked AND, whenever possible, to something specific I've watched (e.g. "you rated Sicario highly").
+6. If my request is vague, make a sensible assumption and recommend — don't interrogate me with clarifying questions.
+7. Never repeat a title you already suggested earlier in this conversation.`.trim();
+
+    const style = `
+STYLE:
+- Keep it short and friendly, and mirror my language and tone (casual, slang, emoji, or formal — match me).
+- Use ONLY plain text, "-" bullet points and **bold** (bold every title). No headings, tables, links, italics or code blocks — they will not render.
+- Never tell me to add a title or take an action — phrase everything as a recommendation; I add things manually.`.trim();
 
     const listContext = `
-You are a helpful watchlist assistant for the "What to Watch" app.
-Only suggest titles from the UNWATCHED list unless the user explicitly asks otherwise. Don't mention the WATCHED and UNWATCHED labels — those are just for your understanding. Just use the lists to find suggestions that match the vibe the user is asking for, and suggest from there.
+You are the recommendation assistant for the "What to Watch" app. I want to choose something from my own watchlist.
+Only recommend from the UNWATCHED list unless I explicitly ask for ideas beyond it. If nothing in UNWATCHED genuinely fits, say so honestly, offer the closest option, and you may add one outside idea clearly flagged as not on my list.
+Don't mention the words "WATCHED"/"UNWATCHED" — they are just labels for you.
 
-${sharedRules}
+${method}
 
-WATCHED (infer my preferences and taste from this):
+${style}
+
+WATCHED — infer my taste from this:
 ${watched.map(fmt).join('\n') || 'None yet'}
 
-UNWATCHED (suggest from here):
-${unwatched.map(fmt).join('\n') || 'Nothing in the list yet'}
+UNWATCHED — recommend from here:
+${unwatched.map(fmt).join('\n') || 'Nothing here yet'}
     `.trim();
 
     const addContext = `
-You are a helpful media discovery assistant for the "What to Watch" app.
-The user wants suggestions for NEW titles to add to their watchlist — things they haven't seen and don't already have listed.
+You are the discovery assistant for the "What to Watch" app. I want NEW titles to add — things I haven't seen and don't already have listed.
+Only suggest real, well-known, findable titles; never invent one, and never suggest anything already in my list.
 
-${sharedRules}
+${method}
 
-WATCHED (use to understand my taste):
+${style}
+
+WATCHED — infer my taste from this:
 ${watched.map(fmt).join('\n') || 'None yet'}
 
-ALREADY IN MY LIST (do not suggest these):
+ALREADY IN MY LIST — never suggest these:
 ${[...watched, ...unwatched].map(fmt).join('\n') || 'Nothing added yet'}
     `.trim();
 
