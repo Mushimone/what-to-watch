@@ -49,10 +49,24 @@
             (change)="overlapOnlyView.set($event.checked)"
             >Only what you both want</mat-slide-toggle
           >
-          <button mat-flat-button color="primary" (click)="startTournament()">
-            <mat-icon>emoji_events</mat-icon>
-            Tournament pick
-          </button>
+          <div class="actions-right">
+            <mat-form-field appearance="outline" class="size-select" subscriptSizing="dynamic">
+              <mat-label>Bracket size</mat-label>
+              <mat-select
+                [value]="tournamentSize()"
+                (selectionChange)="tournamentSize.set($event.value)"
+              >
+                @for (n of sizeOptions(); track n) {
+                  <mat-option [value]="n">{{ n }} titles</mat-option>
+                }
+                <mat-option [value]="'all'">All ({{ displayedPool().length }})</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <button mat-flat-button color="primary" (click)="startTournament()">
+              <mat-icon>emoji_events</mat-icon>
+              Tournament pick
+            </button>
+          </div>
         </div>
 
         @if (loading()) {

@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { SupabaseService } from './supabase.service';
 import { Profile } from '../models/profile.model';
 import { AcceptInviteOutcome } from '../models/friend.model';
@@ -12,6 +13,24 @@ export class FriendsService {
 
   private _friends$ = new BehaviorSubject<Profile[]>([]);
   friends$ = this._friends$.asObservable();
+
+  private channel: RealtimeChannel | null = null;
+
+  /**
+   * Subscribes once to friendship changes so the friends list refreshes live
+   * (e.g. the moment an invite is accepted) without a page reload. RLS scopes
+   * the events to friendships the current user belongs to.
+   */
+  startRealtime(): void {
+    if (this.channel) return;
+    this.channel = this.supabase
+      .getClient()
+      .channel('friendships-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, () => {
+        this.getFriends();
+      })
+      .subscribe();
+  }
 
   /** Loads accepted friends (the other member of each friendship) as profiles. */
   async getFriends(): Promise<Profile[]> {

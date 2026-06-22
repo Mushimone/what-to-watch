@@ -39,8 +39,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.actions-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.size-select {
+  width: 130px;
 }
 
 .hint {

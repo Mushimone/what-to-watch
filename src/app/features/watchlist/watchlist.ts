@@ -14,6 +14,7 @@ import { WatchlistAiChatComponent, ChatMode } from './watchlist-ai-chat/watchlis
 import { UsernameDialog } from '../auth/username-dialog/username-dialog';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ProfileService } from '../../core/services/profile.service';
+import { FriendsService } from '../../core/services/friends.service';
 
 @Component({
   selector: 'app-watchlist',
@@ -33,6 +34,7 @@ import { ProfileService } from '../../core/services/profile.service';
 export class Watchlist implements OnInit {
   private supabase = inject(SupabaseService);
   private profile = inject(ProfileService);
+  private friends = inject(FriendsService);
   private dialog = inject(MatDialog);
   private router = inject(Router);
 
@@ -51,6 +53,7 @@ export class Watchlist implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    this.friends.startRealtime();
     const profile = await this.profile.loadProfile();
     if (profile && !profile.username) {
       this.dialog.open(UsernameDialog, {

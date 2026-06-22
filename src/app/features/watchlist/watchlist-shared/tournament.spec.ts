@@ -57,4 +57,25 @@ describe('tournament', () => {
     expect(result.matchups).toBe(2);
     expect(result.winner).toBeTruthy();
   });
+
+  it('reports totalRounds as ceil(log2(n))', () => {
+    const four = createTournament([mk('A'), mk('B'), mk('C'), mk('D')], () => 0, noShuffle);
+    expect(four.totalRounds).toBe(2);
+    expect(four.round).toBe(1);
+
+    const items = Array.from({ length: 12 }, (_, i) => mk(`I${i}`));
+    expect(createTournament(items, () => 0, noShuffle).totalRounds).toBe(4);
+  });
+
+  it('advances the round counter as the bracket progresses', () => {
+    let s = createTournament([mk('A'), mk('B'), mk('C'), mk('D')], () => 0, noShuffle);
+    expect(s.round).toBe(1); // A vs B
+    s = choose(s, 'a');
+    expect(s.round).toBe(1); // C vs D
+    s = choose(s, 'a');
+    expect(s.round).toBe(2); // final
+    s = choose(s, 'a');
+    expect(s.winner).toBeTruthy();
+    expect(s.round).toBe(2);
+  });
 });

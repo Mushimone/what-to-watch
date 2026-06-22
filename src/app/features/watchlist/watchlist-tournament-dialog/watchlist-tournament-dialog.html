@@ -2,6 +2,7 @@
 <mat-dialog-content>
   @if (state(); as s) {
     @if (s.current) {
+      <p class="round">Round {{ s.round }} of {{ s.totalRounds }}</p>
       <p class="prompt">Which one?</p>
       <div class="matchup">
         <button class="contender" (click)="pick('a')">
