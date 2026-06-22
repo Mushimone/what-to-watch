@@ -26,13 +26,13 @@ export class SupabaseService {
     return this.supabase.auth.signOut();
   }
 
-  public signInWithGoogle() {
+  public signInWithGoogle(redirectTo: string = `${window.location.origin}/`) {
     return this.supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        // Use explicit origin so this never silently redirects to an unexpected URL.
-        // Update to your production URL before deploying.
-        redirectTo: `${window.location.origin}/`,
+        // Defaults to the app root; callers (e.g. the invite flow) can pass an
+        // explicit URL so OAuth returns the user to where they started.
+        redirectTo,
       },
     });
   }
