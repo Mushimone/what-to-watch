@@ -18,5 +18,9 @@ export const routes: Routes = [
     loadComponent: () => import('./features/watchlist/watchlist').then((m) => m.Watchlist),
     canActivate: [authGuard],
   },
+  {
+    path: 'invite/:token',
+    loadComponent: () => import('./features/invite/invite').then((m) => m.Invite),
+  },
   { path: '**', redirectTo: '' },
 ];

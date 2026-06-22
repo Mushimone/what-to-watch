@@ -12,7 +12,7 @@
 // ── Desktop side-by-side layout ────────────────────────────────────────────
 .desktop-layout {
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: 2fr 1.4fr 1.6fr;
   height: calc(100dvh - 56px); // fill below header
   border-top: 1px solid var(--mat-sys-outline-variant);
 }
@@ -20,7 +20,8 @@
 .desktop-col {
   overflow-y: auto;
 
-  &--add {
+  &--add,
+  &--shared {
     border-left: 1px solid var(--mat-sys-outline-variant);
   }
 }

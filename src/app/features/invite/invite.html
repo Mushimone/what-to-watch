@@ -1,0 +1,23 @@
+<div class="invite">
+  @switch (status()) {
+    @case ('working') {
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Adding your friend…</p>
+    }
+    @case ('ok') {
+      <h2>You're connected! 🎉</h2>
+      <p>You can now see each other's watchlists in the Shared tab.</p>
+      <button mat-flat-button color="primary" (click)="goToWatchlist()">Go to my watchlist</button>
+    }
+    @case ('self') {
+      <h2>That's your own invite link</h2>
+      <p>Send it to a friend instead.</p>
+      <button mat-button routerLink="/watchlist">Back to watchlist</button>
+    }
+    @default {
+      <h2>This invite link is no longer valid</h2>
+      <p>It may have expired or already been used. Ask your friend for a new one.</p>
+      <button mat-button routerLink="/watchlist">Back to watchlist</button>
+    }
+  }
+</div>

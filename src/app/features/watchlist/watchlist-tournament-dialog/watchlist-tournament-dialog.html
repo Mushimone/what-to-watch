@@ -1,0 +1,40 @@
+<h2 mat-dialog-title>Pick tonight's title</h2>
+<mat-dialog-content>
+  @if (state(); as s) {
+    @if (s.current) {
+      <p class="prompt">Which one?</p>
+      <div class="matchup">
+        <button class="contender" (click)="pick('a')">
+          @if (s.current.a.poster_url) {
+            <img [src]="s.current.a.poster_url" [alt]="s.current.a.title" />
+          }
+          <span class="contender-title">{{ s.current.a.title }}</span>
+        </button>
+        <span class="vs">vs</span>
+        <button class="contender" (click)="pick('b')">
+          @if (s.current.b.poster_url) {
+            <img [src]="s.current.b.poster_url" [alt]="s.current.b.title" />
+          }
+          <span class="contender-title">{{ s.current.b.title }}</span>
+        </button>
+      </div>
+    } @else if (s.winner) {
+      <div class="winner">
+        <p class="prompt">Tonight you're watching</p>
+        <button class="contender contender--winner" (click)="openWinner(s.winner)">
+          @if (s.winner.poster_url) {
+            <img [src]="s.winner.poster_url" [alt]="s.winner.title" />
+          }
+          <span class="contender-title">{{ s.winner.title }}</span>
+        </button>
+      </div>
+    }
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="restart()">
+    <mat-icon>replay</mat-icon>
+    Restart
+  </button>
+  <button mat-button mat-dialog-close>Close</button>
+</mat-dialog-actions>

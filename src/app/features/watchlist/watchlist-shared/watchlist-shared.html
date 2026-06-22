@@ -1,0 +1,81 @@
+<div class="shared">
+  @if (friends$ | async; as friends) {
+    @if (friends.length === 0) {
+      <!-- Empty state doubles as onboarding -->
+      <div class="onboarding">
+        <h3>Watch together</h3>
+        <ol>
+          <li>Invite a friend with a link.</li>
+          <li>See your lists merged — what you both want is highlighted.</li>
+          <li>Run a tournament to decide what to watch tonight.</li>
+        </ol>
+        <button mat-flat-button color="primary" (click)="invite()">
+          <mat-icon>person_add</mat-icon>
+          Invite a friend
+        </button>
+      </div>
+    } @else {
+      @if (!introDismissed()) {
+        <div class="intro-card">
+          <span>Pick a friend to see your shared list, then run a tournament to decide.</span>
+          <button mat-icon-button aria-label="Dismiss" (click)="dismissIntro()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      }
+
+      <div class="controls">
+        <mat-form-field appearance="outline" class="friend-select">
+          <mat-label>Friend</mat-label>
+          <mat-select
+            [value]="selectedFriend()"
+            (selectionChange)="selectFriend($event.value)"
+          >
+            @for (f of friends; track f.id) {
+              <mat-option [value]="f">{{ f.username || 'Friend' }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-stroked-button (click)="invite()">
+          <mat-icon>person_add</mat-icon>
+          Invite
+        </button>
+      </div>
+
+      @if (selectedFriend()) {
+        <div class="actions">
+          <mat-slide-toggle
+            [checked]="overlapOnlyView()"
+            (change)="overlapOnlyView.set($event.checked)"
+            >Only what you both want</mat-slide-toggle
+          >
+          <button mat-flat-button color="primary" (click)="startTournament()">
+            <mat-icon>emoji_events</mat-icon>
+            Tournament pick
+          </button>
+        </div>
+
+        @if (loading()) {
+          <p class="hint">Loading…</p>
+        } @else if (displayedPool().length === 0) {
+          <p class="hint">No shared titles to show. Try turning off the overlap filter.</p>
+        } @else {
+          <div class="grid">
+            @for (entry of displayedPool(); track entry.item.id) {
+              <button class="poster" (click)="openDetail(entry)">
+                @if (entry.item.poster_url) {
+                  <img [src]="entry.item.poster_url" [alt]="entry.item.title" />
+                }
+                @if (entry.owner === 'both') {
+                  <span class="badge badge--both">Both</span>
+                } @else if (entry.owner === 'them') {
+                  <span class="badge badge--them">Theirs</span>
+                }
+              </button>
+            }
+          </div>
+        }
+      }
+    }
+  }
+</div>

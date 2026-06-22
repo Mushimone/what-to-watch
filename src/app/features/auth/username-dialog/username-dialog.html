@@ -1,0 +1,22 @@
+<h2 mat-dialog-title>Pick a username</h2>
+<mat-dialog-content>
+  <p>This is how friends will see you when you share watchlists.</p>
+  <mat-form-field appearance="outline" style="width: 100%">
+    <mat-label>Username</mat-label>
+    <input
+      matInput
+      [(ngModel)]="usernameValue"
+      maxlength="30"
+      (keyup.enter)="save()"
+      autocomplete="off"
+    />
+  </mat-form-field>
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
+    {{ saving() ? 'Saving…' : 'Save' }}
+  </button>
+</mat-dialog-actions>

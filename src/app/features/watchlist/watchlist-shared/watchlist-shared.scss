@@ -1,0 +1,86 @@
+.shared {
+  padding: 12px 16px 80px;
+}
+
+.onboarding {
+  max-width: 420px;
+  margin: 32px auto;
+  text-align: center;
+
+  ol {
+    text-align: left;
+    margin: 16px 0 24px;
+    line-height: 1.6;
+  }
+}
+
+.intro-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--mat-sys-surface-container);
+  border-radius: 12px;
+  padding: 8px 8px 8px 16px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .friend-select {
+    flex: 1;
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.hint {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+.poster {
+  position: relative;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+
+  img {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+}
+
+.badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: #fff;
+
+  &--both {
+    background: var(--mat-sys-primary);
+  }
+  &--them {
+    background: rgba(0, 0, 0, 0.6);
+  }
+}

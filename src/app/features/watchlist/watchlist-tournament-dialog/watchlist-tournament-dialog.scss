@@ -1,0 +1,51 @@
+.prompt {
+  text-align: center;
+  margin: 0 0 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.matchup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.vs {
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.contender {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  background: transparent;
+  padding: 8px;
+  cursor: pointer;
+  flex: 1;
+  max-width: 220px;
+
+  img {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+}
+
+.contender--winner {
+  margin: 0 auto;
+}
+
+.contender-title {
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.winner {
+  text-align: center;
+}
