@@ -15,6 +15,9 @@
       <div class="desktop-col desktop-col--add">
         <app-watchlist-add></app-watchlist-add>
       </div>
+      <div class="desktop-col desktop-col--shared">
+        <app-watchlist-shared></app-watchlist-shared>
+      </div>
     </div>
   } @else {
     <!-- ── Mobile: tab group ──────────────────────────────────────── -->
@@ -24,6 +27,9 @@
       </mat-tab>
       <mat-tab label="Add">
         <app-watchlist-add></app-watchlist-add>
+      </mat-tab>
+      <mat-tab label="Shared">
+        <app-watchlist-shared></app-watchlist-shared>
       </mat-tab>
     </mat-tab-group>
   }
