@@ -16,6 +16,8 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { FriendsService } from '../../core/services/friends.service';
 
+export type WatchlistSection = 'list' | 'add' | 'shared';
+
 @Component({
   selector: 'app-watchlist',
   imports: [
@@ -39,6 +41,8 @@ export class Watchlist implements OnInit {
   private router = inject(Router);
 
   isDesktop = signal(false);
+  /** Which section the desktop content pane shows (mobile uses tabs instead). */
+  activeSection = signal<WatchlistSection>('list');
   chatMode: ChatMode = 'list';
 
   constructor() {
@@ -47,9 +51,15 @@ export class Watchlist implements OnInit {
       .pipe(takeUntilDestroyed())
       .subscribe((state) => {
         this.isDesktop.set(state.matches);
-        // On desktop both panels are always visible — list context is always correct.
-        if (state.matches) this.chatMode = 'list';
+        // Keep the chat context aligned with the currently visible section.
+        if (state.matches) this.chatMode = this.activeSection() === 'add' ? 'add' : 'list';
       });
+  }
+
+  /** Desktop nav: switch the content pane and align the chat context. */
+  setSection(section: WatchlistSection): void {
+    this.activeSection.set(section);
+    this.chatMode = section === 'add' ? 'add' : 'list';
   }
 
   async ngOnInit(): Promise<void> {

@@ -1,23 +1,63 @@
 <div class="watchlist-page">
-  <div class="page-header">
-    <span class="page-title">What to Watch</span>
-    <button mat-icon-button (click)="logout()" aria-label="Sign out" matTooltip="Sign out">
-      <mat-icon>logout</mat-icon>
-    </button>
-  </div>
+  @if (!isDesktop()) {
+    <div class="page-header">
+      <span class="page-title">What to Watch</span>
+      <button mat-icon-button (click)="logout()" aria-label="Sign out" matTooltip="Sign out">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+  }
 
   @if (isDesktop()) {
-    <!-- ── Desktop: side-by-side columns ─────────────────────────── -->
-    <div class="desktop-layout">
-      <div class="desktop-col desktop-col--list">
-        <app-watchlist-list></app-watchlist-list>
-      </div>
-      <div class="desktop-col desktop-col--add">
-        <app-watchlist-add></app-watchlist-add>
-      </div>
-      <div class="desktop-col desktop-col--shared">
-        <app-watchlist-shared></app-watchlist-shared>
-      </div>
+    <!-- ── Desktop: sidebar nav + single full-width content pane ──────── -->
+    <div class="desktop-shell">
+      <nav class="sidebar">
+        <span class="sidebar-brand">What to Watch</span>
+
+        <button
+          class="nav-item"
+          [class.nav-item--active]="activeSection() === 'list'"
+          (click)="setSection('list')"
+        >
+          <mat-icon>video_library</mat-icon>
+          <span>Watchlist</span>
+        </button>
+        <button
+          class="nav-item"
+          [class.nav-item--active]="activeSection() === 'add'"
+          (click)="setSection('add')"
+        >
+          <mat-icon>add</mat-icon>
+          <span>Add</span>
+        </button>
+        <button
+          class="nav-item"
+          [class.nav-item--active]="activeSection() === 'shared'"
+          (click)="setSection('shared')"
+        >
+          <mat-icon>group</mat-icon>
+          <span>Shared</span>
+        </button>
+
+        <button class="nav-item nav-item--logout" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </nav>
+
+      <main class="content">
+        @switch (activeSection()) {
+          @case ('list') {
+            <app-watchlist-list></app-watchlist-list>
+          }
+          @case ('add') {
+            <app-watchlist-add></app-watchlist-add>
+          }
+          @case ('shared') {
+            <app-watchlist-shared></app-watchlist-shared>
+          }
+        }
+      </main>
     </div>
   } @else {
     <!-- ── Mobile: tab group ──────────────────────────────────────── -->
@@ -34,6 +74,6 @@
     </mat-tab-group>
   }
 
-  <!-- FAB + chat panel — outside tab group so it floats over everything -->
+  <!-- FAB + chat panel — outside both branches so it floats over everything -->
   <app-watchlist-ai-chat [mode]="chatMode"></app-watchlist-ai-chat>
 </div>

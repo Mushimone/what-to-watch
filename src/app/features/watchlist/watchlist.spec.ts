@@ -20,4 +20,18 @@ describe('Watchlist', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('setSection switches the active section and aligns chat mode', () => {
+    component.setSection('add');
+    expect(component.activeSection()).toBe('add');
+    expect(component.chatMode).toBe('add');
+
+    component.setSection('shared');
+    expect(component.activeSection()).toBe('shared');
+    expect(component.chatMode).toBe('list');
+
+    component.setSection('list');
+    expect(component.activeSection()).toBe('list');
+    expect(component.chatMode).toBe('list');
+  });
 });
