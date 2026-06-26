@@ -13,8 +13,14 @@ import { TmdbWatchProvider } from '../../../core/models/tmdb.model';
 import { OpenAiService } from '../../../core/services/openai.service';
 import { SearchService } from '../../../core/services/search.service';
 import { WatchlistService } from '../../../core/services/watchlist.service';
-import { WatchlistItem } from '../../../core/models/watchlist-item.model';
+import { SearchResult, WatchlistItem } from '../../../core/models/watchlist-item.model';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
+
+export type DetailDialogData =
+  | WatchlistItem
+  | { mode: 'preview'; result: SearchResult };
+
+export type DetailDialogStatus = 'added' | 'duplicate' | 'error';
 
 @Component({
   selector: 'app-watchlist-detail-dialog',
@@ -27,29 +33,30 @@ export class WatchlistDetailDialog {
   private search = inject(SearchService);
   private openai = inject(OpenAiService);
   private dialogRef = inject(MatDialogRef<WatchlistDetailDialog>);
+  private data = inject<DetailDialogData>(MAT_DIALOG_DATA);
 
   readonly logoBase = 'https://image.tmdb.org/t/p/w92';
   readonly region = this.search.watchRegion;
+  readonly mode: 'saved' | 'preview' =
+    'mode' in this.data && this.data.mode === 'preview' ? 'preview' : 'saved';
 
-  item = signal(inject<WatchlistItem>(MAT_DIALOG_DATA));
+  item = signal<WatchlistItem>(this.buildItem());
   enriching = signal(false);
+  backdrop = signal<string | null>(null);
+  alreadyAdded = signal(false);
+  adding = signal(false);
 
-  // Where to watch
   providers = signal<TmdbWatchProvider[]>([]);
   providersLoading = signal(false);
 
-  // More like this
   similar = signal<string | null>(null);
   similarLoading = signal(false);
   similarError = signal(false);
 
   constructor() {
     const current = this.item();
-    // Older items added before enrichment may lack these fields — fetch and backfill.
-    const needsDetails =
-      current.external_source === 'tmdb' &&
-      (current.duration_minutes == null || !current.director || !current.overview);
-    if (needsDetails) {
+
+    if (this.mode === 'preview') {
       this.enriching.set(true);
       this.search
         .getTmdbDetails(current.external_id, current.type)
@@ -57,9 +64,40 @@ export class WatchlistDetailDialog {
         .subscribe((details) => {
           this.enriching.set(false);
           if (!details) return;
-          this.item.update((it) => ({ ...it, ...details }));
-          this.watchlist.updateDetails(current.id, details);
+          const { backdrop_url, ...itemFields } = details;
+          this.item.update((it) => ({ ...it, ...itemFields }));
+          if (backdrop_url) this.backdrop.set(backdrop_url);
         });
+
+      const previewResult = (this.data as { mode: 'preview'; result: SearchResult }).result;
+      this.watchlist.watchlistItems$.pipe(take(1)).subscribe((items) => {
+        const exists = items.some(
+          (i) =>
+            i.external_id === previewResult.external_id &&
+            i.external_source === previewResult.external_source,
+        );
+        this.alreadyAdded.set(exists);
+      });
+    } else {
+      // Saved mode: always fetch details for backdrop; only backfill DB if the item is sparse.
+      if (current.external_source === 'tmdb') {
+        const needsDetails =
+          current.duration_minutes == null || !current.director || !current.overview;
+        this.enriching.set(true);
+        this.search
+          .getTmdbDetails(current.external_id, current.type)
+          .pipe(catchError(() => of(null)))
+          .subscribe((details) => {
+            this.enriching.set(false);
+            if (!details) return;
+            const { backdrop_url, ...itemFields } = details;
+            if (backdrop_url) this.backdrop.set(backdrop_url);
+            if (needsDetails) {
+              this.item.update((it) => ({ ...it, ...itemFields }));
+              this.watchlist.updateDetails(current.id, itemFields);
+            }
+          });
+      }
     }
 
     if (current.external_source === 'tmdb') {
@@ -74,7 +112,35 @@ export class WatchlistDetailDialog {
     }
   }
 
-  /** Asks the AI for similar titles, excluding what's already in the user's list. */
+  private buildItem(): WatchlistItem {
+    if ('mode' in this.data && this.data.mode === 'preview') {
+      const r = this.data.result;
+      return {
+        id: '',
+        user_id: '',
+        added_at: '',
+        watched: false,
+        ...r,
+      };
+    }
+    return this.data as WatchlistItem;
+  }
+
+  async add(): Promise<void> {
+    if (this.adding() || this.alreadyAdded()) return;
+    this.adding.set(true);
+    const { id, user_id, added_at, watched, ...addPayload } = this.item();
+    const status = await this.watchlist.addToWatchlist({ ...addPayload, watched: false });
+    this.adding.set(false);
+    if (status === 'duplicate') {
+      this.dialogRef.close('duplicate' as DetailDialogStatus);
+    } else if (status !== null) {
+      this.dialogRef.close('added' as DetailDialogStatus);
+    } else {
+      this.dialogRef.close('error' as DetailDialogStatus);
+    }
+  }
+
   findSimilar(): void {
     if (this.similarLoading()) return;
     this.similarLoading.set(true);
@@ -123,7 +189,6 @@ export class WatchlistDetailDialog {
     return this.item().release_date?.slice(0, 4) || null;
   }
 
-  /** Formats minutes as "2h 22m" / "45m". */
   get runtimeLabel(): string | null {
     const minutes = this.item().duration_minutes;
     if (minutes == null) return null;

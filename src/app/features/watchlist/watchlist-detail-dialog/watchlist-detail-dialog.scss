@@ -1,5 +1,24 @@
 .dialog-root {
   position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-banner {
+  width: 100%;
+  height: 150px;
+  background-size: cover;
+  background-position: center 20%;
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 4px 4px 0 0;
+}
+
+.hero-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 30%, rgba(0, 0, 0, 0.85) 100%);
+  border-radius: inherit;
 }
 
 .detail {
@@ -11,6 +30,10 @@
   // Long content (overview + AI suggestions) scrolls inside the dialog.
   max-height: 80vh;
   overflow-y: auto;
+
+  &.has-hero {
+    padding-top: 0.75rem;
+  }
 }
 
 .close-btn {

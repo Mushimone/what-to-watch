@@ -95,10 +95,14 @@ export class SearchService {
       type === 'movie'
         ? (details.credits?.crew.find((member) => member.job === 'Director')?.name ?? null)
         : (details.created_by?.[0]?.name ?? null);
+    const backdrop_url = details.backdrop_path
+      ? `https://image.tmdb.org/t/p/w780${details.backdrop_path}`
+      : null;
     return {
       duration_minutes,
       director,
       overview: details.overview || null,
+      backdrop_url,
     };
   }
 

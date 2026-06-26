@@ -6,25 +6,27 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import {
   catchError,
   debounceTime,
   distinctUntilChanged,
   filter,
-  firstValueFrom,
   map,
   merge,
-  of,
   startWith,
   Subject,
   switchMap,
 } from 'rxjs';
 import { AsyncPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { SearchService } from '../../../core/services/search.service';
-import { WatchlistService } from '../../../core/services/watchlist.service';
 import { SearchResult } from '../../../core/models/watchlist-item.model';
 import { MatIcon } from '@angular/material/icon';
+import {
+  DetailDialogStatus,
+  WatchlistDetailDialog,
+} from '../watchlist-detail-dialog/watchlist-detail-dialog';
 
 @Component({
   selector: 'app-watchlist-add',
@@ -43,8 +45,8 @@ import { MatIcon } from '@angular/material/icon';
 })
 export class WatchlistAdd {
   private searchService = inject(SearchService);
-  private watchlistService = inject(WatchlistService);
   private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   searchControl = new FormControl('');
   private resetSearch$ = new Subject<void>();
@@ -71,35 +73,36 @@ export class WatchlistAdd {
     this.resetSearch$.pipe(map(() => ({ status: 'idle', results: [] }))),
   ).pipe(startWith({ status: 'idle', results: [] }));
 
-  // tells mat-autocomplete how to show the selected value in the input
   displayWith(result: SearchResult | string | null): string {
     if (!result || typeof result === 'string') return '';
     return result.title;
   }
 
-  async onResultSelected(event: MatAutocompleteSelectedEvent) {
+  onResultSelected(event: MatAutocompleteSelectedEvent): void {
     const result: SearchResult = event.option.value;
-    // Enrich with runtime/director/overview — not returned by search/multi.
-    // Fall back to the bare result if the details call fails.
-    const enrichment = await firstValueFrom(
-      this.searchService
-        .getTmdbDetails(result.external_id, result.type)
-        .pipe(catchError(() => of(null))),
-    );
-    const item = { ...result, ...(enrichment ?? {}), watched: false };
-    const success = await this.watchlistService.addToWatchlist(item);
-    if (success === 'duplicate') {
-      this.snackBar.open(`"${result.title}" is already in your watchlist.`, 'OK', {
-        duration: 3000,
-      });
-      this.searchControl.setValue('');
-      this.resetSearch$.next();
-    } else if (success !== null) {
-      this.snackBar.open(`"${result.title}" added to your watchlist!`, 'OK', { duration: 3000 });
-      this.searchControl.setValue('');
-      this.resetSearch$.next();
-    } else {
-      this.snackBar.open('Something went wrong. Please try again.', 'Dismiss', { duration: 3000 });
-    }
+    const dialogRef = this.dialog.open(WatchlistDetailDialog, {
+      data: { mode: 'preview', result },
+      maxWidth: '680px',
+      width: '100%',
+    });
+
+    dialogRef.afterClosed().subscribe((status: DetailDialogStatus | undefined) => {
+      if (status === 'added') {
+        this.snackBar.open(`"${result.title}" added to your watchlist!`, 'OK', { duration: 3000 });
+        this.searchControl.setValue('');
+        this.resetSearch$.next();
+      } else if (status === 'duplicate') {
+        this.snackBar.open(`"${result.title}" is already in your watchlist.`, 'OK', {
+          duration: 3000,
+        });
+        this.searchControl.setValue('');
+        this.resetSearch$.next();
+      } else if (status === 'error') {
+        this.snackBar.open('Something went wrong. Please try again.', 'Dismiss', {
+          duration: 3000,
+        });
+      }
+      // undefined = cancelled — no snackbar, search text retained
+    });
   }
 }

@@ -4,97 +4,120 @@
       <mat-icon>close</mat-icon>
     </button>
 
-    <div class="detail">
+    @if (backdrop(); as backdropUrl) {
+      <div class="hero-banner" [style.background-image]="'url(' + backdropUrl + ')'">
+        <div class="hero-gradient"></div>
+      </div>
+    }
+
+    <div class="detail" [class.has-hero]="backdrop()">
       @if (item.poster_url) {
         <img [src]="item.poster_url" alt="{{ item.title }} poster" class="detail-poster" />
       }
 
       <div class="detail-body">
-      <span class="type-badge">{{ item.type }}</span>
+        <span class="type-badge">{{ item.type }}</span>
 
-      <h2 class="detail-title">
-        {{ item.title }}
-        @if (year) {
-          <span class="detail-year">({{ year }})</span>
+        <h2 class="detail-title">
+          {{ item.title }}
+          @if (year) {
+            <span class="detail-year">({{ year }})</span>
+          }
+        </h2>
+
+        <div class="meta-row">
+          @if (item.vote_average) {
+            <span class="vote-average">
+              <mat-icon class="star-icon">star</mat-icon> {{ item.vote_average | number: '1.1-1' }}
+            </span>
+          }
+          @if (runtimeLabel) {
+            <span class="meta-item">
+              <mat-icon>schedule</mat-icon> {{ runtimeLabel }}
+            </span>
+          }
+        </div>
+
+        @if (item.director) {
+          <p class="detail-director"><span class="label">Director</span> {{ item.director }}</p>
         }
-      </h2>
 
-      <div class="meta-row">
-        @if (item.vote_average) {
-          <span class="vote-average">
-            <mat-icon class="star-icon">star</mat-icon> {{ item.vote_average | number: '1.1-1' }}
-          </span>
+        @if (item.genres.length) {
+          <p class="detail-genres">{{ item.genres.join(', ') }}</p>
         }
-        @if (runtimeLabel) {
-          <span class="meta-item">
-            <mat-icon>schedule</mat-icon> {{ runtimeLabel }}
-          </span>
+
+        @if (item.overview) {
+          <p class="detail-overview">{{ item.overview }}</p>
+        } @else if (enriching()) {
+          <p class="detail-overview muted">Loading details…</p>
         }
-      </div>
 
-      @if (item.director) {
-        <p class="detail-director"><span class="label">Director</span> {{ item.director }}</p>
-      }
-
-      @if (item.genres.length) {
-        <p class="detail-genres">{{ item.genres.join(', ') }}</p>
-      }
-
-      @if (item.overview) {
-        <p class="detail-overview">{{ item.overview }}</p>
-      } @else if (enriching()) {
-        <p class="detail-overview muted">Loading details…</p>
-      }
-
-      <!-- Where to watch -->
-      <div class="watch-section">
-        <span class="section-label">Where to watch</span>
-        @if (providersLoading()) {
-          <p class="muted small">Checking availability…</p>
-        } @else if (providers().length) {
-          <div class="provider-logos">
-            @for (provider of providers(); track provider.provider_id) {
-              @if (provider.logo_path) {
-                <img
-                  class="provider-logo"
-                  [src]="logoBase + provider.logo_path"
-                  [alt]="provider.provider_name"
-                  [title]="provider.provider_name"
-                />
+        <!-- Where to watch -->
+        <div class="watch-section">
+          <span class="section-label">Where to watch</span>
+          @if (providersLoading()) {
+            <p class="muted small">Checking availability…</p>
+          } @else if (providers().length) {
+            <div class="provider-logos">
+              @for (provider of providers(); track provider.provider_id) {
+                @if (provider.logo_path) {
+                  <img
+                    class="provider-logo"
+                    [src]="logoBase + provider.logo_path"
+                    [alt]="provider.provider_name"
+                    [title]="provider.provider_name"
+                  />
+                }
               }
+            </div>
+          } @else {
+            <p class="muted small">Not available on streaming in {{ region }}.</p>
+          }
+        </div>
+
+        <!-- More like this -->
+        <div class="similar-section">
+          @if (similar(); as suggestions) {
+            <span class="section-label">More like this</span>
+            <div class="similar-content" [innerHTML]="suggestions | markdown"></div>
+          } @else {
+            <button mat-stroked-button (click)="findSimilar()" [disabled]="similarLoading()">
+              <mat-icon>auto_awesome</mat-icon>
+              {{ similarLoading() ? 'Finding…' : 'Find similar' }}
+            </button>
+            @if (similarError()) {
+              <p class="muted small">Couldn't load suggestions. Try again.</p>
             }
+          }
+        </div>
+
+        @if (mode === 'preview') {
+          <div class="detail-actions">
+            @if (alreadyAdded()) {
+              <button mat-stroked-button disabled>
+                <mat-icon>check_circle</mat-icon>
+                Already in your watchlist
+              </button>
+            } @else {
+              <button mat-flat-button color="primary" (click)="add()" [disabled]="adding()">
+                <mat-icon>add</mat-icon>
+                {{ adding() ? 'Adding…' : 'Add to watchlist' }}
+              </button>
+            }
+            <button mat-stroked-button mat-dialog-close>Cancel</button>
           </div>
         } @else {
-          <p class="muted small">Not available on streaming in {{ region }}.</p>
+          <div class="detail-actions">
+            <button mat-stroked-button (click)="toggleWatched()">
+              <mat-icon>{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
+              {{ item.watched ? 'Mark unwatched' : 'Mark watched' }}
+            </button>
+            <button mat-stroked-button color="warn" (click)="remove()">
+              <mat-icon>delete</mat-icon>
+              Remove
+            </button>
+          </div>
         }
-      </div>
-
-      <!-- More like this -->
-      <div class="similar-section">
-        @if (similar(); as suggestions) {
-          <span class="section-label">More like this</span>
-          <div class="similar-content" [innerHTML]="suggestions | markdown"></div>
-        } @else {
-          <button mat-stroked-button (click)="findSimilar()" [disabled]="similarLoading()">
-            <mat-icon>auto_awesome</mat-icon>
-            {{ similarLoading() ? 'Finding…' : 'Find similar' }}
-          </button>
-          @if (similarError()) {
-            <p class="muted small">Couldn't load suggestions. Try again.</p>
-          }
-        }
-      </div>
-
-      <div class="detail-actions">
-        <button mat-stroked-button (click)="toggleWatched()">
-          <mat-icon>{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
-          {{ item.watched ? 'Mark unwatched' : 'Mark watched' }}
-        </button>
-        <button mat-stroked-button color="warn" (click)="remove()">
-          <mat-icon>delete</mat-icon>
-          Remove
-        </button>
-      </div>
       </div>
     </div>
   </div>

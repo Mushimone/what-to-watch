@@ -33,6 +33,7 @@ export interface TmdbCreatedBy {
 export interface TmdbDetails {
   id: number;
   overview: string;
+  backdrop_path?: string | null;
   /** Movies only */
   runtime?: number | null;
   /** TV only */
@@ -47,6 +48,7 @@ export interface TmdbEnrichment {
   duration_minutes: number | null;
   director: string | null;
   overview: string | null;
+  backdrop_url: string | null;
 }
 
 export interface TmdbWatchProvider {
