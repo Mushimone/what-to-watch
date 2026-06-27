@@ -100,10 +100,13 @@ export class WatchlistAiChatComponent implements OnChanges {
     this.history.push(userTurn);
 
     this.isLoading.set(true);
-    this.openai.chat(this.history, { maxTokens: 800 }).subscribe({
+    this.openai.chat(this.history).subscribe({
       next: (modelReply) => {
-        this.history.push({ role: 'assistant', content: modelReply });
-        this.displayMessages.update((msgs) => [...msgs, { role: 'model', text: modelReply }]);
+        const reply = modelReply.trim()
+          ? modelReply
+          : "I couldn't put that into words — try rephrasing?";
+        this.history.push({ role: 'assistant', content: reply });
+        this.displayMessages.update((msgs) => [...msgs, { role: 'model', text: reply }]);
         this.isLoading.set(false);
         this.scrollToBottom();
       },
@@ -149,7 +152,8 @@ HOW TO RECOMMEND:
 
     const style = `
 STYLE:
-- Keep it short and friendly, and mirror my language and tone (casual, slang, emoji, or formal — match me).
+- Always write your WHOLE reply in the same natural language as my most recent message (I write in Italian → reply in Italian; English → English), no matter what language these instructions are in.
+- Keep it short and friendly, and match my tone — casual, slang, emoji or formal.
 - Use ONLY plain text, "-" bullet points and **bold** (bold every title). No headings, tables, links, italics or code blocks — they will not render.
 - Never tell me to add a title or take an action — phrase everything as a recommendation; I add things manually.`.trim();
 
