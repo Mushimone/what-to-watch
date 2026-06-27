@@ -20,7 +20,10 @@ export class OpenAiService {
    * The caller owns the conversation history (system + user/assistant turns).
    * `maxTokens` caps the response length when a bounded reply is wanted.
    */
-  chat(messages: OpenAiMessage[], options?: { maxTokens?: number }): Observable<string> {
+  chat(
+    messages: OpenAiMessage[],
+    options?: { maxTokens?: number; reasoningEffort?: 'low' | 'medium' | 'high' },
+  ): Observable<string> {
     return this.http
       .post<OpenAiChatResponse>(
         this.endpoint,
@@ -28,6 +31,7 @@ export class OpenAiService {
           model: environment.mimo.model,
           messages,
           ...(options?.maxTokens ? { max_tokens: options.maxTokens } : {}),
+          ...(options?.reasoningEffort ? { reasoning_effort: options.reasoningEffort } : {}),
         },
         {
           // MiMo accepts the OpenAI-style Bearer header (its docs show the official

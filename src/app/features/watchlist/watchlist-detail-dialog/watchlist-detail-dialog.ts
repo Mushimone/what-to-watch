@@ -172,7 +172,7 @@ export class WatchlistDetailDialog {
         },
       ];
 
-      this.openai.chat(messages).subscribe({
+      this.openai.chat(messages, { reasoningEffort: 'low' }).subscribe({
         next: (reply) => {
           this.similar.set(reply);
           this.similarLoading.set(false);
