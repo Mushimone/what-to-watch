@@ -8,19 +8,20 @@
                 </mat-chip-listbox>
               </div>
             <div class="sort-by">
-              <button mat-icon-button (click)="openTimePicker()" matTooltip="I have time…" aria-label="Find something to watch by available time">
+              <button mat-stroked-button (click)="openTimePicker()" aria-label="Find something to watch by available time">
                 <mat-icon>schedule</mat-icon>
+                I have time…
               </button>
               <button mat-icon-button [matMenuTriggerFor]="sortMenu" [matTooltip]="activeSortLabel" aria-label="Sort options">
                 <mat-icon>swap_vert</mat-icon>
               </button>
               <mat-menu #sortMenu="matMenu">
-                @for (option of sortOptions; track option.value) {
-                  <button mat-menu-item (click)="changeSort(option.value)" [class.active-sort]="activeSort() === option.value">
-                    @if (activeSort() === option.value) {
-                      <mat-icon>check</mat-icon>
+                @for (dim of sortDimensions; track dim.key) {
+                  <button mat-menu-item (click)="changeSort(dim.key)" [class.active-sort]="activeSortKey === dim.key">
+                    @if (activeSortKey === dim.key) {
+                      <mat-icon>{{ activeSortDir === 'desc' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
                     }
-                    {{ option.label }}
+                    {{ dim.label }}
                   </button>
                 }
               </mat-menu>

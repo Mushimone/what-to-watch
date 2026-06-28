@@ -12,9 +12,9 @@
 
 |                |                                                                                                                                   |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 🔍 **Search**  | Find movies, series and anime via TMDB and AniList APIs                                                                           |
+| 🔍 **Search**  | Find movies, series and anime via the TMDB API                                                                                    |
 | ✅ **Track**   | Mark titles as watched / unwatched, filter and sort your list                                                                     |
-| 🤖 **AI chat** | Context-aware assistant (Gemini 2.5 Flash) that knows your list and reasons about mood, tone and atmosphere — not just genre tags |
+| 🤖 **AI chat** | Context-aware assistant (MiMo) that knows your list and reasons about mood, tone and atmosphere — not just genre tags            |
 | 📱 **PWA**     | Installable on mobile, works like a native app                                                                                    |
 | 🔐 **Auth**    | Google OAuth via Supabase, per-user data with Row Level Security                                                                  |
 
@@ -26,7 +26,7 @@
 - **UI** — Angular Material 3, dark theme, mobile-first
 - **Reactive layer** — RxJS (`combineLatest`, `BehaviorSubject`, `takeUntilDestroyed`)
 - **Backend / Auth** — Supabase (PostgreSQL + RLS + Google OAuth)
-- **AI** — Google Gemini 2.5 Flash REST API
+- **AI** — MiMo (OpenAI-compatible chat-completions API)
 - **External APIs** — TMDB (movies & series)
 - **Deploy** — Vercel + Angular service worker (PWA)
 
@@ -39,7 +39,7 @@
 - Node.js ≥ 18
 - A [Supabase](https://supabase.com) project with Google OAuth enabled
 - A [TMDB](https://www.themoviedb.org/settings/api) API key
-- A [Gemini](https://aistudio.google.com/app/apikey) API key
+- A MiMo API key + model name
 
 ### Setup
 
@@ -49,11 +49,18 @@ cd what-to-watch
 npm install
 ```
 
-Copy the environment template and fill in your keys:
+Create a `.env` file in the project root with your keys (read by `scripts/set-env.js`, which generates `environment.ts` / `environment.prod.ts` on `npm start` / `npm run build`):
 
 ```bash
-cp src/environments/environment.example.ts src/environments/environment.ts
+SUPABASE_URL=...
+SUPABASE_ANON_KEY=...
+TMDB_API_KEY=...
+MIMO_API_KEY=...
+MIMO_MODEL=...
+# MIMO_BASE_URL is optional (defaults to the MiMo endpoint)
 ```
+
+`environment.example.ts` shows the generated shape for reference.
 
 ```ts
 // src/environments/environment.ts
@@ -61,8 +68,7 @@ export const environment = {
   production: false,
   supabase: { url: 'YOUR_SUPABASE_URL', anonKey: 'YOUR_SUPABASE_ANON_KEY' },
   tmdb: { apiKey: 'YOUR_TMDB_KEY', baseUrl: '...', imageBaseUrl: '...' },
-  gemini: { apiKey: 'YOUR_GEMINI_KEY' },
-  anilist: { apiUrl: 'https://graphql.anilist.co' },
+  mimo: { apiKey: 'YOUR_MIMO_API_KEY', model: 'YOUR_MIMO_MODEL', baseUrl: '...' },
 };
 ```
 
@@ -83,7 +89,7 @@ src/app/
 ├── core/
 │   ├── guards/          # auth.guard, redirect-if-auth.guard
 │   ├── models/          # TypeScript interfaces
-│   └── services/        # SupabaseService, WatchlistService, SearchService, GeminiService
+│   └── services/        # SupabaseService, WatchlistService, SearchService, OpenAiService
 ├── features/
 │   ├── home/            # Landing page (unauthenticated)
 │   ├── auth/            # Login (Google OAuth)
@@ -92,7 +98,7 @@ src/app/
 │       ├── watchlist-add/      # Search + add flow
 │       └── watchlist-ai-chat/  # FAB + AI chat panel
 └── shared/
-    └── pipes/           # MarkdownPipe (renders Gemini replies)
+    └── pipes/           # MarkdownPipe (renders AI replies)
 ```
 
 ---
@@ -101,7 +107,7 @@ src/app/
 
 The app deploys automatically to Vercel on every push to `main`.
 
-To inject the Gemini API key at build time without committing it, set `GEMINI_API_KEY` in your Vercel project environment variables — the `prebuild` script patches `environment.prod.ts` automatically before `ng build` runs.
+To inject keys at build time without committing them, set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `TMDB_API_KEY`, `MIMO_API_KEY` and `MIMO_MODEL` in your Vercel project environment variables — the `prebuild` script (`scripts/set-env.js`) generates `environment.prod.ts` from them before `ng build` runs.
 
 A GitHub Actions workflow (`.github/workflows/supabase-keep-alive.yml`) pings the database daily to prevent Supabase free-tier pausing.
 

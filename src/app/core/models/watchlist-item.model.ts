@@ -1,5 +1,5 @@
 export type MediaType = 'movie' | 'series' | 'anime';
-export type ExternalSource = 'tmdb' | 'anilist';
+export type ExternalSource = 'tmdb';
 
 export interface WatchlistItem {
   id: string;

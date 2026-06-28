@@ -32,20 +32,29 @@ import { WatchlistTimePickerDialog } from '../watchlist-time-picker-dialog/watch
 export class WatchlistList {
   private watchlist = inject(WatchlistService);
   private dialog = inject(MatDialog);
-  filterChips = ['Movies', 'Series', 'Anime', 'Not Watched'];
-  sortOptions = [
-    { value: 'added_desc', label: 'Recently Added' },
-    { value: 'added_asc', label: 'Oldest Added' },
-    { value: 'title_asc', label: 'Title (A–Z)' },
-    { value: 'title_desc', label: 'Title (Z–A)' },
-    { value: 'rating_desc', label: 'Rating (High to Low)' },
-    { value: 'rating_asc', label: 'Rating (Low to High)' },
-    { value: 'duration_desc', label: 'Duration (Long to Short)' },
-    { value: 'duration_asc', label: 'Duration (Short to Long)' },
+  filterChips = ['Movies', 'Series', 'Animation', 'Not Watched'];
+  // Four sort dimensions; clicking the active one flips its direction.
+  sortDimensions = [
+    { key: 'added', label: 'Date added' },
+    { key: 'title', label: 'Title' },
+    { key: 'rating', label: 'Rating' },
+    { key: 'duration', label: 'Duration' },
   ];
+  private defaultDir: Record<string, 'asc' | 'desc'> = {
+    added: 'desc',
+    title: 'asc',
+    rating: 'desc',
+    duration: 'desc',
+  };
 
+  get activeSortKey(): string {
+    return this.activeSort().split('_')[0];
+  }
+  get activeSortDir(): 'asc' | 'desc' {
+    return this.activeSort().split('_')[1] as 'asc' | 'desc';
+  }
   get activeSortLabel(): string {
-    return this.sortOptions.find((o) => o.value === this.activeSort())?.label ?? 'Sort';
+    return this.sortDimensions.find((d) => d.key === this.activeSortKey)?.label ?? 'Sort';
   }
   activeFilter = signal('Not Watched');
   activeSort = signal('added_desc');
@@ -93,16 +102,20 @@ export class WatchlistList {
     }
     this.activeFilter.set(filterValue);
   }
-  changeSort(sortValue: string) {
-    this.activeSort.set(sortValue);
+  changeSort(key: string) {
+    if (this.activeSortKey === key) {
+      this.activeSort.set(`${key}_${this.activeSortDir === 'desc' ? 'asc' : 'desc'}`);
+    } else {
+      this.activeSort.set(`${key}_${this.defaultDir[key]}`);
+    }
   }
   private filterItems(items: WatchlistItem[], filter: string): WatchlistItem[] {
     if (filter === 'Movies') {
       return items.filter((item) => item.type === 'movie');
     } else if (filter === 'Series') {
       return items.filter((item) => item.type === 'series');
-    } else if (filter === 'Anime') {
-      return items.filter((item) => item.type === 'series' && item.genres.includes('Animation'));
+    } else if (filter === 'Animation') {
+      return items.filter((item) => item.genres.includes('Animation'));
     } else if (filter === 'Not Watched') {
       return items.filter((item) => !item.watched);
     }

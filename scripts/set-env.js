@@ -50,9 +50,6 @@ export const environment = {
     baseUrl: 'https://api.themoviedb.org/3',
     imageBaseUrl: 'https://image.tmdb.org/t/p/w500',
   },
-  anilist: {
-    apiUrl: 'https://graphql.anilist.co',
-  },
   mimo: {
     apiKey: '${MIMO_API_KEY}',
     model: '${MIMO_MODEL}',
