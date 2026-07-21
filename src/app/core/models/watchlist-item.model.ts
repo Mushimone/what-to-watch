@@ -21,6 +21,8 @@ export interface WatchlistItem {
   watched_seasons?: number[];
   /** How many episodes watched — used for shows TMDB flattens to one season */
   watched_episodes?: number;
+  /** Set by the nightly job when a finished show gained a new season/episodes */
+  has_update?: boolean;
   /** Owner's personal reaction; null/undefined = not rated */
   reaction?: 'liked' | 'disliked' | null;
   added_at: string;

@@ -44,6 +44,8 @@ export interface TmdbDetails {
   number_of_seasons?: number | null;
   /** TV only — total episodes across all seasons */
   number_of_episodes?: number | null;
+  /** TV only — per-season breakdown, incl. specials (season 0) and unaired seasons */
+  seasons?: { season_number: number; episode_count: number }[];
   credits?: { crew: TmdbCrewMember[] };
 }
 

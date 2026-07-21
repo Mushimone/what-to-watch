@@ -81,6 +81,11 @@ export class WatchlistDetailDialog {
         this.alreadyAdded.set(exists);
       });
     } else {
+      // Seen it — drop the "new season" badge.
+      if (this.isOwn && current.has_update) {
+        this.item.update((it) => ({ ...it, has_update: false }));
+        this.watchlist.clearUpdateFlag(current.id);
+      }
       // Saved mode: always fetch details for backdrop; only backfill DB if the item is sparse.
       if (current.external_source === 'tmdb') {
         const needsDetails =
