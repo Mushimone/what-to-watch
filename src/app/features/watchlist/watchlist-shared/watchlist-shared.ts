@@ -55,7 +55,8 @@ export class WatchlistShared implements OnInit {
   sizeOptions = computed(() => this.sizePresets.filter((n) => n < this.displayedPool().length));
 
   async ngOnInit(): Promise<void> {
-    await this.friends.getFriends();
+    const friends = await this.friends.getFriends();
+    if (friends.length) await this.selectFriend(friends[0]);
   }
 
   async selectFriend(friend: Profile): Promise<void> {

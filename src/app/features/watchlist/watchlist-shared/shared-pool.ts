@@ -30,7 +30,8 @@ export function mergeWatchlists(
     seen.add(key);
     entries.push({ item, owner: 'them' });
   }
-  return entries;
+  const rank: Record<SharedPoolEntry['owner'], number> = { both: 0, me: 1, them: 2 };
+  return entries.sort((a, b) => rank[a.owner] - rank[b.owner]);
 }
 
 export function overlapOnly(pool: SharedPoolEntry[]): SharedPoolEntry[] {
