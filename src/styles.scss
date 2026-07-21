@@ -128,6 +128,12 @@ app-root {
     background: #e5534b;
     color: white;
   }
+  // Heart fills red with a bouncy pop, à la the old Twitter like.
+  &--like.reaction-btn--active {
+    background: rgba(0, 0, 0, 0.55);
+    color: #e0245e;
+    animation: heart-pop 0.35s ease;
+  }
 }
 
 @keyframes reaction-pop {
@@ -136,6 +142,21 @@ app-root {
   }
   45% {
     transform: scale(1.4);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes heart-pop {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0.8);
+  }
+  60% {
+    transform: scale(1.35);
   }
   100% {
     transform: scale(1);
