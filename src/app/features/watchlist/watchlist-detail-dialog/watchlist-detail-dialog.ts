@@ -94,9 +94,26 @@ export class WatchlistDetailDialog {
             if (!details) return;
             const { backdrop_url, ...itemFields } = details;
             if (backdrop_url) this.backdrop.set(backdrop_url);
-            if (needsDetails) {
-              this.item.update((it) => ({ ...it, ...itemFields }));
-              this.watchlist.updateDetails(current.id, itemFields);
+            // Backfill sparse enrichment; always refresh season/episode counts
+            // since they grow over time as new episodes air (and are stale/null
+            // in rows added before this was tracked).
+            const patch: Partial<
+              Pick<
+                WatchlistItem,
+                'duration_minutes' | 'director' | 'overview' | 'season_count' | 'episode_count'
+              >
+            > = needsDetails ? { ...itemFields } : {};
+            if (current.type !== 'movie') {
+              if (itemFields.season_count != null && itemFields.season_count !== current.season_count) {
+                patch.season_count = itemFields.season_count;
+              }
+              if (itemFields.episode_count != null && itemFields.episode_count !== current.episode_count) {
+                patch.episode_count = itemFields.episode_count;
+              }
+            }
+            if (Object.keys(patch).length) {
+              this.item.update((it) => ({ ...it, ...patch }));
+              this.watchlist.updateDetails(current.id, patch);
             }
           });
       }
@@ -126,6 +143,64 @@ export class WatchlistDetailDialog {
     const next = this.item().reaction === reaction ? null : reaction;
     this.item.update((it) => ({ ...it, reaction: next }));
     this.watchlist.setReaction(this.item().id, next);
+  }
+
+  /** Multi-season shows are tracked by whole season; flat ones (most anime) by episode. */
+  get hasSeasons(): boolean {
+    return (this.item().season_count ?? 0) >= 2;
+  }
+  get hasEpisodes(): boolean {
+    return !this.hasSeasons && (this.item().episode_count ?? 0) > 1;
+  }
+
+  /** Season numbers to render (1…n), empty for movies or unknown counts. */
+  get seasons(): number[] {
+    const count = this.item().season_count;
+    return count ? Array.from({ length: count }, (_, i) => i + 1) : [];
+  }
+
+  get watchedEpisodes(): number {
+    return this.item().watched_episodes ?? 0;
+  }
+  get episodeTotal(): number {
+    return this.item().episode_count ?? 0;
+  }
+
+  /** Live preview while dragging the slider — no DB write. */
+  previewEpisodes(count: number): void {
+    if (!this.isOwn) return;
+    const total = this.episodeTotal;
+    const clamped = Math.max(0, Math.min(count, total));
+    this.item.update((it) => ({
+      ...it,
+      watched_episodes: clamped,
+      watched: total > 0 && clamped >= total,
+    }));
+  }
+
+  /** Commit on slider release or a +/- tap. */
+  setEpisodes(count: number): void {
+    if (!this.isOwn) return;
+    this.previewEpisodes(count);
+    this.watchlist.setWatchedEpisodes(this.item().id, this.watchedEpisodes);
+  }
+
+  isSeasonWatched(season: number): boolean {
+    return (this.item().watched_seasons ?? []).includes(season);
+  }
+
+  toggleSeason(season: number): void {
+    if (!this.isOwn) return;
+    const set = new Set(this.item().watched_seasons ?? []);
+    set.has(season) ? set.delete(season) : set.add(season);
+    const watchedSeasons = [...set].sort((a, b) => a - b);
+    const count = this.item().season_count;
+    this.item.update((it) => ({
+      ...it,
+      watched_seasons: watchedSeasons,
+      watched: count != null && watchedSeasons.length >= count,
+    }));
+    this.watchlist.setWatchedSeasons(this.item().id, watchedSeasons);
   }
 
   private buildItem(): WatchlistItem {
@@ -215,8 +290,16 @@ export class WatchlistDetailDialog {
 
   toggleWatched(): void {
     const it = this.item();
-    this.watchlist.toggleWatchedStatus(it.id, !it.watched);
-    this.item.update((current) => ({ ...current, watched: !current.watched }));
+    const watched = !it.watched;
+    // Mirror the service's whole-series sync so the chips/stepper update in place.
+    const patch: Partial<WatchlistItem> = { watched };
+    if ((it.season_count ?? 0) >= 2) {
+      patch.watched_seasons = watched ? this.seasons : [];
+    } else if ((it.episode_count ?? 0) > 1) {
+      patch.watched_episodes = watched ? it.episode_count! : 0;
+    }
+    this.item.update((current) => ({ ...current, ...patch }));
+    this.watchlist.toggleWatchedStatus(it.id, watched);
   }
 
   remove(): void {

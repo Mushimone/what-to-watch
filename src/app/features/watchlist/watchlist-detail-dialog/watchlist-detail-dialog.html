@@ -52,6 +52,61 @@
           <p class="detail-overview muted">Loading details…</p>
         }
 
+        <!-- Progress (own series/anime only) -->
+        @if (mode === 'saved' && isOwn && hasSeasons) {
+          <div class="seasons-section">
+            <span class="section-label">Seasons watched</span>
+            <div class="season-chips">
+              @for (season of seasons; track season) {
+                <button
+                  type="button"
+                  class="season-chip"
+                  [class.season-chip--watched]="isSeasonWatched(season)"
+                  [attr.aria-pressed]="isSeasonWatched(season)"
+                  (click)="toggleSeason(season)"
+                >
+                  S{{ season }}
+                </button>
+              }
+            </div>
+          </div>
+        } @else if (mode === 'saved' && isOwn && hasEpisodes) {
+          <div class="episodes-section">
+            <span class="section-label">Episodes watched — {{ watchedEpisodes }} / {{ episodeTotal }}</span>
+            <div class="episode-stepper">
+              <button
+                type="button"
+                class="ep-btn"
+                (click)="setEpisodes(watchedEpisodes - 1)"
+                [disabled]="watchedEpisodes <= 0"
+                aria-label="One fewer episode"
+              >
+                <mat-icon>remove</mat-icon>
+              </button>
+              <input
+                #epSlider
+                type="range"
+                class="ep-slider"
+                min="0"
+                [max]="episodeTotal"
+                [value]="watchedEpisodes"
+                (input)="previewEpisodes(+epSlider.value)"
+                (change)="setEpisodes(+epSlider.value)"
+                [attr.aria-valuetext]="watchedEpisodes + ' of ' + episodeTotal + ' episodes'"
+              />
+              <button
+                type="button"
+                class="ep-btn"
+                (click)="setEpisodes(watchedEpisodes + 1)"
+                [disabled]="watchedEpisodes >= episodeTotal"
+                aria-label="One more episode"
+              >
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+
         <!-- Where to watch -->
         <div class="watch-section">
           <span class="section-label">Where to watch</span>

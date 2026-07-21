@@ -43,10 +43,7 @@ export class SearchService {
       type: result.media_type === 'movie' ? 'movie' : 'series',
       genres: result.genre_ids.map((id) => this.getGenreNameById(id, result.media_type)),
       duration_minutes: null, // TMDb doesn't provide runtime in search results, would need an additional API call to fetch details
-      episode_count:
-        result.media_type === 'tv' && result.episode_run_time
-          ? result.episode_run_time.length
-          : null,
+      episode_count: null, // real count comes from the details endpoint (number_of_episodes)
       poster_url: result.poster_path
         ? `https://image.tmdb.org/t/p/w500${result.poster_path}`
         : null,
@@ -98,11 +95,15 @@ export class SearchService {
     const backdrop_url = details.backdrop_path
       ? `https://image.tmdb.org/t/p/w780${details.backdrop_path}`
       : null;
+    const season_count = type === 'movie' ? null : (details.number_of_seasons ?? null);
+    const episode_count = type === 'movie' ? null : (details.number_of_episodes ?? null);
     return {
       duration_minutes,
       director,
       overview: details.overview || null,
       backdrop_url,
+      season_count,
+      episode_count,
     };
   }
 

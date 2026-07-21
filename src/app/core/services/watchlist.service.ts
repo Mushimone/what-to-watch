@@ -68,7 +68,9 @@ export class WatchlistService {
    */
   public async updateDetails(
     id: string,
-    details: Partial<Pick<WatchlistItem, 'duration_minutes' | 'director' | 'overview'>>,
+    details: Partial<
+      Pick<WatchlistItem, 'duration_minutes' | 'director' | 'overview' | 'season_count' | 'episode_count'>
+    >,
   ) {
     const { error } = await this.supabase
       .getClient()
@@ -104,17 +106,82 @@ export class WatchlistService {
   }
 
   public async toggleWatchedStatus(id: string, watched: boolean) {
+    // For series/anime, the whole-series toggle also fills or clears every season
+    // so the two stay consistent (all seasons watched ⇔ watched=true).
+    const current = this.watchlistItemsSubject.value.find((item) => item.id === id);
+    const patch: Partial<WatchlistItem> = { watched };
+    // Keep whichever progress track the show uses in sync with the whole-series flag.
+    if ((current?.season_count ?? 0) >= 2) {
+      patch.watched_seasons = watched
+        ? Array.from({ length: current!.season_count! }, (_, i) => i + 1)
+        : [];
+    } else if ((current?.episode_count ?? 0) > 1) {
+      patch.watched_episodes = watched ? current!.episode_count! : 0;
+    }
     const { error } = await this.supabase
       .getClient()
       .from('watchlist_items')
-      .update({ watched })
+      .update(patch)
       .eq('id', id);
     if (error) {
       console.error('Error updating watched status:', error);
       return false;
     }
     const updatedItems = this.watchlistItemsSubject.value.map((item) =>
-      item.id === id ? { ...item, watched } : item,
+      item.id === id ? { ...item, ...patch } : item,
+    );
+    this.watchlistItemsSubject.next(updatedItems);
+    return true;
+  }
+
+  /**
+   * Marks a specific set of seasons watched. `watched` is derived: a series is
+   * fully watched only once every season is ticked — otherwise it stays in the
+   * Not Watched list.
+   */
+  public async setWatchedSeasons(id: string, watchedSeasons: number[]) {
+    const current = this.watchlistItemsSubject.value.find((item) => item.id === id);
+    const watched =
+      current?.season_count != null && watchedSeasons.length >= current.season_count;
+    const patch: Partial<WatchlistItem> = { watched_seasons: watchedSeasons, watched };
+    const { error } = await this.supabase
+      .getClient()
+      .from('watchlist_items')
+      .update(patch)
+      .eq('id', id);
+    if (error) {
+      console.error('Error updating watched seasons:', error);
+      return false;
+    }
+    const updatedItems = this.watchlistItemsSubject.value.map((item) =>
+      item.id === id ? { ...item, ...patch } : item,
+    );
+    this.watchlistItemsSubject.next(updatedItems);
+    return true;
+  }
+
+  /**
+   * Sets how many episodes are watched (for shows tracked by episode). `watched`
+   * is derived: fully watched only once every episode is reached — otherwise it
+   * stays in the Not Watched list.
+   */
+  public async setWatchedEpisodes(id: string, watchedEpisodes: number) {
+    const current = this.watchlistItemsSubject.value.find((item) => item.id === id);
+    const total = current?.episode_count ?? null;
+    const clamped = total != null ? Math.max(0, Math.min(watchedEpisodes, total)) : Math.max(0, watchedEpisodes);
+    const watched = total != null && clamped >= total;
+    const patch: Partial<WatchlistItem> = { watched_episodes: clamped, watched };
+    const { error } = await this.supabase
+      .getClient()
+      .from('watchlist_items')
+      .update(patch)
+      .eq('id', id);
+    if (error) {
+      console.error('Error updating watched episodes:', error);
+      return false;
+    }
+    const updatedItems = this.watchlistItemsSubject.value.map((item) =>
+      item.id === id ? { ...item, ...patch } : item,
     );
     this.watchlistItemsSubject.next(updatedItems);
     return true;

@@ -40,6 +40,10 @@ export interface TmdbDetails {
   episode_run_time?: number[] | null;
   /** TV only */
   created_by?: TmdbCreatedBy[];
+  /** TV only — excludes specials (season 0) */
+  number_of_seasons?: number | null;
+  /** TV only — total episodes across all seasons */
+  number_of_episodes?: number | null;
   credits?: { crew: TmdbCrewMember[] };
 }
 
@@ -49,6 +53,10 @@ export interface TmdbEnrichment {
   director: string | null;
   overview: string | null;
   backdrop_url: string | null;
+  /** Total seasons — series/anime only; null for movies */
+  season_count: number | null;
+  /** Total episodes — series/anime only; null for movies */
+  episode_count: number | null;
 }
 
 export interface TmdbWatchProvider {
