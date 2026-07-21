@@ -105,6 +105,24 @@ export class WatchlistService {
     return true;
   }
 
+  /** Clears the "new season" flag once the user has seen the item. */
+  public async clearUpdateFlag(id: string) {
+    const { error } = await this.supabase
+      .getClient()
+      .from('watchlist_items')
+      .update({ has_update: false })
+      .eq('id', id);
+    if (error) {
+      console.error('Error clearing update flag:', error);
+      return false;
+    }
+    const updatedItems = this.watchlistItemsSubject.value.map((item) =>
+      item.id === id ? { ...item, has_update: false } : item,
+    );
+    this.watchlistItemsSubject.next(updatedItems);
+    return true;
+  }
+
   public async toggleWatchedStatus(id: string, watched: boolean) {
     // For series/anime, the whole-series toggle also fills or clears every season
     // so the two stay consistent (all seasons watched ⇔ watched=true).

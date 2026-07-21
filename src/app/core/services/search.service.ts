@@ -95,7 +95,13 @@ export class SearchService {
     const backdrop_url = details.backdrop_path
       ? `https://image.tmdb.org/t/p/w780${details.backdrop_path}`
       : null;
-    const season_count = type === 'movie' ? null : (details.number_of_seasons ?? null);
+    // Count only aired, non-special seasons — TMDB's number_of_seasons includes
+    // renewed-but-unaired seasons (0 episodes), which show up as phantom chips.
+    const airedSeasons = details.seasons?.filter(
+      (s) => s.season_number >= 1 && s.episode_count > 0,
+    ).length;
+    const season_count =
+      type === 'movie' ? null : (airedSeasons ?? details.number_of_seasons ?? null);
     const episode_count = type === 'movie' ? null : (details.number_of_episodes ?? null);
     return {
       duration_minutes,

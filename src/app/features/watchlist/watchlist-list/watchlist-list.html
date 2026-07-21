@@ -56,6 +56,9 @@
                         </button>
                       </div>
                       <span class="type-badge">{{ item.type }}</span>
+                      @if (item.has_update) {
+                        <span class="new-season-badge">{{ (item.season_count ?? 0) >= 2 ? 'New season' : 'New episodes' }}</span>
+                      }
                       @if (item.season_count && (item.watched_seasons?.length ?? 0) > 0 && (item.watched_seasons?.length ?? 0) < item.season_count) {
                         <span class="season-progress" title="Seasons watched">{{ item.watched_seasons?.length }}/{{ item.season_count }} seasons</span>
                       } @else if (item.episode_count && (item.watched_episodes ?? 0) > 0 && (item.watched_episodes ?? 0) < item.episode_count) {
