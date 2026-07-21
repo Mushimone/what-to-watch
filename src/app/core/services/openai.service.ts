@@ -1,19 +1,16 @@
-import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { from, map, Observable } from 'rxjs';
 import { OpenAiChatResponse, OpenAiMessage } from '../models/openai.models';
+import { SupabaseService } from './supabase.service';
 
 /**
- * Thin client for an OpenAI-compatible chat-completions API (MiMo).
- * Endpoint, model and key all come from the environment so the provider can
- * be swapped via config alone.
+ * Thin client for the chat recommender. The MiMo API key lives server-side in
+ * the `mimo-chat` Supabase Edge Function, so nothing sensitive ships to the
+ * browser; the caller's Supabase session authorizes the invocation.
  */
 @Injectable({ providedIn: 'root' })
 export class OpenAiService {
-  private http = inject(HttpClient);
-
-  private readonly endpoint = `${environment.mimo.baseUrl}/chat/completions`;
+  private supabase = inject(SupabaseService);
 
   /**
    * Sends a full message array and returns the assistant's reply text.
@@ -24,24 +21,19 @@ export class OpenAiService {
     messages: OpenAiMessage[],
     options?: { maxTokens?: number; reasoningEffort?: 'low' | 'medium' | 'high' },
   ): Observable<string> {
-    return this.http
-      .post<OpenAiChatResponse>(
-        this.endpoint,
-        {
-          model: environment.mimo.model,
+    return from(
+      this.supabase.getClient().functions.invoke<OpenAiChatResponse>('mimo-chat', {
+        body: {
           messages,
-          ...(options?.maxTokens ? { max_tokens: options.maxTokens } : {}),
-          ...(options?.reasoningEffort ? { reasoning_effort: options.reasoningEffort } : {}),
+          ...(options?.maxTokens ? { maxTokens: options.maxTokens } : {}),
+          ...(options?.reasoningEffort ? { reasoningEffort: options.reasoningEffort } : {}),
         },
-        {
-          // MiMo accepts the OpenAI-style Bearer header (its docs show the official
-          // OpenAI SDK working); 'api-key' is sent too to match the curl examples.
-          headers: {
-            Authorization: `Bearer ${environment.mimo.apiKey}`,
-            'api-key': environment.mimo.apiKey,
-          },
-        },
-      )
-      .pipe(map((response) => response.choices[0]?.message?.content ?? ''));
+      }),
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) throw error;
+        return data?.choices[0]?.message?.content ?? '';
+      }),
+    );
   }
 }

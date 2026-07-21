@@ -21,7 +21,9 @@ if (fs.existsSync(dotenvPath)) {
     });
 }
 
-const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'TMDB_API_KEY', 'MIMO_API_KEY', 'MIMO_MODEL'];
+// MiMo keys are NOT here: they live server-side as Supabase Edge Function
+// secrets (see supabase/functions/mimo-chat) and never reach the client bundle.
+const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'TMDB_API_KEY'];
 const missing = required.filter((k) => !process.env[k]);
 if (missing.length) {
   console.error(`Missing required env vars: ${missing.join(', ')}`);
@@ -34,9 +36,6 @@ const escape = (v) => v.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 const SUPABASE_URL = escape(process.env.SUPABASE_URL);
 const SUPABASE_ANON_KEY = escape(process.env.SUPABASE_ANON_KEY);
 const TMDB_API_KEY = escape(process.env.TMDB_API_KEY);
-const MIMO_API_KEY = escape(process.env.MIMO_API_KEY);
-const MIMO_MODEL = escape(process.env.MIMO_MODEL);
-const MIMO_BASE_URL = escape(process.env.MIMO_BASE_URL || 'https://token-plan-ams.xiaomimimo.com/v1');
 
 const template = (production) => `\
 export const environment = {
@@ -49,11 +48,6 @@ export const environment = {
     apiKey: '${TMDB_API_KEY}',
     baseUrl: 'https://api.themoviedb.org/3',
     imageBaseUrl: 'https://image.tmdb.org/t/p/w500',
-  },
-  mimo: {
-    apiKey: '${MIMO_API_KEY}',
-    model: '${MIMO_MODEL}',
-    baseUrl: '${MIMO_BASE_URL}',
   },
 };
 `;
