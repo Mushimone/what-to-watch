@@ -12,6 +12,7 @@ import { OpenAiMessage } from '../../../core/models/openai.models';
 import { TmdbWatchProvider } from '../../../core/models/tmdb.model';
 import { OpenAiService } from '../../../core/services/openai.service';
 import { SearchService } from '../../../core/services/search.service';
+import { SupabaseService } from '../../../core/services/supabase.service';
 import { WatchlistService } from '../../../core/services/watchlist.service';
 import { SearchResult, WatchlistItem } from '../../../core/models/watchlist-item.model';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
@@ -31,6 +32,7 @@ export type DetailDialogStatus = 'added' | 'duplicate' | 'error';
 export class WatchlistDetailDialog {
   private watchlist = inject(WatchlistService);
   private search = inject(SearchService);
+  private supabase = inject(SupabaseService);
   private openai = inject(OpenAiService);
   private dialogRef = inject(MatDialogRef<WatchlistDetailDialog>);
   private data = inject<DetailDialogData>(MAT_DIALOG_DATA);
@@ -110,6 +112,20 @@ export class WatchlistDetailDialog {
           this.providersLoading.set(false);
         });
     }
+  }
+
+  /** True only for a saved item the current user owns — friend items (opened from
+   * Shared) are read-only, so mutating actions and reactions are hidden. */
+  get isOwn(): boolean {
+    return this.mode === 'saved' && this.item().user_id === this.supabase.getCurrentUser()?.id;
+  }
+
+  /** Tapping the active reaction again clears it. */
+  setReaction(reaction: 'liked' | 'disliked'): void {
+    if (!this.isOwn) return;
+    const next = this.item().reaction === reaction ? null : reaction;
+    this.item.update((it) => ({ ...it, reaction: next }));
+    this.watchlist.setReaction(this.item().id, next);
   }
 
   private buildItem(): WatchlistItem {

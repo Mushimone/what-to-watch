@@ -19,6 +19,7 @@ import { WatchlistItem } from '../../../core/models/watchlist-item.model';
 import { OpenAiService } from '../../../core/services/openai.service';
 import { WatchlistService } from '../../../core/services/watchlist.service';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
+import { fmtItem, RECOMMEND_STYLE } from '../recommend.prompt';
 
 export type ChatMode = 'list' | 'add';
 
@@ -127,20 +128,12 @@ export class WatchlistAiChatComponent implements OnChanges {
   buildContext(items: WatchlistItem[]): void {
     const watched = items.filter((i) => i.watched);
     const unwatched = items.filter((i) => !i.watched);
-    const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n).trimEnd()}…` : s);
-    const fmt = (i: WatchlistItem) => {
-      const year = i.release_date?.slice(0, 4);
-      const meta = [year, i.type, i.genres.join('/')].filter(Boolean).join(', ');
-      const dir = i.director ? `, dir. ${i.director}` : '';
-      const rating = i.vote_average ? ` ★${i.vote_average.toFixed(1)}` : '';
-      const overview = i.overview ? `\n   ${clip(i.overview, 160)}` : '';
-      return `- ${i.title} (${meta}${dir})${rating}${overview}`;
-    };
+    const fmt = fmtItem;
 
     // Shared recommendation method — the "how to think" half of the prompt.
     const method = `
 HOW TO RECOMMEND:
-1. First infer my taste from the WATCHED list — recurring tones, themes, pacing, eras, directors, and what I rated highly (★). Treat that as my profile.
+1. First infer my taste from the WATCHED list — recurring tones, themes, pacing, eras, directors, and what I rated highly (★). A 👍 means I loved that title and 👎 means I disliked it; weight my 👍/👎 more heavily than ★, and steer away from what a 👎 represents. Treat that as my profile.
 2. Work out what I'm actually asking for: a mood/vibe, a time constraint, something similar to a title, help deciding, or just browsing options.
 3. Match against BOTH my request and my taste profile, using your real knowledge of each title's plot, tone and atmosphere. Genre tags are rough; the year, director, ★rating and short synopsis are only there to help you identify the exact title and gauge what I like.
 4. Be adaptive and decisive about the shape of your answer:
@@ -150,12 +143,7 @@ HOW TO RECOMMEND:
 6. If my request is vague, make a sensible assumption and recommend — don't interrogate me with clarifying questions.
 7. Never repeat a title you already suggested earlier in this conversation.`.trim();
 
-    const style = `
-STYLE:
-- Always write your WHOLE reply in the same natural language as my most recent message (I write in Italian → reply in Italian; English → English), no matter what language these instructions are in.
-- Keep it short and friendly, and match my tone — casual, slang, emoji or formal.
-- Use ONLY plain text, "-" bullet points and **bold** (bold every title). No headings, tables, links, italics or code blocks — they will not render.
-- Never tell me to add a title or take an action — phrase everything as a recommendation; I add things manually.`.trim();
+    const style = RECOMMEND_STYLE;
 
     const listContext = `
 You are the recommendation assistant for the "What to Watch" app. I want to choose something from my own watchlist.

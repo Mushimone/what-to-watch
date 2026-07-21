@@ -9,11 +9,14 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Profile } from '../../../core/models/profile.model';
 import { SharedPoolEntry } from '../../../core/models/shared-pool.model';
+import { WatchlistItem } from '../../../core/models/watchlist-item.model';
 import { WatchlistService } from '../../../core/services/watchlist.service';
 import { FriendsService } from '../../../core/services/friends.service';
 import { mergeWatchlists, overlapOnly } from './shared-pool';
 import { shuffle } from './tournament';
+import { buildGroupPickPrompt } from '../recommend.prompt';
 import { WatchlistTournamentDialog } from '../watchlist-tournament-dialog/watchlist-tournament-dialog';
+import { WatchlistGroupPickDialog } from '../watchlist-group-pick-dialog/watchlist-group-pick-dialog';
 import { WatchlistDetailDialog, DetailDialogData } from '../watchlist-detail-dialog/watchlist-detail-dialog';
 
 const LAST_FRIEND_KEY = 'sharedSelectedFriendId';
@@ -42,6 +45,9 @@ export class WatchlistShared implements OnInit {
   selectedFriend = signal<Profile | null>(null);
   overlapOnlyView = signal(false);
   pool = signal<SharedPoolEntry[]>([]);
+  // Watched titles from both sides — the taste signal for the AI group pick.
+  myWatched = signal<WatchlistItem[]>([]);
+  theirWatched = signal<WatchlistItem[]>([]);
   loading = signal(false);
   introDismissed = signal(localStorage.getItem('sharedIntroDismissed') === 'true');
 
@@ -69,10 +75,34 @@ export class WatchlistShared implements OnInit {
     this.loading.set(true);
     const mineAll = await this.watchlist.getWatchlist();
     const theirsAll = await this.friends.getFriendWatchlist(friend.id);
+    this.myWatched.set(mineAll.filter((i) => i.watched));
+    this.theirWatched.set(theirsAll.filter((i) => i.watched));
     const mine = mineAll.filter((i) => !i.watched);
     const theirs = theirsAll.filter((i) => !i.watched);
     this.pool.set(mergeWatchlists(mine, theirs));
     this.loading.set(false);
+  }
+
+  /** Ask the recommender to pick one title from the shared pool for both of us. */
+  askAiToPick(): void {
+    const pool = this.displayedPool();
+    if (pool.length === 0) {
+      this.snackbar.open('No titles to pick from.', 'Dismiss', { duration: 4000 });
+      return;
+    }
+    const system = buildGroupPickPrompt(
+      this.myWatched(),
+      this.theirWatched(),
+      pool,
+      this.selectedFriend()?.username || 'your friend',
+      navigator.language,
+    );
+    this.dialog.open(WatchlistGroupPickDialog, {
+      data: { system },
+      width: '560px',
+      maxWidth: '95vw',
+      autoFocus: false,
+    });
   }
 
   dismissIntro(): void {

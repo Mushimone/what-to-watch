@@ -15,6 +15,8 @@ export interface WatchlistItem {
   external_id: string;
   external_source: ExternalSource;
   watched: boolean;
+  /** Owner's personal reaction; null/undefined = not rated */
+  reaction?: 'liked' | 'disliked' | null;
   added_at: string;
   release_date?: string;
   vote_average?: number;

@@ -9,9 +9,4 @@ export const environment = {
     baseUrl: 'https://api.themoviedb.org/3',
     imageBaseUrl: 'https://image.tmdb.org/t/p/w500',
   },
-  mimo: {
-    apiKey: 'YOUR_MIMO_API_KEY',
-    model: 'YOUR_MIMO_MODEL',
-    baseUrl: 'https://token-plan-ams.xiaomimimo.com/v1',
-  },
 };

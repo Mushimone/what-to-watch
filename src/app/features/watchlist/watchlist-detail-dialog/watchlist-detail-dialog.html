@@ -109,8 +109,28 @@
         }
         <button mat-stroked-button mat-dialog-close>Cancel</button>
       </div>
-    } @else {
+    } @else if (isOwn) {
       <div class="detail-actions">
+        <div class="reaction-group">
+          <button
+            class="reaction-btn reaction-btn--like"
+            [class.reaction-btn--active]="item.reaction === 'liked'"
+            [attr.aria-pressed]="item.reaction === 'liked'"
+            (click)="setReaction('liked')"
+            title="I liked this"
+          >
+            <mat-icon>{{ item.reaction === 'liked' ? 'favorite' : 'favorite_border' }}</mat-icon>
+          </button>
+          <button
+            class="reaction-btn reaction-btn--down"
+            [class.reaction-btn--active]="item.reaction === 'disliked'"
+            [attr.aria-pressed]="item.reaction === 'disliked'"
+            (click)="setReaction('disliked')"
+            title="I didn't like this"
+          >
+            <mat-icon>thumb_down</mat-icon>
+          </button>
+        </div>
         <button mat-stroked-button (click)="toggleWatched()">
           <mat-icon>{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
           {{ item.watched ? 'Mark unwatched' : 'Mark watched' }}
@@ -119,6 +139,10 @@
           <mat-icon>delete</mat-icon>
           Remove
         </button>
+      </div>
+    } @else {
+      <div class="detail-actions">
+        <span class="muted small">On your friend's list — add it to your own to react.</span>
       </div>
     }
   </div>

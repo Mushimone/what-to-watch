@@ -94,6 +94,13 @@ li {
   }
 }
 
+// .reaction-btn visual lives in global styles.scss (shared with the detail dialog).
+.reactions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .type-badge {
   font-size: 0.65rem;
   font-weight: 600;
