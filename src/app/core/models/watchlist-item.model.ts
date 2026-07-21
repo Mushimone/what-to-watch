@@ -15,6 +15,12 @@ export interface WatchlistItem {
   external_id: string;
   external_source: ExternalSource;
   watched: boolean;
+  /** Total seasons — series/anime only; null for movies or when unknown */
+  season_count?: number | null;
+  /** Season numbers the owner has marked watched — series/anime only */
+  watched_seasons?: number[];
+  /** How many episodes watched — used for shows TMDB flattens to one season */
+  watched_episodes?: number;
   /** Owner's personal reaction; null/undefined = not rated */
   reaction?: 'liked' | 'disliked' | null;
   added_at: string;

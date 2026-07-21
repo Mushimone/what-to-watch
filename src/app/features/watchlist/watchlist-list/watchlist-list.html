@@ -56,6 +56,11 @@
                         </button>
                       </div>
                       <span class="type-badge">{{ item.type }}</span>
+                      @if (item.season_count && (item.watched_seasons?.length ?? 0) > 0 && (item.watched_seasons?.length ?? 0) < item.season_count) {
+                        <span class="season-progress" title="Seasons watched">{{ item.watched_seasons?.length }}/{{ item.season_count }} seasons</span>
+                      } @else if (item.episode_count && (item.watched_episodes ?? 0) > 0 && (item.watched_episodes ?? 0) < item.episode_count) {
+                        <span class="season-progress" title="Episodes watched">{{ item.watched_episodes }}/{{ item.episode_count }} eps</span>
+                      }
                       <h2 class="item-title">
                         {{ item.title }}
                         @if (item.release_date) {

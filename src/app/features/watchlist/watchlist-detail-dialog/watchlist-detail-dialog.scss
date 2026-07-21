@@ -168,9 +168,90 @@
 }
 
 .watch-section,
-.similar-section {
+.similar-section,
+.seasons-section,
+.episodes-section {
   width: 100%;
   margin-top: 0.4rem;
+}
+
+.episode-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ep-slider {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--color-accent); // native track/thumb tint
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.ep-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  mat-icon {
+    font-size: 1.1rem;
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+}
+
+.season-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.season-chip {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+
+  &:hover {
+    border-color: var(--color-accent);
+  }
+
+  &--watched {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-black);
+  }
 }
 
 .provider-logos {
