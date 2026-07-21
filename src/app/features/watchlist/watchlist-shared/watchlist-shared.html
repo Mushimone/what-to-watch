@@ -79,11 +79,15 @@
               <button class="poster" (click)="openDetail(entry)">
                 @if (entry.item.poster_url) {
                   <img [src]="entry.item.poster_url" [alt]="entry.item.title" />
+                } @else {
+                  <span class="poster-fallback">{{ entry.item.title }}</span>
                 }
                 @if (entry.owner === 'both') {
                   <span class="badge badge--both">Both</span>
                 } @else if (entry.owner === 'them') {
                   <span class="badge badge--them">Theirs</span>
+                } @else {
+                  <span class="badge badge--me">Yours</span>
                 }
               </button>
             }

@@ -14,7 +14,9 @@ import { FriendsService } from '../../../core/services/friends.service';
 import { mergeWatchlists, overlapOnly } from './shared-pool';
 import { shuffle } from './tournament';
 import { WatchlistTournamentDialog } from '../watchlist-tournament-dialog/watchlist-tournament-dialog';
-import { WatchlistDetailDialog } from '../watchlist-detail-dialog/watchlist-detail-dialog';
+import { WatchlistDetailDialog, DetailDialogData } from '../watchlist-detail-dialog/watchlist-detail-dialog';
+
+const LAST_FRIEND_KEY = 'sharedSelectedFriendId';
 
 @Component({
   selector: 'app-watchlist-shared',
@@ -56,11 +58,14 @@ export class WatchlistShared implements OnInit {
 
   async ngOnInit(): Promise<void> {
     const friends = await this.friends.getFriends();
-    if (friends.length) await this.selectFriend(friends[0]);
+    if (!friends.length) return;
+    const lastId = localStorage.getItem(LAST_FRIEND_KEY);
+    await this.selectFriend(friends.find((f) => f.id === lastId) ?? friends[0]);
   }
 
   async selectFriend(friend: Profile): Promise<void> {
     this.selectedFriend.set(friend);
+    localStorage.setItem(LAST_FRIEND_KEY, friend.id);
     this.loading.set(true);
     const mineAll = await this.watchlist.getWatchlist();
     const theirsAll = await this.friends.getFriendWatchlist(friend.id);
@@ -113,8 +118,12 @@ export class WatchlistShared implements OnInit {
   }
 
   openDetail(entry: SharedPoolEntry): void {
+    // A friend-only title isn't in my list, so offer "Add" (preview flow) rather
+    // than the Mark-watched/Remove actions that would target the friend's row.
+    const data: DetailDialogData =
+      entry.owner === 'them' ? { mode: 'preview', result: entry.item } : entry.item;
     this.dialog.open(WatchlistDetailDialog, {
-      data: entry.item,
+      data,
       width: '680px',
       maxWidth: '95vw',
       autoFocus: false,
