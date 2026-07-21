@@ -86,6 +86,23 @@ export class WatchlistService {
     return true;
   }
 
+  public async setReaction(id: string, reaction: 'liked' | 'disliked' | null) {
+    const { error } = await this.supabase
+      .getClient()
+      .from('watchlist_items')
+      .update({ reaction })
+      .eq('id', id);
+    if (error) {
+      console.error('Error updating reaction:', error);
+      return false;
+    }
+    const updatedItems = this.watchlistItemsSubject.value.map((item) =>
+      item.id === id ? { ...item, reaction } : item,
+    );
+    this.watchlistItemsSubject.next(updatedItems);
+    return true;
+  }
+
   public async toggleWatchedStatus(id: string, watched: boolean) {
     const { error } = await this.supabase
       .getClient()

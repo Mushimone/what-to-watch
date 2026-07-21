@@ -95,6 +95,10 @@ export class WatchlistList {
   toggleWatched(item: WatchlistItem) {
     this.watchlist.toggleWatchedStatus(item.id, !item.watched);
   }
+  /** Tapping the active reaction again clears it. */
+  setReaction(item: WatchlistItem, reaction: 'liked' | 'disliked') {
+    this.watchlist.setReaction(item.id, item.reaction === reaction ? null : reaction);
+  }
   applyFilter(filterValue: string) {
     if (filterValue === this.activeFilter()) {
       this.activeFilter.set('All');

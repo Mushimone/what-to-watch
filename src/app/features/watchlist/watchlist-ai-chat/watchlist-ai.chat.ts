@@ -134,13 +134,14 @@ export class WatchlistAiChatComponent implements OnChanges {
       const dir = i.director ? `, dir. ${i.director}` : '';
       const rating = i.vote_average ? ` ★${i.vote_average.toFixed(1)}` : '';
       const overview = i.overview ? `\n   ${clip(i.overview, 160)}` : '';
-      return `- ${i.title} (${meta}${dir})${rating}${overview}`;
+      const reaction = i.reaction === 'liked' ? ' 👍' : i.reaction === 'disliked' ? ' 👎' : '';
+      return `- ${i.title} (${meta}${dir})${rating}${reaction}${overview}`;
     };
 
     // Shared recommendation method — the "how to think" half of the prompt.
     const method = `
 HOW TO RECOMMEND:
-1. First infer my taste from the WATCHED list — recurring tones, themes, pacing, eras, directors, and what I rated highly (★). Treat that as my profile.
+1. First infer my taste from the WATCHED list — recurring tones, themes, pacing, eras, directors, and what I rated highly (★). A 👍 means I loved that title and 👎 means I disliked it; weight my 👍/👎 more heavily than ★, and steer away from what a 👎 represents. Treat that as my profile.
 2. Work out what I'm actually asking for: a mood/vibe, a time constraint, something similar to a title, help deciding, or just browsing options.
 3. Match against BOTH my request and my taste profile, using your real knowledge of each title's plot, tone and atmosphere. Genre tags are rough; the year, director, ★rating and short synopsis are only there to help you identify the exact title and gauge what I like.
 4. Be adaptive and decisive about the shape of your answer:
