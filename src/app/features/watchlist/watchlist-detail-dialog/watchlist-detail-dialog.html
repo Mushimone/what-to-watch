@@ -91,34 +91,35 @@
           }
         </div>
 
-        @if (mode === 'preview') {
-          <div class="detail-actions">
-            @if (alreadyAdded()) {
-              <button mat-stroked-button disabled>
-                <mat-icon>check_circle</mat-icon>
-                Already in your watchlist
-              </button>
-            } @else {
-              <button mat-flat-button color="primary" (click)="add()" [disabled]="adding()">
-                <mat-icon>add</mat-icon>
-                {{ adding() ? 'Adding…' : 'Add to watchlist' }}
-              </button>
-            }
-            <button mat-stroked-button mat-dialog-close>Cancel</button>
-          </div>
-        } @else {
-          <div class="detail-actions">
-            <button mat-stroked-button (click)="toggleWatched()">
-              <mat-icon>{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
-              {{ item.watched ? 'Mark unwatched' : 'Mark watched' }}
-            </button>
-            <button mat-stroked-button color="warn" (click)="remove()">
-              <mat-icon>delete</mat-icon>
-              Remove
-            </button>
-          </div>
-        }
       </div>
     </div>
+
+    @if (mode === 'preview') {
+      <div class="detail-actions">
+        @if (alreadyAdded()) {
+          <button mat-stroked-button disabled>
+            <mat-icon>check_circle</mat-icon>
+            Already in your watchlist
+          </button>
+        } @else {
+          <button mat-flat-button color="primary" (click)="add()" [disabled]="adding()">
+            <mat-icon>add</mat-icon>
+            {{ adding() ? 'Adding…' : 'Add to watchlist' }}
+          </button>
+        }
+        <button mat-stroked-button mat-dialog-close>Cancel</button>
+      </div>
+    } @else {
+      <div class="detail-actions">
+        <button mat-stroked-button (click)="toggleWatched()">
+          <mat-icon>{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
+          {{ item.watched ? 'Mark unwatched' : 'Mark watched' }}
+        </button>
+        <button mat-stroked-button color="warn" (click)="remove()">
+          <mat-icon>delete</mat-icon>
+          Remove
+        </button>
+      </div>
+    }
   </div>
 }
