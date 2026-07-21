@@ -1,0 +1,20 @@
+<h2 mat-dialog-title>AI pick for you two</h2>
+<mat-dialog-content>
+  @if (loading()) {
+    <div class="loading">
+      <mat-spinner diameter="32"></mat-spinner>
+      <span>Thinking about what you'd both enjoy…</span>
+    </div>
+  } @else if (error()) {
+    <p>Something went wrong. Please try again.</p>
+  } @else {
+    <div class="result" [innerHTML]="result() | markdown"></div>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="run()" [disabled]="loading()">
+    <mat-icon>replay</mat-icon>
+    Again
+  </button>
+  <button mat-button mat-dialog-close>Close</button>
+</mat-dialog-actions>
