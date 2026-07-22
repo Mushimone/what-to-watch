@@ -26,10 +26,10 @@
   padding: 6px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--dur-short) var(--ease-out);
 
   &:hover {
-    background: rgba(127, 127, 127, 0.12);
+    background: var(--color-hairline-soft);
   }
 }
 

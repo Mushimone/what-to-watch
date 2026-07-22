@@ -19,7 +19,7 @@
 .hero-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 30%, rgba(0, 0, 0, 0.85) 100%);
+  background: linear-gradient(to bottom, var(--color-scrim-0) 30%, var(--color-scrim-4) 100%);
   border-radius: inherit;
 }
 
@@ -111,13 +111,13 @@
   align-items: center;
   gap: 2px;
   font-weight: 600;
-  color: #f5c518; // IMDb-style gold
+  color: var(--color-rating);
 
   .star-icon {
     font-size: 1rem;
     width: 1rem;
     height: 1rem;
-    color: #f5c518;
+    color: var(--color-rating);
   }
 }
 
@@ -201,7 +201,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--color-hairline);
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
@@ -234,14 +234,14 @@
   font-weight: 600;
   padding: 4px 12px;
   border-radius: 99px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--color-hairline);
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
   transition:
-    background 0.15s,
-    color 0.15s,
-    border-color 0.15s;
+    background var(--dur-short) var(--ease-out),
+    color var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out);
 
   &:hover {
     border-color: var(--color-accent);
@@ -289,7 +289,7 @@
   justify-content: flex-end;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid var(--color-hairline-soft);
 }
 
 .reaction-group {

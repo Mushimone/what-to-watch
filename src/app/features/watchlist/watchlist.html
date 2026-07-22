@@ -1,48 +1,56 @@
 <div class="watchlist-page">
-  @if (!isDesktop()) {
-    <div class="page-header">
-      <span class="page-title">What to Watch</span>
-      <button mat-icon-button (click)="logout()" aria-label="Sign out" matTooltip="Sign out">
-        <mat-icon>logout</mat-icon>
-      </button>
-    </div>
-  }
-
   @if (isDesktop()) {
     <!-- ── Desktop: sidebar nav + single full-width content pane ──────── -->
     <div class="desktop-shell">
       <nav class="sidebar">
         <span class="sidebar-brand">What to Watch</span>
 
+        <!-- Add is an action, not a destination — same role it has on mobile. -->
         <button
-          class="nav-item"
-          [class.nav-item--active]="activeSection() === 'list'"
-          (click)="setSection('list')"
-        >
-          <mat-icon>video_library</mat-icon>
-          <span>Watchlist</span>
-        </button>
-        <button
-          class="nav-item"
-          [class.nav-item--active]="activeSection() === 'add'"
+          class="rail-action"
+          [class.rail-action--active]="activeSection() === 'add'"
           (click)="setSection('add')"
         >
           <mat-icon>add</mat-icon>
-          <span>Add</span>
+          <span>Add a title</span>
+        </button>
+
+        <button
+          class="nav-item"
+          [class.nav-item--active]="activeSection() === 'list'"
+          [attr.aria-current]="activeSection() === 'list' ? 'page' : null"
+          (click)="setSection('list')"
+        >
+          <mat-icon>video_library</mat-icon>
+          <span>My list</span>
         </button>
         <button
           class="nav-item"
           [class.nav-item--active]="activeSection() === 'shared'"
+          [attr.aria-current]="activeSection() === 'shared' ? 'page' : null"
           (click)="setSection('shared')"
         >
           <mat-icon>group</mat-icon>
-          <span>Shared</span>
+          <span>Friends</span>
         </button>
 
-        <button class="nav-item nav-item--logout" (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          <span>Sign out</span>
+        <!-- The AI trigger docks in the rail here instead of floating. -->
+        <button class="rail-ai" (click)="chat.isOpen = !chat.isOpen">
+          <mat-icon>auto_awesome</mat-icon>
+          <span>Ask AI</span>
         </button>
+
+        <button class="rail-account" [matMenuTriggerFor]="accountMenu">
+          <mat-icon>account_circle</mat-icon>
+          <span class="rail-account__name">{{ username() }}</span>
+          <mat-icon class="rail-account__caret">expand_more</mat-icon>
+        </button>
+        <mat-menu #accountMenu="matMenu" panelClass="rail-account-menu">
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Sign out</span>
+          </button>
+        </mat-menu>
       </nav>
 
       <main class="content">
@@ -60,20 +68,67 @@
       </main>
     </div>
   } @else {
-    <!-- ── Mobile: tab group ──────────────────────────────────────── -->
-    <mat-tab-group (selectedTabChange)="onTabChange($event)">
-      <mat-tab label="Watchlist">
-        <app-watchlist-list></app-watchlist-list>
-      </mat-tab>
-      <mat-tab label="Add">
-        <app-watchlist-add></app-watchlist-add>
-      </mat-tab>
-      <mat-tab label="Shared">
-        <app-watchlist-shared></app-watchlist-shared>
-      </mat-tab>
-    </mat-tab-group>
+    <!-- ── Mobile: top bar (title/context) + scrolling pane + bottom nav ── -->
+    <div class="page-header">
+      @if (activeSection() === 'add') {
+        <button mat-icon-button (click)="setSection('list')" aria-label="Back">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+      }
+      <span class="page-title">{{ sectionTitle() }}</span>
+      <button mat-icon-button (click)="logout()" aria-label="Sign out" matTooltip="Sign out">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+
+    <main class="mobile-content">
+      @switch (activeSection()) {
+        @case ('list') {
+          <app-watchlist-list></app-watchlist-list>
+        }
+        @case ('add') {
+          <app-watchlist-add></app-watchlist-add>
+        }
+        @case ('shared') {
+          <app-watchlist-shared></app-watchlist-shared>
+        }
+      }
+    </main>
+
+    <!-- Add: floating action button, bottom-right (hidden while already adding) -->
+    @if (activeSection() !== 'add') {
+      <button mat-fab class="add-fab" (click)="setSection('add')" aria-label="Add a title">
+        <mat-icon>add</mat-icon>
+      </button>
+    }
+
+    <nav class="bottom-nav" aria-label="Main">
+      <button
+        class="bottom-nav__item"
+        [class.bottom-nav__item--active]="activeSection() === 'list'"
+        [attr.aria-current]="activeSection() === 'list' ? 'page' : null"
+        (click)="setSection('list')"
+      >
+        <mat-icon>video_library</mat-icon>
+        <span>My list</span>
+      </button>
+
+      <!-- notch: reserves room for the centred AI button -->
+      <span class="bottom-nav__notch" aria-hidden="true"></span>
+
+      <button
+        class="bottom-nav__item"
+        [class.bottom-nav__item--active]="activeSection() === 'shared'"
+        [attr.aria-current]="activeSection() === 'shared' ? 'page' : null"
+        (click)="setSection('shared')"
+      >
+        <mat-icon>group</mat-icon>
+        <span>Friends</span>
+      </button>
+    </nav>
   }
 
-  <!-- FAB + chat panel — outside both branches so it floats over everything -->
-  <app-watchlist-ai-chat [mode]="chatMode"></app-watchlist-ai-chat>
+  <!-- Chat panel — its own FAB docks into the mobile notch; on desktop the rail
+       button above drives it and the FAB is hidden. -->
+  <app-watchlist-ai-chat #chat [mode]="chatMode"></app-watchlist-ai-chat>
 </div>

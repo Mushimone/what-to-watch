@@ -1,11 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatTabsModule, MatTabChangeEvent } from '@angular/material/tabs';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog } from '@angular/material/dialog';
 import { WatchlistList } from './watchlist-list/watchlist-list';
 import { WatchlistAdd } from './watchlist-add/watchlist-add';
@@ -21,10 +21,10 @@ export type WatchlistSection = 'list' | 'add' | 'shared';
 @Component({
   selector: 'app-watchlist',
   imports: [
-    MatTabsModule,
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    MatMenuModule,
     WatchlistList,
     WatchlistAdd,
     WatchlistShared,
@@ -41,22 +41,23 @@ export class Watchlist implements OnInit {
   private router = inject(Router);
 
   isDesktop = signal(false);
-  /** Which section the desktop content pane shows (mobile uses tabs instead). */
+  /** Which section the content pane shows — same model on desktop and mobile. */
   activeSection = signal<WatchlistSection>('list');
+  sectionTitle = computed(
+    () => ({ list: 'What to Watch', add: 'Add a title', shared: 'Friends' })[this.activeSection()],
+  );
   chatMode: ChatMode = 'list';
+  /** Shown in the desktop rail's account row. */
+  username = signal('Account');
 
   constructor() {
     inject(BreakpointObserver)
       .observe('(min-width: 900px)')
       .pipe(takeUntilDestroyed())
-      .subscribe((state) => {
-        this.isDesktop.set(state.matches);
-        // Keep the chat context aligned with the currently visible section.
-        if (state.matches) this.chatMode = this.activeSection() === 'add' ? 'add' : 'list';
-      });
+      .subscribe((state) => this.isDesktop.set(state.matches));
   }
 
-  /** Desktop nav: switch the content pane and align the chat context. */
+  /** Switch the content pane and align the chat context. */
   setSection(section: WatchlistSection): void {
     this.activeSection.set(section);
     this.chatMode = section === 'add' ? 'add' : 'list';
@@ -65,6 +66,7 @@ export class Watchlist implements OnInit {
   async ngOnInit(): Promise<void> {
     this.friends.startRealtime();
     const profile = await this.profile.loadProfile();
+    if (profile?.username) this.username.set(profile.username);
     if (profile && !profile.username) {
       this.dialog.open(UsernameDialog, {
         disableClose: true,
@@ -73,11 +75,6 @@ export class Watchlist implements OnInit {
         autoFocus: true,
       });
     }
-  }
-
-  onTabChange(event: MatTabChangeEvent): void {
-    // index 1 = Add (use 'add' chat context); index 0 = List, 2 = Shared.
-    this.chatMode = event.index === 1 ? 'add' : 'list';
   }
 
   async logout(): Promise<void> {
