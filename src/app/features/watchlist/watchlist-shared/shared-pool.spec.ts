@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mergeWatchlists, overlapOnly } from './shared-pool';
+import { buildRoster, mergeWatchlists, overlapOnly } from './shared-pool';
 import { WatchlistItem } from '../../../core/models/watchlist-item.model';
 
 function mk(id: string): WatchlistItem {
@@ -40,5 +40,33 @@ describe('mergeWatchlists', () => {
   it('overlapOnly returns just the "both" entries', () => {
     const pool = mergeWatchlists([mk('A'), mk('B')], [mk('B')]);
     expect(overlapOnly(pool).map((e) => e.item.external_id)).toEqual(['B']);
+  });
+});
+
+describe('buildRoster', () => {
+  const friend = (id: string) => ({ id, username: id, avatar_url: null, created_at: '' });
+  const owned = (uid: string, id: string, poster: string | null = null) => ({
+    ...mk(id),
+    user_id: uid,
+    poster_url: poster,
+  });
+
+  it('counts each friend\'s overlap, ignores watched rows, and sorts by overlap', () => {
+    const roster = buildRoster(
+      [friend('low'), friend('high')],
+      [mk('A'), mk('B'), { ...mk('C'), watched: true }],
+      [
+        owned('low', 'A', 'p1.jpg'),
+        owned('low', 'Z'),
+        owned('high', 'A', 'p1.jpg'),
+        owned('high', 'B'),
+        owned('high', 'C'), // mine is watched → not shared
+        { ...owned('high', 'D'), watched: true }, // theirs watched → not counted
+      ],
+    );
+
+    expect(roster.map((r) => r.friend.id)).toEqual(['high', 'low']);
+    expect(roster[0]).toMatchObject({ both: 2, total: 3 });
+    expect(roster[1]).toMatchObject({ both: 1, total: 2, peek: ['p1.jpg'] });
   });
 });

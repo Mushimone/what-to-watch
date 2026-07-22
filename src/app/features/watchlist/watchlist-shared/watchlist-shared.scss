@@ -18,24 +18,199 @@
   }
 }
 
-.intro-card {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--mat-sys-surface-container);
-  border-radius: 12px;
-  padding: 8px 8px 8px 16px;
-  margin-bottom: 12px;
-  font-size: 0.9rem;
+// ─── Friend list ───────────────────────────────────────────────────────────────
+.roster-head {
+  margin: var(--space-xs) 0 var(--space-lg);
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    line-height: 1.15;
+    margin: 0 0 var(--space-2xs);
+    overflow-wrap: anywhere;
+  }
+
+  p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+  }
 }
 
-.controls {
+.roster {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
+    gap: var(--space-sm);
+  }
+}
+
+.friend-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out),
+    background-color var(--dur-short) var(--ease-out);
 
-  .friend-select {
+  &:hover {
+    border-color: var(--color-accent-muted);
+    background: var(--color-surface-alt);
+    transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: var(--dur-instant);
+    &:hover,
+    &:active {
+      transform: none;
+    }
+  }
+
+  &--invite {
+    background: transparent;
+    border-style: dashed;
+    color: var(--color-text-muted);
+  }
+
+  &__avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-accent-muted);
+    color: var(--color-black);
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    text-transform: uppercase;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    &--ghost {
+      background: transparent;
+      border: 1px dashed var(--color-hairline);
+      color: var(--color-text-muted);
+    }
+
+    &--sm {
+      width: 32px;
+      height: 32px;
+      font-size: 0.95rem;
+    }
+  }
+
+  // min-width:0 lets a long username ellipsize instead of pushing the row wide
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
     flex: 1;
+  }
+
+  &__name {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__meta {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+
+    strong {
+      color: var(--color-accent);
+      font-weight: 600;
+    }
+  }
+
+  &__dot {
+    padding: 0 var(--space-2xs);
+  }
+
+  // Overlapping posters — the card's proof that the two lists actually meet.
+  &__peek {
+    display: none;
+    flex: none;
+
+    @media (min-width: 600px) {
+      display: flex;
+    }
+
+    img {
+      width: 28px;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid var(--color-surface);
+      margin-left: -10px;
+      transition: margin-left var(--dur-short) var(--ease-out);
+    }
+  }
+
+  &:hover &__peek img {
+    margin-left: -4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:hover &__peek img {
+      margin-left: -10px;
+    }
+  }
+
+  &__go {
+    flex: none;
+    color: var(--color-text-muted);
+  }
+}
+
+// ─── Shared list header ────────────────────────────────────────────────────────
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -54,10 +229,6 @@
   gap: 12px;
 }
 
-.size-select {
-  width: 130px;
-}
-
 .hint {
   color: var(--mat-sys-on-surface-variant);
 }
@@ -73,18 +244,63 @@
   }
 }
 
+// Ownership reads from the frame, not just the badge: a title you both want
+// carries an accent ring and a glow; one-sided titles stay quiet.
 .poster {
   position: relative;
   border: none;
   padding: 0;
   background: transparent;
   cursor: pointer;
+  border-radius: 10px;
+  transition:
+    transform var(--dur-short) var(--ease-out),
+    box-shadow var(--dur-short) var(--ease-out);
+
+  img,
+  .poster-fallback {
+    border-radius: 8px;
+    outline-offset: -2px;
+  }
 
   img {
     width: 100%;
     aspect-ratio: 2 / 3;
     object-fit: cover;
-    border-radius: 8px;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+
+  &--both {
+    box-shadow: 0 0 0 2px var(--color-accent), 0 0 18px rgb(var(--rgb-accent) / 0.35);
+
+    &:hover {
+      box-shadow: 0 0 0 2px var(--color-accent), 0 0 26px rgb(var(--rgb-accent) / 0.55);
+    }
+  }
+
+  &--me img,
+  &--me .poster-fallback {
+    outline: 2px solid var(--color-sea-green);
+  }
+
+  &--them img,
+  &--them .poster-fallback {
+    outline: 2px solid var(--color-hairline);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: var(--dur-instant);
+    &:hover {
+      transform: none;
+    }
   }
 }
 
@@ -104,6 +320,9 @@
 }
 
 .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   position: absolute;
   top: 6px;
   left: 6px;
@@ -112,8 +331,16 @@
   border-radius: 6px;
   color: var(--color-text);
 
+  mat-icon {
+    font-size: 0.8rem;
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+
   &--both {
-    background: var(--mat-sys-primary);
+    background: var(--color-accent);
+    color: var(--color-black);
+    font-weight: 600;
   }
   &--them {
     background: var(--color-scrim-2);

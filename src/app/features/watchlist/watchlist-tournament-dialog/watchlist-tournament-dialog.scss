@@ -14,6 +14,16 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+// The win/lose animations scale and nudge the cards past their static box, which
+// would otherwise grow the dialog's scroll area and flash a scrollbar mid-pick.
+// The padding reserves that room up front; the negative margin keeps the layout
+// looking unchanged.
+.matchup,
+.winner {
+  padding: var(--space-md);
+  margin: calc(var(--space-md) * -1);
+}
+
 .matchup {
   display: flex;
   align-items: center;
@@ -26,6 +36,70 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+// ─── Bracket size step ─────────────────────────────────────────────────────────
+.sizes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.size-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 84px;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    transform var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out),
+    background-color var(--dur-short) var(--ease-out);
+
+  strong {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+
+  span {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  &:hover {
+    border-color: var(--color-accent-muted);
+    background: var(--color-surface-alt);
+    transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &--all {
+    border-color: var(--color-accent-muted);
+  }
+}
+
+.size-note {
+  margin: var(--space-md) 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+// ─── Matchup ───────────────────────────────────────────────────────────────────
 .contender {
   display: flex;
   flex-direction: column;
@@ -38,6 +112,10 @@
   cursor: pointer;
   flex: 1;
   max-width: 220px;
+  transition:
+    transform var(--dur-med) var(--ease-out),
+    opacity var(--dur-med) var(--ease-out),
+    border-color var(--dur-med) var(--ease-out);
 
   img {
     width: 100%;
@@ -45,10 +123,78 @@
     object-fit: cover;
     border-radius: 8px;
   }
+
+  &:hover {
+    border-color: var(--color-accent-muted);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+// The picked side flares; the beaten side drops away. Both settle before the
+// next matchup is dealt (PICK_ANIM_MS in the component matches --dur-med * 1.7).
+.contender--won {
+  border-color: var(--color-accent);
+  animation: contender-win 420ms var(--ease-out);
+}
+
+.contender--lost {
+  opacity: 0.25;
+  transform: scale(0.94) translateY(6px);
+}
+
+@keyframes contender-win {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgb(var(--rgb-accent) / 0.5);
+  }
+  45% {
+    transform: scale(1.05);
+    box-shadow: 0 0 24px 4px rgb(var(--rgb-accent) / 0.45);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgb(var(--rgb-accent) / 0);
+  }
 }
 
 .contender--winner {
   margin: 0 auto;
+  border-color: var(--color-accent);
+  animation: winner-crown 600ms var(--ease-out);
+}
+
+@keyframes winner-crown {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.03);
+    box-shadow: 0 0 32px 6px rgb(var(--rgb-accent) / 0.4);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 16px 0 rgb(var(--rgb-accent) / 0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contender {
+    transition-duration: var(--dur-instant);
+  }
+  .contender--won,
+  .contender--winner {
+    animation: none;
+  }
+  .contender--lost {
+    transform: none;
+  }
 }
 
 .contender-title {

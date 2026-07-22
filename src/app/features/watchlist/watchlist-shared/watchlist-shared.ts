@@ -2,8 +2,6 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -12,14 +10,11 @@ import { SharedPoolEntry } from '../../../core/models/shared-pool.model';
 import { WatchlistItem } from '../../../core/models/watchlist-item.model';
 import { WatchlistService } from '../../../core/services/watchlist.service';
 import { FriendsService } from '../../../core/services/friends.service';
-import { mergeWatchlists, overlapOnly } from './shared-pool';
-import { shuffle } from './tournament';
+import { RosterEntry, buildRoster, mergeWatchlists, overlapOnly } from './shared-pool';
 import { buildGroupPickPrompt } from '../recommend.prompt';
 import { WatchlistTournamentDialog } from '../watchlist-tournament-dialog/watchlist-tournament-dialog';
 import { WatchlistGroupPickDialog } from '../watchlist-group-pick-dialog/watchlist-group-pick-dialog';
 import { WatchlistDetailDialog, DetailDialogData } from '../watchlist-detail-dialog/watchlist-detail-dialog';
-
-const LAST_FRIEND_KEY = 'sharedSelectedFriendId';
 
 @Component({
   selector: 'app-watchlist-shared',
@@ -27,8 +22,6 @@ const LAST_FRIEND_KEY = 'sharedSelectedFriendId';
     AsyncPipe,
     MatButtonModule,
     MatIconModule,
-    MatFormFieldModule,
-    MatSelectModule,
     MatSlideToggleModule,
   ],
   templateUrl: './watchlist-shared.html',
@@ -49,29 +42,31 @@ export class WatchlistShared implements OnInit {
   myWatched = signal<WatchlistItem[]>([]);
   theirWatched = signal<WatchlistItem[]>([]);
   loading = signal(false);
-  introDismissed = signal(localStorage.getItem('sharedIntroDismissed') === 'true');
-
-  /** How many titles enter the bracket; 'all' uses the whole pool. */
-  tournamentSize = signal<number | 'all'>('all');
-  private readonly sizePresets = [4, 8, 16, 32, 64];
+  roster = signal<RosterEntry[]>([]);
+  rosterLoading = signal(false);
 
   displayedPool = computed(() =>
     this.overlapOnlyView() ? overlapOnly(this.pool()) : this.pool(),
   );
 
-  /** Presets smaller than the current pool — larger ones would equal "All". */
-  sizeOptions = computed(() => this.sizePresets.filter((n) => n < this.displayedPool().length));
-
   async ngOnInit(): Promise<void> {
     const friends = await this.friends.getFriends();
     if (!friends.length) return;
-    const lastId = localStorage.getItem(LAST_FRIEND_KEY);
-    await this.selectFriend(friends.find((f) => f.id === lastId) ?? friends[0]);
+    this.rosterLoading.set(true);
+    const mine = await this.watchlist.getWatchlist();
+    const theirsAll = await this.friends.getFriendsWatchlists(friends.map((f) => f.id));
+    this.roster.set(buildRoster(friends, mine, theirsAll));
+    this.rosterLoading.set(false);
+  }
+
+  /** Back to the friend list. */
+  clearFriend(): void {
+    this.selectedFriend.set(null);
+    this.pool.set([]);
   }
 
   async selectFriend(friend: Profile): Promise<void> {
     this.selectedFriend.set(friend);
-    localStorage.setItem(LAST_FRIEND_KEY, friend.id);
     this.loading.set(true);
     const mineAll = await this.watchlist.getWatchlist();
     const theirsAll = await this.friends.getFriendWatchlist(friend.id);
@@ -105,11 +100,6 @@ export class WatchlistShared implements OnInit {
     });
   }
 
-  dismissIntro(): void {
-    this.introDismissed.set(true);
-    localStorage.setItem('sharedIntroDismissed', 'true');
-  }
-
   async invite(): Promise<void> {
     const url = await this.friends.createInvite();
     if (!url) {
@@ -136,11 +126,9 @@ export class WatchlistShared implements OnInit {
       });
       return;
     }
-    const size = this.tournamentSize();
-    const items =
-      size === 'all' ? pool : shuffle(pool).slice(0, Math.min(size, pool.length));
+    // The dialog asks for the bracket size before dealing the first matchup.
     this.dialog.open(WatchlistTournamentDialog, {
-      data: items,
+      data: pool,
       width: '680px',
       maxWidth: '95vw',
       autoFocus: false,
