@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { lastValueFrom, toArray } from 'rxjs';
+import { lastValueFrom, of, toArray } from 'rxjs';
 import { OpenAiService } from './openai.service';
 
 /** Serves `chunks` as the SSE body, split exactly where the test says. */
@@ -36,6 +36,14 @@ describe('OpenAiService.stream', () => {
     ]);
 
     expect(await deltasOf(makeService())).toEqual(['Watch', ' Arrival']);
+  });
+
+  it('falls back to the buffered call when the stream yields nothing', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 400, body: null }));
+    const service = makeService();
+    vi.spyOn(service, 'chat').mockReturnValue(of('buffered reply'));
+
+    expect(await deltasOf(service)).toEqual(['buffered reply']);
   });
 
   it('skips keep-alives and malformed frames', async () => {

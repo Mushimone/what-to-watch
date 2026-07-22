@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { from, map, Observable } from 'rxjs';
+import { EMPTY, catchError, concatWith, defer, from, map, Observable, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { OpenAiChatResponse, OpenAiMessage } from '../models/openai.models';
 import { SupabaseService } from './supabase.service';
@@ -43,12 +43,26 @@ export class OpenAiService {
    * the reply while the model is still writing it. `functions.invoke` buffers
    * the whole body, so this goes to the function URL directly with the user's
    * session token — the API key still never leaves the server.
+   *
+   * If the stream yields nothing (upstream rejects `stream: true`, or the
+   * function isn't redeployed yet) it falls back to the buffered call, so the
+   * worst case is the old behaviour rather than an empty reply.
    */
   stream(
     messages: OpenAiMessage[],
     options?: { maxTokens?: number; reasoningEffort?: 'low' | 'medium' | 'high' },
   ): Observable<string> {
-    return from(this.readDeltas(messages, options));
+    let streamed = false;
+    return from(this.readDeltas(messages, options)).pipe(
+      tap(() => (streamed = true)),
+      // A mid-stream failure keeps its error; one before any token falls back.
+      catchError((err) => {
+        if (streamed) return throwError(() => err);
+        console.warn('Streaming chat failed, falling back to buffered:', err);
+        return EMPTY;
+      }),
+      concatWith(defer(() => (streamed ? EMPTY : this.chat(messages, options)))),
+    );
   }
 
   private async *readDeltas(
