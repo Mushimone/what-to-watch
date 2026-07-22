@@ -1,46 +1,124 @@
       <div class="watchlist-container">
-            <div class="filters-container">
-              <div class="left-chips">
-                <mat-chip-listbox>
-                  @for (option of filterChips; track option) {
-                    <mat-chip-option [selected]="activeFilter() === option" (click)="applyFilter(option)">{{ option }}</mat-chip-option>
-                  }
-                </mat-chip-listbox>
+            <!-- One row: search carries the filter, sort is icon-only (labels live in
+                 its menu), and the only labelled control is the one that acts. -->
+            <div class="toolbar">
+              <div class="search-field">
+                <mat-icon class="search-icon">search</mat-icon>
+                <input
+                  #search
+                  type="search"
+                  class="search-input"
+                  placeholder="Search your list"
+                  aria-label="Search your watchlist by title"
+                  [value]="query()"
+                  (input)="query.set(search.value)"
+                />
+                @if (query()) {
+                  <button type="button" class="icon-btn" (click)="query.set(''); search.focus()" aria-label="Clear search">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+                <span class="field-sep"></span>
+                <button
+                  type="button"
+                  class="icon-btn field-filter"
+                  [class.icon-btn--on]="activeType() || unwatchedOnly()"
+                  [matMenuTriggerFor]="filterMenu"
+                  matTooltip="Filter"
+                  aria-label="Filter"
+                >
+                  <mat-icon>tune</mat-icon>
+                </button>
               </div>
-            <div class="sort-by">
-              <button mat-stroked-button (click)="openTimePicker()" aria-label="Find something to watch by available time">
-                <mat-icon>schedule</mat-icon>
-                I have time…
-              </button>
-              <button mat-icon-button [matMenuTriggerFor]="sortMenu" [matTooltip]="activeSortLabel" aria-label="Sort options">
+              <!-- The leading slot carries each row's own icon; the active mark sits
+                   at the trailing edge so the slot is never an empty gap. -->
+              <mat-menu #filterMenu="matMenu">
+                @for (type of typeFilters; track type.key) {
+                  <button mat-menu-item (click)="applyType(type.key)" [class.menu-on]="activeType() === type.key">
+                    <mat-icon>{{ type.icon }}</mat-icon>
+                    {{ type.label }}
+                    @if (activeType() === type.key) {
+                      <mat-icon class="menu-tail">check</mat-icon>
+                    }
+                  </button>
+                }
+                <button mat-menu-item class="menu-divide" (click)="unwatchedOnly.set(!unwatchedOnly())" [class.menu-on]="unwatchedOnly()">
+                  <mat-icon>visibility_off</mat-icon>
+                  Not watched
+                  @if (unwatchedOnly()) {
+                    <mat-icon class="menu-tail">check</mat-icon>
+                  }
+                </button>
+              </mat-menu>
+
+              <button
+                type="button"
+                class="icon-btn icon-btn--framed"
+                [matMenuTriggerFor]="sortMenu"
+                [matTooltip]="'Sort: ' + activeSortLabel"
+                aria-label="Sort by"
+              >
                 <mat-icon>swap_vert</mat-icon>
               </button>
               <mat-menu #sortMenu="matMenu">
                 @for (dim of sortDimensions; track dim.key) {
-                  <button mat-menu-item (click)="changeSort(dim.key)" [class.active-sort]="activeSortKey === dim.key">
-                    @if (activeSortKey === dim.key) {
-                      <mat-icon>{{ activeSortDir === 'desc' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
-                    }
+                  <button mat-menu-item (click)="changeSort(dim.key)" [class.menu-on]="activeSortKey === dim.key">
+                    <mat-icon>{{ dim.icon }}</mat-icon>
                     {{ dim.label }}
+                    @if (activeSortKey === dim.key) {
+                      <mat-icon class="menu-tail">{{ activeSortDir === 'desc' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                    }
                   </button>
                 }
               </mat-menu>
             </div>
-            </div>
         @if (displayedItems$ | async; as items) {
           @if( isLoading()){
-            <p>Loading your watchlist...</p>
+            <p class="list-note">Loading your watchlist...</p>
           }
           @else if (totalCount() === 0) {
-            <p>Your watchlist is empty. Start adding some movies and TV shows!</p>
-          }
-          @else if (items.length === 0 && activeFilter() === 'Not Watched') {
-            <p>You've watched everything! Toggle the filter to see your full list.</p>
+            <p class="list-note">Your watchlist is empty. Start adding some movies and TV shows!</p>
           }
           @else if (items.length === 0) {
-            <p>No items match your filter.</p>
+            <div class="list-note">
+              @if (query()) {
+                <p>Nothing in your list matches “{{ query() }}”.</p>
+              } @else if (unwatchedOnly() && !activeType()) {
+                <p>You've watched everything. Turn off “Not watched” to see the full list.</p>
+              } @else {
+                <p>No items match these filters.</p>
+              }
+              <button type="button" class="chip" (click)="clearNarrowing()">
+                <mat-icon>backspace</mat-icon>
+                Clear filters
+              </button>
+            </div>
           }
           @else {
+            <!-- Second row: the one action, then whatever is currently narrowing the
+                 list. Each chip switches its own dimension off. -->
+            <div class="active-row">
+              <button type="button" class="time-btn" (click)="openTimePicker()">
+                <mat-icon>schedule</mat-icon>
+                I have time…
+              </button>
+
+              @if (unwatchedOnly()) {
+                <button type="button" class="chip" (click)="unwatchedOnly.set(false)">
+                  Not watched
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+              @if (activeTypeLabel; as label) {
+                <button type="button" class="chip" (click)="activeType.set(null)">
+                  {{ label }}
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+              @if (items.length < totalCount()) {
+                <span class="count">{{ items.length }} of {{ totalCount() }}</span>
+              }
+            </div>
             <ul class="watchlist-grid">
               @for (item of items; track item.id) {
                 <li>

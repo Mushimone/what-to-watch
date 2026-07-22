@@ -195,28 +195,245 @@ li {
   }
 }
 
-.filters-container {
+// ─── Toolbar ───────────────────────────────────────────────────────────────────
+// One row. The search field carries the filter, sort is icon-only (its labels
+// live in the menu), and the only text label belongs to the control that acts.
+.toolbar {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
   padding: var(--space-sm) var(--space-md);
-  justify-content: space-between;
 
   @media (min-width: 900px) {
     padding: var(--space-md) var(--space-lg) 0;
   }
 }
 
-.left-chips {
+.search-field {
   flex: 1;
   min-width: 0;
-  overflow-x: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0 var(--space-2xs) 0 var(--space-sm);
+  height: 42px;
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 99px;
+  background: var(--color-surface);
+  transition: border-color var(--dur-short) var(--ease-out);
+
+  // The input's own ring is suppressed below, so the field carries it instead.
+  &:focus-within {
+    border-color: var(--color-accent);
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
 }
 
-.sort-by {
+.search-icon {
   flex-shrink: 0;
+  color: var(--color-text-muted);
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
-::ng-deep .active-sort {
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.95rem;
+
+  &::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &::-webkit-search-cancel-button {
+    display: none; // replaced by the styled clear button
+  }
+}
+
+// Hairline between typing and filtering — they're separate jobs sharing one shell.
+.field-sep {
+  flex-shrink: 0;
+  width: 1px;
+  height: 20px;
+  background: var(--color-hairline-soft);
+}
+
+.icon-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    color var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+
+  // Sort sits outside the field, so it needs its own edge to read as a control.
+  &--framed {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--color-hairline-soft);
+
+    &:hover {
+      border-color: var(--color-hairline);
+    }
+  }
+
+  &--on {
+    color: var(--color-accent);
+  }
+
+  mat-icon {
+    font-size: 1.15rem;
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+}
+
+.time-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--color-accent-muted);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 0.85rem;
   font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--dur-short) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
+
+  &:hover {
+    background: rgb(var(--rgb-accent) / 0.1);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  mat-icon {
+    font-size: 1.05rem;
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+}
+
+// ─── Action + what's currently on ──────────────────────────────────────────────
+// "I have time" anchors the row's left edge; active-filter chips fill in beside
+// it and the count sits at the far end.
+.active-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md) 0;
+
+  @media (min-width: 900px) {
+    padding: var(--space-sm) var(--space-lg) 0;
+  }
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  height: 28px;
+  padding: 0 var(--space-xs) 0 var(--space-sm);
+  border: 1px solid var(--color-accent);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-out);
+
+  &:hover {
+    background: rgb(var(--rgb-accent) / 0.12);
+  }
+
+  mat-icon {
+    font-size: 0.95rem;
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+}
+
+.count {
+  margin-left: auto; // trailing end of the row, away from the controls
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.list-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  color: var(--color-text-muted);
+
+  p {
+    margin: 0;
+  }
+
+  @media (min-width: 900px) {
+    padding: var(--space-lg);
+  }
+}
+
+// Menu rows render in the CDK overlay, so these reach out of the component.
+::ng-deep .menu-on {
+  font-weight: 600;
+  color: var(--color-accent);
+
+  .mat-icon {
+    color: var(--color-accent);
+  }
+}
+
+::ng-deep .menu-tail {
+  margin-left: auto;
+  margin-right: 0 !important; // Material's icon margin would leave it off the edge
+}
+
+::ng-deep .menu-divide {
+  border-top: 1px solid var(--color-hairline-soft);
 }

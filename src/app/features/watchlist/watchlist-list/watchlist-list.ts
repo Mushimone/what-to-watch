@@ -1,7 +1,6 @@
 import { AsyncPipe, DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -19,7 +18,6 @@ import { WatchlistTimePickerDialog } from '../watchlist-time-picker-dialog/watch
   imports: [
     MatTabsModule,
     MatButtonModule,
-    MatChipsModule,
     MatMenuModule,
     MatTooltipModule,
     AsyncPipe,
@@ -32,13 +30,19 @@ import { WatchlistTimePickerDialog } from '../watchlist-time-picker-dialog/watch
 export class WatchlistList {
   private watchlist = inject(WatchlistService);
   private dialog = inject(MatDialog);
-  filterChips = ['Movies', 'Series', 'Animation', 'Not Watched'];
+  // The three type filters live behind the Filter button; "Not watched" stays out
+  // as its own toggle since it's the default view and the one flipped most often.
+  typeFilters = [
+    { key: 'movie', label: 'Movies', icon: 'movie' },
+    { key: 'series', label: 'Series', icon: 'live_tv' },
+    { key: 'animation', label: 'Animation', icon: 'animation' },
+  ];
   // Four sort dimensions; clicking the active one flips its direction.
   sortDimensions = [
-    { key: 'added', label: 'Date added' },
-    { key: 'title', label: 'Title' },
-    { key: 'rating', label: 'Rating' },
-    { key: 'duration', label: 'Duration' },
+    { key: 'added', label: 'Date added', icon: 'history' },
+    { key: 'title', label: 'Title', icon: 'sort_by_alpha' },
+    { key: 'rating', label: 'Rating', icon: 'star' },
+    { key: 'duration', label: 'Duration', icon: 'hourglass_empty' },
   ];
   private defaultDir: Record<string, 'asc' | 'desc'> = {
     added: 'desc',
@@ -56,9 +60,18 @@ export class WatchlistList {
   get activeSortLabel(): string {
     return this.sortDimensions.find((d) => d.key === this.activeSortKey)?.label ?? 'Sort';
   }
-  activeFilter = signal('Not Watched');
+  // Three independent narrowing dimensions — picking a type no longer silently
+  // drops the unwatched-only view the way the old single-chip filter did.
+  query = signal('');
+  activeType = signal<string | null>(null);
+  unwatchedOnly = signal(true);
   activeSort = signal('added_desc');
   isLoading = signal(true);
+
+  get activeTypeLabel(): string | null {
+    return this.typeFilters.find((t) => t.key === this.activeType())?.label ?? null;
+  }
+
   watchlistItems$ = this.watchlist.watchlistItems$;
   /** Total count regardless of the active filter — drives empty-state messaging. */
   totalCount = toSignal(this.watchlistItems$.pipe(map((items) => items.length)), {
@@ -66,22 +79,15 @@ export class WatchlistList {
   });
   displayedItems$ = combineLatest([
     this.watchlistItems$,
-    toObservable(this.activeFilter),
+    toObservable(this.query),
+    toObservable(this.activeType),
+    toObservable(this.unwatchedOnly),
     toObservable(this.activeSort),
   ]).pipe(
-    map(([items, filter, sort]: [WatchlistItem[], string, string]) => {
-      return this.applyFilterAndSort(items, filter, sort);
-    }),
+    map(([items, query, type, unwatched, sort]) =>
+      this.sortItems(this.filterItems(items, query, type, unwatched), sort),
+    ),
   );
-
-  private applyFilterAndSort(
-    items: WatchlistItem[],
-    filter: string,
-    sort: string,
-  ): WatchlistItem[] {
-    const filteredItems = this.filterItems(items, filter);
-    return this.sortItems(filteredItems, sort);
-  }
 
   async ngOnInit() {
     await this.watchlist.getWatchlist();
@@ -99,12 +105,15 @@ export class WatchlistList {
   setReaction(item: WatchlistItem, reaction: 'liked' | 'disliked') {
     this.watchlist.setReaction(item.id, item.reaction === reaction ? null : reaction);
   }
-  applyFilter(filterValue: string) {
-    if (filterValue === this.activeFilter()) {
-      this.activeFilter.set('All');
-      return;
-    }
-    this.activeFilter.set(filterValue);
+  /** Picking the active type again clears it — the menu doubles as its own reset. */
+  applyType(key: string) {
+    this.activeType.update((current) => (current === key ? null : key));
+  }
+
+  clearNarrowing() {
+    this.query.set('');
+    this.activeType.set(null);
+    this.unwatchedOnly.set(false);
   }
   changeSort(key: string) {
     if (this.activeSortKey === key) {
@@ -113,17 +122,21 @@ export class WatchlistList {
       this.activeSort.set(`${key}_${this.defaultDir[key]}`);
     }
   }
-  private filterItems(items: WatchlistItem[], filter: string): WatchlistItem[] {
-    if (filter === 'Movies') {
-      return items.filter((item) => item.type === 'movie');
-    } else if (filter === 'Series') {
-      return items.filter((item) => item.type === 'series');
-    } else if (filter === 'Animation') {
-      return items.filter((item) => item.genres.includes('Animation'));
-    } else if (filter === 'Not Watched') {
-      return items.filter((item) => !item.watched);
-    }
-    return items;
+  private filterItems(
+    items: WatchlistItem[],
+    query: string,
+    type: string | null,
+    unwatchedOnly: boolean,
+  ): WatchlistItem[] {
+    const needle = query.trim().toLowerCase();
+    return items.filter((item) => {
+      if (unwatchedOnly && item.watched) return false;
+      if (type === 'movie' && item.type !== 'movie') return false;
+      if (type === 'series' && item.type !== 'series') return false;
+      if (type === 'animation' && !item.genres.includes('Animation')) return false;
+      if (needle && !item.title.toLowerCase().includes(needle)) return false;
+      return true;
+    });
   }
 
   private sortItems(items: WatchlistItem[], sort: string): WatchlistItem[] {
