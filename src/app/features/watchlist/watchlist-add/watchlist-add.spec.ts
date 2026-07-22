@@ -34,7 +34,14 @@ describe('WatchlistAdd', () => {
         },
         {
           provide: WatchlistService,
-          useValue: { watchlistItems$: saved, getWatchlist: () => Promise.resolve([]) },
+          useValue: {
+            watchlistItems$: saved,
+            getWatchlist: () => Promise.resolve([]),
+            addToWatchlist: (item: WatchlistItem) => {
+              saved.next([...saved.value, item]);
+              return Promise.resolve(item);
+            },
+          },
         },
       ],
     }).compileComponents();
@@ -70,6 +77,23 @@ describe('WatchlistAdd', () => {
     expect(component.state().results.length).toBe(2);
     expect(component.isAdded(result('1', 'Dune'))).toBe(true);
     expect(component.isAdded(result('2', 'Dune: Part Two'))).toBe(false);
+  });
+
+  it('quick-adds without the dialog and leaves the rest of the list addable', async () => {
+    component.searchControl.setValue('dune');
+    vi.advanceTimersByTime(300);
+
+    await component.quickAdd(result('1', 'Dune'));
+    expect(component.isAdded(result('1', 'Dune'))).toBe(true);
+    expect(component.adding()).toBe(null);
+    expect(component.state().results.length).toBe(2);
+
+    // A second add on the same row is a no-op, not a duplicate insert.
+    await component.quickAdd(result('1', 'Dune'));
+    expect(saved.value.length).toBe(1);
+
+    await component.quickAdd(result('2', 'Dune: Part Two'));
+    expect(saved.value.length).toBe(2);
   });
 
   it('clears the results as soon as the query is cleared', () => {

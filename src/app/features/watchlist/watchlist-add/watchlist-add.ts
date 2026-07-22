@@ -1,8 +1,9 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -40,6 +41,7 @@ const MIN_QUERY = 3;
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatProgressSpinnerModule,
     ReactiveFormsModule,
     DatePipe,
     MatIcon,
@@ -93,6 +95,9 @@ export class WatchlistAdd {
   });
   private savedKeys = computed(() => new Set(this.saved().map((item) => this.key(item))));
 
+  /** Key of the row mid-add, so only that row shows a spinner. */
+  readonly adding = signal<string | null>(null);
+
   readonly statusMessage = computed(() => {
     const { status, results } = this.state();
     if (status === 'loading') return 'Searching';
@@ -117,6 +122,28 @@ export class WatchlistAdd {
 
   clear(): void {
     this.searchControl.setValue('');
+  }
+
+  /**
+   * Straight to the list, no sheet: adding several titles in a row shouldn't
+   * cost a dialog round-trip each. The row still opens the sheet for anyone who
+   * wants the details first. Sparse fields are backfilled when the item is
+   * opened later, so the raw search result is enough to save.
+   */
+  async quickAdd(result: SearchResult): Promise<void> {
+    if (this.adding() || this.isAdded(result)) return;
+    this.adding.set(this.key(result));
+    const status = await this.watchlistService.addToWatchlist({ ...result, watched: false });
+    this.adding.set(null);
+
+    if (status === 'duplicate') {
+      this.snackBar.open(`"${result.title}" is already in your watchlist.`, 'OK', {
+        duration: 3000,
+      });
+    } else if (status === null) {
+      this.snackBar.open('Something went wrong. Please try again.', 'Dismiss', { duration: 3000 });
+    }
+    // Success is silent — the row flips to "Added" where the user is looking.
   }
 
   open(result: SearchResult): void {

@@ -51,14 +51,9 @@
     @case ('success') {
       <ul class="result-list">
         @for (result of search.results; track key(result)) {
-          <li>
-            <button
-              type="button"
-              class="result-row"
-              [class.result-row--added]="isAdded(result)"
-              [disabled]="isAdded(result)"
-              (click)="open(result)"
-            >
+          <li class="result-row" [class.result-row--added]="isAdded(result)">
+            <!-- Row opens the details sheet; the trailing + skips it. -->
+            <button type="button" class="result-main" (click)="open(result)">
               @if (result.poster_url) {
                 <img [src]="result.poster_url" class="result-poster" alt="" />
               } @else {
@@ -81,10 +76,24 @@
                   }
                 </span>
               </div>
-              @if (isAdded(result)) {
-                <span class="result-added"><mat-icon>check</mat-icon>Added</span>
-              }
             </button>
+
+            @if (isAdded(result)) {
+              <span class="result-added"><mat-icon>check</mat-icon>Added</span>
+            } @else if (adding() === key(result)) {
+              <mat-spinner class="result-adding" [diameter]="20"></mat-spinner>
+            } @else {
+              <button
+                mat-icon-button
+                type="button"
+                class="result-add"
+                [attr.aria-label]="'Add ' + result.title + ' to your watchlist'"
+                [disabled]="adding() !== null"
+                (click)="quickAdd(result)"
+              >
+                <mat-icon>add</mat-icon>
+              </button>
+            }
           </li>
         }
       </ul>

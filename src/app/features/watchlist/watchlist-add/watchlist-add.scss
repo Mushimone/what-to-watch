@@ -26,12 +26,39 @@
   padding: 0;
 }
 
+// The row is a wrapper, not a control: it holds the details button and the
+// quick-add button side by side (a button inside a button is invalid markup).
 .result-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  width: 100%;
+  gap: 4px;
   padding: 8px;
+  border-radius: 8px;
+  transition: background var(--dur-short) var(--ease-out);
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+  }
+
+  // Added rows stay in place — removing them would shift every row below out
+  // from under the user's finger.
+  &--added {
+    opacity: 0.55;
+  }
+
+  &--skeleton {
+    gap: 12px;
+    pointer-events: none;
+  }
+}
+
+.result-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
   border: none;
   border-radius: 8px;
   background: transparent;
@@ -39,13 +66,7 @@
   text-align: left;
   font: inherit;
   cursor: pointer;
-  transition:
-    background var(--dur-short) var(--ease-out),
-    transform var(--dur-short) var(--ease-out);
-
-  &:hover {
-    background: var(--mat-sys-surface-container-high);
-  }
+  transition: transform var(--dur-short) var(--ease-out);
 
   &:focus-visible {
     outline: 2px solid var(--mat-sys-primary);
@@ -55,17 +76,16 @@
   &:active {
     transform: scale(0.99);
   }
+}
 
-  // Added rows stay in place — removing them would shift every row below out
-  // from under the user's finger.
-  &--added {
-    opacity: 0.55;
-    cursor: default;
-  }
+.result-add {
+  flex-shrink: 0;
+  color: var(--mat-sys-primary);
+}
 
-  &--skeleton {
-    pointer-events: none;
-  }
+.result-adding {
+  flex-shrink: 0;
+  margin: 10px;
 }
 
 .result-poster {
@@ -107,6 +127,7 @@
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
+  padding-right: 8px;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--mat-sys-primary);
