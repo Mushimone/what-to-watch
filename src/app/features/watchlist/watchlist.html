@@ -53,18 +53,12 @@
         </mat-menu>
       </nav>
 
+      <!-- Panes stay mounted and are hidden, not destroyed: switching sections
+           would otherwise re-run every load and flash an empty pane. -->
       <main class="content">
-        @switch (activeSection()) {
-          @case ('list') {
-            <app-watchlist-list></app-watchlist-list>
-          }
-          @case ('add') {
-            <app-watchlist-add></app-watchlist-add>
-          }
-          @case ('shared') {
-            <app-watchlist-shared></app-watchlist-shared>
-          }
-        }
+        <app-watchlist-list [hidden]="activeSection() !== 'list'"></app-watchlist-list>
+        <app-watchlist-add [hidden]="activeSection() !== 'add'"></app-watchlist-add>
+        <app-watchlist-shared [hidden]="activeSection() !== 'shared'"></app-watchlist-shared>
       </main>
     </div>
   } @else {
@@ -82,17 +76,9 @@
     </div>
 
     <main class="mobile-content">
-      @switch (activeSection()) {
-        @case ('list') {
-          <app-watchlist-list></app-watchlist-list>
-        }
-        @case ('add') {
-          <app-watchlist-add></app-watchlist-add>
-        }
-        @case ('shared') {
-          <app-watchlist-shared></app-watchlist-shared>
-        }
-      }
+      <app-watchlist-list [hidden]="activeSection() !== 'list'"></app-watchlist-list>
+      <app-watchlist-add [hidden]="activeSection() !== 'add'"></app-watchlist-add>
+      <app-watchlist-shared [hidden]="activeSection() !== 'shared'"></app-watchlist-shared>
     </main>
 
     <!-- Add: floating action button, bottom-right (hidden while already adding) -->

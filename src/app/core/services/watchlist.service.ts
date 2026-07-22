@@ -12,17 +12,27 @@ export class WatchlistService {
   private watchlistItemsSubject = new BehaviorSubject<WatchlistItem[]>([]);
   watchlistItems$ = this.watchlistItemsSubject.asObservable();
 
-  public async getWatchlist() {
+  /** User the cached list belongs to — null until the first successful load. */
+  private loadedFor: string | null = null;
+
+  /**
+   * Cached after the first load: every mutation below keeps the subject in sync,
+   * so re-entering a view doesn't need another round-trip. Pass `force` to refetch.
+   */
+  public async getWatchlist(force = false) {
+    const userId = this.supabase.getCurrentUser()?.id;
+    if (!force && userId && this.loadedFor === userId) return this.watchlistItemsSubject.value;
     const client = this.supabase.getClient();
     const { data, error } = await client
       .from('watchlist_items')
       .select('*')
-      .eq('user_id', this.supabase.getCurrentUser()?.id)
+      .eq('user_id', userId)
       .order('added_at', { ascending: false });
     if (error) {
       console.error('Error fetching watchlist:', error);
       return [];
     }
+    this.loadedFor = userId ?? null;
     this.watchlistItemsSubject.next(data);
     return data;
   }

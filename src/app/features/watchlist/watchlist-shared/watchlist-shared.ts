@@ -43,7 +43,8 @@ export class WatchlistShared implements OnInit {
   theirWatched = signal<WatchlistItem[]>([]);
   loading = signal(false);
   roster = signal<RosterEntry[]>([]);
-  rosterLoading = signal(false);
+  // Starts true: the first load must not flash the "no friends" onboarding.
+  rosterLoading = signal(true);
 
   displayedPool = computed(() =>
     this.overlapOnlyView() ? overlapOnly(this.pool()) : this.pool(),
@@ -51,11 +52,13 @@ export class WatchlistShared implements OnInit {
 
   async ngOnInit(): Promise<void> {
     const friends = await this.friends.getFriends();
-    if (!friends.length) return;
-    this.rosterLoading.set(true);
-    const mine = await this.watchlist.getWatchlist();
-    const theirsAll = await this.friends.getFriendsWatchlists(friends.map((f) => f.id));
-    this.roster.set(buildRoster(friends, mine, theirsAll));
+    if (friends.length) {
+      const [mine, theirsAll] = await Promise.all([
+        this.watchlist.getWatchlist(),
+        this.friends.getFriendsWatchlists(friends.map((f) => f.id)),
+      ]);
+      this.roster.set(buildRoster(friends, mine, theirsAll));
+    }
     this.rosterLoading.set(false);
   }
 
@@ -68,8 +71,10 @@ export class WatchlistShared implements OnInit {
   async selectFriend(friend: Profile): Promise<void> {
     this.selectedFriend.set(friend);
     this.loading.set(true);
-    const mineAll = await this.watchlist.getWatchlist();
-    const theirsAll = await this.friends.getFriendWatchlist(friend.id);
+    const [mineAll, theirsAll] = await Promise.all([
+      this.watchlist.getWatchlist(),
+      this.friends.getFriendWatchlist(friend.id),
+    ]);
     this.myWatched.set(mineAll.filter((i) => i.watched));
     this.theirWatched.set(theirsAll.filter((i) => i.watched));
     const mine = mineAll.filter((i) => !i.watched);

@@ -1,6 +1,6 @@
 <div class="shared">
   @if (friends$ | async; as friends) {
-    @if (friends.length === 0) {
+    @if (friends.length === 0 && !rosterLoading()) {
       <!-- Empty state doubles as onboarding -->
       <div class="onboarding">
         <h3>Watch together</h3>
