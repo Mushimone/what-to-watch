@@ -1,10 +1,17 @@
 ul {
-  padding: 1rem;
+  padding: var(--space-md);
   margin: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1rem;
+  gap: var(--space-md);
   list-style: none;
+
+  // Desktop: bigger tracks, or a 1400px pane renders nine thumbnail-sized posters.
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+  }
 }
 
 li {
@@ -17,7 +24,9 @@ li {
   overflow: hidden;
   cursor: pointer;
 
-  &:hover .details {
+  // Keyboard users get the overlay too — hover alone strands them.
+  &:hover .details,
+  &:focus-within .details {
     opacity: 1;
   }
 }
@@ -36,27 +45,27 @@ li {
 .details {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 25%, rgba(0, 0, 0, 0.4) 100%);
-  color: white;
+  background: linear-gradient(to top, var(--color-scrim-3) 25%, var(--color-scrim-1) 100%);
+  color: var(--color-text);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   align-items: flex-start;
-  padding: 12px;
+  padding: var(--space-sm);
   gap: 10px;
   opacity: 0;
-  transition: opacity 0.25s ease-in-out;
+  transition: opacity var(--dur-med) var(--ease-out);
   // Two icon buttons pinned to the top-right corner
   .card-actions {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: var(--space-xs);
+    right: var(--space-xs);
     display: flex;
-    gap: 4px;
+    gap: var(--space-2xs);
   }
 
   .card-icon-btn {
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--color-scrim-2);
     border: none;
     border-radius: 50%;
     width: 32px;
@@ -65,11 +74,11 @@ li {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: white;
+    color: var(--color-text);
     padding: 0;
     transition:
-      background 0.2s,
-      transform 0.2s;
+      background var(--dur-short) var(--ease-out),
+      transform var(--dur-instant) var(--ease-out);
 
     mat-icon {
       font-size: 1.1rem;
@@ -78,37 +87,43 @@ li {
     }
 
     &:hover {
-      background: rgba(0, 0, 0, 0.85);
-      transform: scale(1.15);
+      background: var(--color-scrim-4);
+    }
+
+    &:active {
+      transform: scale(0.92);
     }
 
     &.delete:hover {
-      background: rgba(180, 0, 0, 0.75);
+      background: var(--color-danger-scrim);
     }
   }
 
   .actions {
-    margin-top: 8px;
+    margin-top: var(--space-xs);
     display: flex;
-    gap: 8px;
+    gap: var(--space-xs);
   }
 }
 
 // .reaction-btn visual lives in global styles.scss (shared with the detail dialog).
 .reactions {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
 }
 
+// Category label — quiet, outlined. The accent fill is reserved for the one
+// badge that's actually news (a new season).
 .type-badge {
   font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background-color: var(--color-accent);
-  color: var(--color-black);
-  padding: 2px 8px;
+  background: var(--color-scrim-2);
+  border: 1px solid var(--color-hairline);
+  color: var(--color-text);
+  padding: 2px var(--space-xs);
   border-radius: 99px;
 }
 
@@ -118,7 +133,7 @@ li {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 2px 8px;
+  padding: 2px var(--space-xs);
   border-radius: 99px;
   background: var(--color-accent);
   color: var(--color-black);
@@ -128,11 +143,12 @@ li {
   align-self: flex-start;
   font-size: 0.68rem;
   font-weight: 600;
-  padding: 2px 8px;
+  font-variant-numeric: tabular-nums;
+  padding: 2px var(--space-xs);
   border-radius: 99px;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--color-scrim-2);
   border: 1px solid var(--color-accent);
-  color: white;
+  color: var(--color-text);
 }
 
 .item-title {
@@ -158,7 +174,8 @@ li {
   margin: 0;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #f5c518; // IMDb-style gold
+  font-variant-numeric: tabular-nums;
+  color: var(--color-rating);
   display: flex;
   align-items: center;
   gap: 2px;
@@ -167,7 +184,7 @@ li {
     font-size: 0.9rem;
     width: 0.9rem;
     height: 0.9rem;
-    color: #f5c518;
+    color: var(--color-rating);
   }
 }
 
@@ -181,9 +198,13 @@ li {
 .filters-container {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
   justify-content: space-between;
+
+  @media (min-width: 900px) {
+    padding: var(--space-md) var(--space-lg) 0;
+  }
 }
 
 .left-chips {

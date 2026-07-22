@@ -2,54 +2,189 @@
   padding: 0;
 }
 
+// ── Mobile shell: sticky header, scrolling pane, docked bottom nav ──────────
+// Geometry (--nav-h, --notch-r) lives in styles.scss so the AI chat component
+// can derive its own offsets from the same numbers.
+
 .page-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 8px 0 16px;
+  gap: var(--space-2xs);
+  padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-md);
+  padding-top: max(var(--space-xs), env(safe-area-inset-top));
+  background: var(--mat-sys-surface);
+
+  .page-title {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font: var(--mat-sys-title-medium);
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+}
+
+.mobile-content {
+  // clear the bottom nav (and the FAB sitting on it)
+  padding-bottom: calc(var(--nav-h) + var(--space-lg) + env(safe-area-inset-bottom));
+}
+
+.add-fab {
+  position: fixed;
+  right: var(--space-md);
+  bottom: calc(var(--nav-h) + var(--space-md) + env(safe-area-inset-bottom));
+  z-index: var(--z-fab);
+}
+
+.bottom-nav {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: stretch;
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--mat-sys-surface-container);
+  box-shadow: var(--shadow-nav);
+
+  // Carve a semicircular notch at the top centre for the AI button. The colours
+  // here are a stencil, not a palette — black paints, transparent cuts.
+  --cut: radial-gradient(
+    circle var(--notch-r) at 50% 0,
+    transparent calc(var(--notch-r) - 1px),
+    #000 var(--notch-r)
+  );
+  -webkit-mask: var(--cut);
+  mask: var(--cut);
+
+  &__notch {
+    width: calc(var(--notch-r) * 2);
+    flex-shrink: 0;
+  }
+
+  &__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 48px;
+    border: none;
+    background: transparent;
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-medium);
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      color var(--dur-short) var(--ease-out),
+      background var(--dur-short) var(--ease-out),
+      transform var(--dur-instant) var(--ease-out);
+
+    &:hover {
+      background: var(--mat-sys-surface-container-high);
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    // Active state carries weight + a dot as well as colour — colour alone is
+    // not a state anyone can read.
+    &--active {
+      color: var(--mat-sys-primary);
+      font-weight: 700;
+
+      mat-icon {
+        position: relative;
+      }
+
+      mat-icon::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: -3px;
+        width: 4px;
+        height: 4px;
+        margin-left: -2px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+    }
+  }
 }
 
 // ── Desktop: sidebar nav + single content pane ──────────────────────────────
 .desktop-shell {
   display: flex;
   height: 100dvh;
+  overflow: hidden; // only .content scrolls
 }
 
 .sidebar {
   display: flex;
   flex-direction: column;
-  width: 220px;
+  width: var(--rail-w);
   flex-shrink: 0;
-  padding: 16px 12px;
-  gap: 4px;
+  padding: var(--space-md) var(--space-sm);
+  gap: var(--space-2xs);
+  overflow-y: auto;
   border-right: 1px solid var(--mat-sys-outline-variant);
   background: var(--mat-sys-surface-container-low);
 }
 
 .sidebar-brand {
   font: var(--mat-sys-title-medium);
+  font-family: var(--font-display);
   font-weight: 700;
-  padding: 8px 12px 16px;
+  padding: var(--space-xs) var(--space-sm) var(--space-md);
 }
 
-.nav-item {
+// Shared shape for every button in the rail — one row, icon + label.
+%rail-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-sm);
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px var(--space-sm);
   border: none;
   border-radius: 10px;
   background: transparent;
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-label-large);
+  white-space: nowrap;
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition:
+    background var(--dur-short) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
 
   mat-icon {
+    flex-shrink: 0;
     color: var(--mat-sys-on-surface-variant);
   }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.nav-item {
+  @extend %rail-row;
 
   &:hover {
     background: var(--mat-sys-surface-container-high);
@@ -58,28 +193,82 @@
   &--active {
     background: var(--mat-sys-secondary-container);
     color: var(--mat-sys-on-secondary-container);
+    font-weight: 700;
 
     mat-icon {
       color: var(--mat-sys-on-secondary-container);
     }
   }
+}
 
-  // Sign out pinned to the bottom of the rail.
-  &--logout {
-    margin-top: auto;
+// Add — the rail's primary action, filled so it reads as a verb, not a place.
+.rail-action {
+  @extend %rail-row;
+  margin-bottom: var(--space-md);
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  font-weight: 600;
+
+  mat-icon {
+    color: var(--mat-sys-on-primary);
+  }
+
+  &:hover {
+    background: var(--mat-sys-primary-fixed-dim);
+  }
+
+  &--active {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+// Ask AI — outlined, pinned above the account row.
+.rail-ai {
+  @extend %rail-row;
+  margin-top: auto;
+  border: 1px solid var(--mat-sys-outline-variant);
+  color: var(--mat-sys-primary);
+
+  mat-icon {
+    color: var(--mat-sys-primary);
+  }
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+  }
+}
+
+.rail-account {
+  @extend %rail-row;
+  margin-top: var(--space-2xs);
+  color: var(--mat-sys-on-surface-variant);
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__caret {
+    font-size: 1.1rem;
+    width: 1.1rem;
+    height: 1.1rem;
   }
 }
 
 .content {
   flex: 1;
+  min-width: 0; // let grid children shrink instead of overflowing the pane
   overflow-y: auto;
   width: 100%;
   max-width: 1400px;
   margin-inline: auto;
-}
-
-// give tab body breathing room on mobile
-::ng-deep .mat-mdc-tab-body-content {
-  padding: 0;
-  overflow-x: hidden;
+  // keep the last row clear of the floating AI button
+  padding-bottom: calc(var(--space-xl) * 2);
 }

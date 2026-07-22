@@ -5,9 +5,12 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
-// ─── Design token palette ──────────────────────────────────────────────────────
+// ─── Design tokens ─────────────────────────────────────────────────────────────
+// Nothing in this app declares a raw colour, duration, easing or z-index.
+// If a value is needed, it gets a name here first.
 :root {
-  --color-black: #020202;
+  // Base palette
+  --color-black: #040a07; // tinted toward evergreen, not pure black
   --color-evergreen: #0d2818;
   --color-black-forest: #04471c;
   --color-sea-green: #058c42;
@@ -21,6 +24,65 @@
   --color-accent-muted: var(--color-sea-green);
   --color-text: #f0f0f0;
   --color-text-muted: #a0a0a0;
+  --color-focus: var(--color-malachite);
+
+  // Scrims — overlays on top of poster art
+  --color-scrim-0: rgb(0 0 0 / 0.1);
+  --color-scrim-1: rgb(0 0 0 / 0.4);
+  --color-scrim-2: rgb(0 0 0 / 0.55);
+  --color-scrim-3: rgb(0 0 0 / 0.75);
+  --color-scrim-4: rgb(0 0 0 / 0.85);
+  --color-hairline: rgb(255 255 255 / 0.25);
+  --color-hairline-soft: rgb(255 255 255 / 0.12);
+
+  // Signal colours
+  --color-danger: #e5534b;
+  --color-danger-scrim: rgb(180 0 0 / 0.75);
+  --color-heart: #e0245e;
+  --color-rating: #f5c518; // IMDb-style gold
+
+  // Type
+  --font-display: 'Bricolage Grotesque', Roboto, system-ui, sans-serif;
+  --font-body: Roboto, system-ui, sans-serif;
+
+  // Spacing — 4pt scale
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  // Motion
+  --dur-instant: 100ms;
+  --dur-short: 150ms;
+  --dur-med: 250ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  // Elevation
+  --shadow-nav: 0 -1px 12px rgb(0 0 0 / 0.16);
+  --shadow-panel: 0 8px 32px rgb(0 0 0 / 0.24);
+  --z-sticky: 5;
+  --z-nav: 900;
+  --z-panel: 950;
+  --z-fab: 1000;
+
+  // Mobile shell geometry — the bottom bar and its notch. The AI FAB and the
+  // chat panel derive their offsets from these; change them in one place only.
+  --nav-h: 64px;
+  --notch-r: 34px;
+
+  // Desktop rail width, and the usable row width inside it.
+  --rail-w: 220px;
+  --rail-row-w: calc(var(--rail-w) - var(--space-sm) * 2);
+}
+
+// The account menu renders in the CDK overlay, outside component styles — it
+// has to be told to match the rail row that opened it.
+.rail-account-menu.mat-mdc-menu-panel {
+  min-width: var(--rail-row-w);
 }
 
 html {
@@ -57,6 +119,37 @@ body {
   box-sizing: border-box;
 }
 
+// ─── Typography: display face for headings, Roboto for running text ────────────
+h1,
+h2,
+h3,
+.page-title,
+.sidebar-brand,
+.item-title {
+  font-family: var(--font-display);
+  font-style: normal;
+  letter-spacing: -0.01em;
+}
+
+// ─── Focus: one visible ring for every interactive element, never animated ─────
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+// ─── Reduced motion ────────────────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 // ─── Breakpoints (mobile-first) ────────────────────────────────────────────────
 // Usage in component SCSS:
 //   @use 'styles' as s;   ← if needed, or just use the variables directly
@@ -91,7 +184,7 @@ app-root {
 
 // ─── Shared: like/dislike reaction button (list cards + detail dialog) ─────────
 .reaction-btn {
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--color-scrim-2);
   border: none;
   border-radius: 50%;
   width: 34px;
@@ -99,12 +192,13 @@ app-root {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--color-text);
   cursor: pointer;
   padding: 0;
   transition:
-    background 0.2s,
-    transform 0.12s ease;
+    background var(--dur-short) var(--ease-out),
+    color var(--dur-short) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
 
   mat-icon {
     font-size: 1.1rem;
@@ -112,39 +206,32 @@ app-root {
     height: 1.1rem;
   }
 
+  // ponytail: one hover signal — background, not scale.
   &:hover {
-    transform: scale(1.15);
+    background: var(--color-scrim-4);
   }
   &:active {
-    transform: scale(0.85);
+    transform: scale(0.92);
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 
   &--active {
     background: var(--color-accent);
     color: var(--color-black);
-    animation: reaction-pop 0.3s ease;
   }
   &--down.reaction-btn--active {
-    background: #e5534b;
-    color: white;
+    background: var(--color-danger);
+    color: var(--color-text);
   }
-  // Heart fills red with a bouncy pop, à la the old Twitter like.
+  // Heart fills red with a bouncy pop, à la the old Twitter like. The overshoot
+  // is deliberate here and here only — it's the one celebratory moment.
   &--like.reaction-btn--active {
-    background: rgba(0, 0, 0, 0.55);
-    color: #e0245e;
-    animation: heart-pop 0.35s ease;
-  }
-}
-
-@keyframes reaction-pop {
-  0% {
-    transform: scale(1);
-  }
-  45% {
-    transform: scale(1.4);
-  }
-  100% {
-    transform: scale(1);
+    background: var(--color-scrim-2);
+    color: var(--color-heart);
+    animation: heart-pop 350ms var(--ease-out);
   }
 }
 

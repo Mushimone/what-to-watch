@@ -1,17 +1,22 @@
 // ── FAB ────────────────────────────────────────────────────────────────────
+// Mobile only: on desktop the sidebar's "Ask AI" row is the trigger.
 .chat-fab {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 1000;
+  bottom: var(--space-lg);
+  right: var(--space-lg);
+  z-index: var(--z-fab);
+
+  @media (min-width: 900px) {
+    display: none;
+  }
 }
 
 // ── Panel ──────────────────────────────────────────────────────────────────
 .chat-panel {
   position: fixed;
-  bottom: 96px; // sits above the FAB
-  right: 16px;
-  width: calc(100vw - 32px);
+  bottom: var(--space-lg);
+  right: var(--space-md);
+  width: calc(100% - var(--space-xl));
   max-width: 400px;
   height: 60dvh;
   max-height: 560px;
@@ -19,10 +24,10 @@
   flex-direction: column;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+  box-shadow: var(--shadow-panel);
   background: var(--mat-sys-surface);
-  z-index: 999;
-  animation: panelSlideUp 0.2s ease-out;
+  z-index: var(--z-panel);
+  animation: panelSlideUp var(--dur-med) var(--ease-out);
 }
 
 // ── Header ─────────────────────────────────────────────────────────────────
@@ -80,7 +85,7 @@
   border-radius: 12px;
   font-size: 0.875rem;
   line-height: 1.5;
-  animation: messageIn 0.2s ease-out;
+  animation: messageIn var(--dur-med) var(--ease-out);
 
   p {
     margin: 0;
@@ -125,7 +130,7 @@
     height: 7px;
     border-radius: 50%;
     background: var(--mat-sys-outline);
-    animation: bounce 1.2s infinite;
+    animation: bounce 1.2s var(--ease-in-out) infinite;
 
     &:nth-child(2) {
       animation-delay: 0.2s;
@@ -185,5 +190,30 @@
     .mat-mdc-form-field-subscript-wrapper {
       display: none;
     }
+  }
+}
+
+// ── Desktop: the panel rises from the rail's "Ask AI" row, not the corner ───
+@media (min-width: 900px) {
+  .chat-panel {
+    right: auto;
+    left: calc(var(--rail-w) + var(--space-md)); // rail width + gutter
+    bottom: var(--space-lg);
+  }
+}
+
+// ── Mobile: the AI button docks in the bottom-bar notch ─────────────────────
+// Offsets derive from --nav-h / --notch-r (styles.scss) so the dock survives a
+// change to the bar's height: the 56px FAB is centred on the notch's arc.
+@media (max-width: 899px) {
+  .chat-fab {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(var(--nav-h) - 34px + env(safe-area-inset-bottom));
+  }
+
+  .chat-panel {
+    bottom: calc(var(--nav-h) + 40px + env(safe-area-inset-bottom));
   }
 }
