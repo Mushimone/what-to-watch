@@ -3,6 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
+  MatDialog,
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
@@ -30,6 +31,32 @@ export type DetailDialogStatus = 'added' | 'duplicate' | 'error';
   styleUrl: './watchlist-detail-dialog.scss',
 })
 export class WatchlistDetailDialog {
+  /**
+   * Single entry point for every call site: consistent sheet config, plus the
+   * back-button wiring. A history entry is pushed on open so the hardware/browser
+   * Back gesture closes the sheet instead of leaving the page; closing any other
+   * way (drag, X, action) pops that entry back off.
+   */
+  static open(
+    dialog: MatDialog,
+    data: DetailDialogData,
+  ): MatDialogRef<WatchlistDetailDialog, DetailDialogStatus | undefined> {
+    const ref = dialog.open<WatchlistDetailDialog, DetailDialogData, DetailDialogStatus>(
+      WatchlistDetailDialog,
+      { data, panelClass: 'detail-sheet', width: '680px', maxWidth: '95vw', autoFocus: false },
+    );
+
+    history.pushState({ detailSheet: true }, '');
+    const onPop = () => ref.close();
+    addEventListener('popstate', onPop);
+    ref.afterClosed().subscribe(() => {
+      removeEventListener('popstate', onPop);
+      if (history.state?.detailSheet) history.back();
+    });
+
+    return ref;
+  }
+
   private watchlist = inject(WatchlistService);
   private search = inject(SearchService);
   private supabase = inject(SupabaseService);
@@ -134,6 +161,38 @@ export class WatchlistDetailDialog {
           this.providersLoading.set(false);
         });
     }
+  }
+
+  // ─── Drag to dismiss ────────────────────────────────────────────────────────
+  // Only the grip strip at the top of the sheet is draggable (touch-action: none
+  // there), so the scrolling body below keeps native scrolling untouched.
+  dragY = signal(0);
+  dragging = signal(false);
+  private grabY = 0;
+  private lastY = 0;
+  private lastT = 0;
+
+  onDragStart(event: PointerEvent): void {
+    this.dragging.set(true);
+    this.grabY = this.lastY = event.clientY;
+    this.lastT = event.timeStamp;
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  }
+
+  onDragMove(event: PointerEvent): void {
+    if (!this.dragging()) return;
+    this.dragY.set(Math.max(0, event.clientY - this.grabY));
+    this.lastY = event.clientY;
+    this.lastT = event.timeStamp;
+  }
+
+  onDragEnd(event: PointerEvent): void {
+    if (!this.dragging()) return;
+    this.dragging.set(false);
+    // px/ms since the last move — a fast flick dismisses even on a short drag.
+    const velocity = (event.clientY - this.lastY) / Math.max(1, event.timeStamp - this.lastT);
+    if (this.dragY() > 120 || velocity > 0.5) this.dialogRef.close();
+    else this.dragY.set(0);
   }
 
   /** True only for a saved item the current user owns — friend items (opened from

@@ -140,11 +140,6 @@ export class WatchlistShared implements OnInit {
     // than the Mark-watched/Remove actions that would target the friend's row.
     const data: DetailDialogData =
       entry.owner === 'them' ? { mode: 'preview', result: entry.item } : entry.item;
-    this.dialog.open(WatchlistDetailDialog, {
-      data,
-      width: '680px',
-      maxWidth: '95vw',
-      autoFocus: false,
-    });
+    WatchlistDetailDialog.open(this.dialog, data);
   }
 }

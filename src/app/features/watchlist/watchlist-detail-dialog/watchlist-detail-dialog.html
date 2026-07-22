@@ -1,42 +1,66 @@
 @if (item(); as item) {
-  <div class="dialog-root">
+  <div
+    class="sheet"
+    [class.sheet--dragging]="dragging()"
+    [style.transform]="dragY() ? 'translateY(' + dragY() + 'px)' : null"
+  >
+    <!-- Drag-to-dismiss strip across the top of the sheet. -->
+    <div
+      class="sheet-grip"
+      (pointerdown)="onDragStart($event)"
+      (pointermove)="onDragMove($event)"
+      (pointerup)="onDragEnd($event)"
+      (pointercancel)="onDragEnd($event)"
+    >
+      <span class="sheet-grip-pill"></span>
+    </div>
+
     <button class="close-btn" mat-icon-button mat-dialog-close aria-label="Close">
       <mat-icon>close</mat-icon>
     </button>
 
-    @if (backdrop(); as backdropUrl) {
-      <div class="hero-banner" [style.background-image]="'url(' + backdropUrl + ')'">
-        <div class="hero-gradient"></div>
+    <div class="sheet-scroll">
+      <!-- Sticky: the body panel scrolls up over it, and its scrim fades into the
+           body background so the seam never shows. -->
+      <div
+        class="hero"
+        [class.hero--plain]="!backdrop()"
+        [style.background-image]="backdrop() ? 'url(' + backdrop() + ')' : null"
+      >
+        <div class="hero-scrim"></div>
       </div>
-    }
 
-    <div class="detail" [class.has-hero]="backdrop()">
-      @if (item.poster_url) {
-        <img [src]="item.poster_url" alt="{{ item.title }} poster" class="detail-poster" />
-      }
-
-      <div class="detail-body">
-        <span class="type-badge">{{ item.type }}</span>
-
-        <h2 class="detail-title">
-          {{ item.title }}
-          @if (year) {
-            <span class="detail-year">({{ year }})</span>
+      <div class="sheet-body">
+        <header class="masthead">
+          @if (item.poster_url) {
+            <img [src]="item.poster_url" alt="{{ item.title }} poster" class="detail-poster" />
           }
-        </h2>
 
-        <div class="meta-row">
-          @if (item.vote_average) {
-            <span class="vote-average">
-              <mat-icon class="star-icon">star</mat-icon> {{ item.vote_average | number: '1.1-1' }}
-            </span>
-          }
-          @if (runtimeLabel) {
-            <span class="meta-item">
-              <mat-icon>schedule</mat-icon> {{ runtimeLabel }}
-            </span>
-          }
-        </div>
+          <div class="masthead-text">
+            <span class="type-badge">{{ item.type }}</span>
+
+            <h2 class="detail-title">
+              {{ item.title }}
+              @if (year) {
+                <span class="detail-year">({{ year }})</span>
+              }
+            </h2>
+
+            <div class="meta-row">
+              @if (item.vote_average) {
+                <span class="vote-average">
+                  <mat-icon class="star-icon">star</mat-icon>
+                  {{ item.vote_average | number: '1.1-1' }}
+                </span>
+              }
+              @if (runtimeLabel) {
+                <span class="meta-item">
+                  <mat-icon>schedule</mat-icon> {{ runtimeLabel }}
+                </span>
+              }
+            </div>
+          </div>
+        </header>
 
         @if (item.director) {
           <p class="detail-director"><span class="label">Director</span> {{ item.director }}</p>
