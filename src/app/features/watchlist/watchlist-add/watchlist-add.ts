@@ -150,7 +150,8 @@ export class WatchlistAdd {
     const dialogRef = WatchlistDetailDialog.open(this.dialog, { mode: 'preview', result });
 
     dialogRef.afterClosed().subscribe((status: DetailDialogStatus | undefined) => {
-      // 'added' needs no snackbar: the row itself flips to "Added" in place.
+      // A successful add doesn't close the sheet — it switches to saved mode
+      // there — and the row behind it flips to "Added" on its own.
       if (status === 'duplicate') {
         this.snackBar.open(`"${result.title}" is already in your watchlist.`, 'OK', {
           duration: 3000,

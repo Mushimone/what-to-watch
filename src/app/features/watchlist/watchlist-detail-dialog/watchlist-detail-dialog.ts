@@ -22,7 +22,8 @@ export type DetailDialogData =
   | WatchlistItem
   | { mode: 'preview'; result: SearchResult };
 
-export type DetailDialogStatus = 'added' | 'duplicate' | 'error';
+/** A successful add no longer closes the sheet — it switches it to saved mode. */
+export type DetailDialogStatus = 'duplicate' | 'error';
 
 @Component({
   selector: 'app-watchlist-detail-dialog',
@@ -66,8 +67,13 @@ export class WatchlistDetailDialog {
 
   readonly logoBase = 'https://image.tmdb.org/t/p/w92';
   readonly region = this.search.watchRegion;
-  readonly mode: 'saved' | 'preview' =
-    'mode' in this.data && this.data.mode === 'preview' ? 'preview' : 'saved';
+  /**
+   * Not readonly: a successful add flips the open sheet from preview to saved,
+   * so the user lands on Remove / seasons / episodes without reopening it.
+   */
+  readonly mode = signal<'saved' | 'preview'>(
+    'mode' in this.data && this.data.mode === 'preview' ? 'preview' : 'saved',
+  );
 
   item = signal<WatchlistItem>(this.buildItem());
   enriching = signal(false);
@@ -85,7 +91,7 @@ export class WatchlistDetailDialog {
   constructor() {
     const current = this.item();
 
-    if (this.mode === 'preview') {
+    if (this.mode() === 'preview') {
       this.enriching.set(true);
       this.search
         .getTmdbDetails(current.external_id, current.type)
@@ -198,7 +204,7 @@ export class WatchlistDetailDialog {
   /** True only for a saved item the current user owns — friend items (opened from
    * Shared) are read-only, so mutating actions and reactions are hidden. */
   get isOwn(): boolean {
-    return this.mode === 'saved' && this.item().user_id === this.supabase.getCurrentUser()?.id;
+    return this.mode() === 'saved' && this.item().user_id === this.supabase.getCurrentUser()?.id;
   }
 
   /** Tapping the active reaction again clears it. */
@@ -290,7 +296,10 @@ export class WatchlistDetailDialog {
     if (status === 'duplicate') {
       this.dialogRef.close('duplicate' as DetailDialogStatus);
     } else if (status !== null) {
-      this.dialogRef.close('added' as DetailDialogStatus);
+      // Stay open on the saved row the insert returned: the user keeps the
+      // context they were reading and gets Remove / progress in place.
+      this.item.set(status);
+      this.mode.set('saved');
     } else {
       this.dialogRef.close('error' as DetailDialogStatus);
     }
