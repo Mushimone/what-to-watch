@@ -38,6 +38,22 @@ describe('OpenAiService.stream', () => {
     expect(await deltasOf(makeService())).toEqual(['Watch', ' Arrival']);
   });
 
+  // Frame shapes captured from a real mimo-v2.5-pro stream.
+  it('ignores reasoning_content, the empty opener, and the trailing usage frame', async () => {
+    const frame = (delta: unknown) =>
+      `data: {"choices":[{"delta":${JSON.stringify(delta)},"finish_reason":null,"index":0}]}\n\n`;
+    stubFetch([
+      frame({ content: '', role: 'assistant', reasoning_content: null }),
+      frame({ content: null, role: null, reasoning_content: 'The user wants' }),
+      frame({ content: 'Here', role: null, reasoning_content: null }),
+      frame({ content: ' we go', role: null, reasoning_content: null }),
+      'data: {"choices":[{"delta":{"content":null},"finish_reason":"stop","index":0}]}\n\n',
+      'data: {"choices":[],"usage":{"total_tokens":360}}\n\ndata: [DONE]\n\n',
+    ]);
+
+    expect(await deltasOf(makeService())).toEqual(['Here', ' we go']);
+  });
+
   it('falls back to the buffered call when the stream yields nothing', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 400, body: null }));
     const service = makeService();
