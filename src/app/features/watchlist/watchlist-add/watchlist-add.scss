@@ -8,12 +8,64 @@
   width: 100%;
 }
 
-.result-option {
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// ── Results ─────────────────────────────────────────────────────────────────
+// Inline under the field, not in an overlay: the list has to outlive an add so
+// the user can keep picking from the same search.
+.result-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.result-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 0;
-  min-height: 68px;
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background var(--dur-short) var(--ease-out),
+    transform var(--dur-short) var(--ease-out);
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+
+  // Added rows stay in place — removing them would shift every row below out
+  // from under the user's finger.
+  &--added {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  &--skeleton {
+    pointer-events: none;
+  }
 }
 
 .result-poster {
@@ -22,6 +74,7 @@
   object-fit: cover;
   border-radius: 4px;
   flex-shrink: 0;
+  background: var(--mat-sys-surface-container-high);
 }
 
 .result-info {
@@ -41,42 +94,57 @@
   text-overflow: ellipsis;
 }
 
+// Rating lives here as plain text — an icon in the row's trailing slot reads as
+// a favourite button, which it never was.
 .result-meta {
   font-size: 0.75rem;
   color: var(--color-text-muted);
   text-transform: capitalize;
 }
 
-.top-info {
+.result-added {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-width: 0;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--mat-sys-primary);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
 }
 
-.result-rating {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 2px;
-  font-size: 0.8rem;
+.result-empty {
+  padding: 24px 8px;
+  margin: 0;
+  text-align: center;
   color: var(--color-text-muted);
 }
 
-.star-icon {
-  margin-right: 4px;
+.skeleton-line {
+  height: 12px;
+  border-radius: 4px;
+  background: var(--mat-sys-surface-container-high);
+  animation: skeleton-pulse 1.4s var(--ease-in-out) infinite;
+
+  &--title {
+    height: 16px;
+    width: 60%;
+  }
 }
 
-// Make the autocomplete panel fill as much vertical space as possible
-::ng-deep .mat-mdc-autocomplete-panel {
-  max-height: 70dvh !important;
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
 }
 
-// Ensure each option accommodates the taller content
-::ng-deep .mat-mdc-option {
-  height: auto !important;
-  min-height: 68px !important;
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line {
+    animation: none;
+  }
 }

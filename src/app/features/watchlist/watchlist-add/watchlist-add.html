@@ -1,45 +1,93 @@
-
 <div class="search-container">
-<mat-form-field appearance="outline" class="search-field">
-  <mat-label>Search for movies or TV shows</mat-label>
-  <input matInput [formControl]="searchControl" placeholder="Type a title" [matAutocomplete]="auto" />
-  <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayWith" (optionSelected)="onResultSelected($event)">
-    @if (searchStatus$ | async; as state) {
-      @if (state.status === 'idle'){
-        <mat-option disabled>Start typing to search...</mat-option>
-      }
-      @else if (state.status === 'loading') {
-        <mat-option disabled>Searching...</mat-option>
-      }
-      @else if (state.status === 'error') {
-        <mat-option disabled>Error occurred. Please try again.</mat-option>
-      }
-      @else if (state.status === 'no-results') {
-        <mat-option disabled>No results found.</mat-option>
-      }
-      @else if (state.status === 'success') {
-        @for (result of $any(state.results); track result.external_id) {
-        <mat-option [value]="result" class  >
-          <div class="result-option">
-            @if (result.poster_url) {
-              <img [src]="result.poster_url" class="result-poster" alt="" />
-            }
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Search for movies or TV shows</mat-label>
+    <input
+      matInput
+      #input
+      [formControl]="searchControl"
+      placeholder="Type a title"
+      autocomplete="off"
+      (keydown.escape)="clear()"
+    />
+    @if (searchControl.value) {
+      <button
+        matIconSuffix
+        mat-icon-button
+        type="button"
+        aria-label="Clear search"
+        (click)="clear(); input.focus()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </mat-form-field>
+
+  <span class="sr-only" role="status" aria-live="polite">{{ statusMessage() }}</span>
+
+  @let search = state();
+
+  @switch (search.status) {
+    @case ('loading') {
+      <!-- Skeletons, not a "Searching…" line: the list keeps its height so the
+           page doesn't collapse and re-expand on every keystroke. -->
+      <ul class="result-list">
+        @for (row of [1, 2, 3]; track row) {
+          <li class="result-row result-row--skeleton" aria-hidden="true">
+            <div class="result-poster"></div>
             <div class="result-info">
-              <div class="top-info">
-                <span class="result-title">{{ result.title }}{{ result.release_date ? ' (' + (result.release_date | date:'yyyy') + ')' : '' }}</span>
-                <span class="result-rating">
-                  <mat-icon class="star-icon">star</mat-icon>
-                  {{ result.vote_average | number:'1.1-1' }}
+              <div class="skeleton-line skeleton-line--title"></div>
+              <div class="skeleton-line"></div>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+    @case ('no-results') {
+      <p class="result-empty">No results found.</p>
+    }
+    @case ('error') {
+      <p class="result-empty">Something went wrong. Please try again.</p>
+    }
+    @case ('success') {
+      <ul class="result-list">
+        @for (result of search.results; track key(result)) {
+          <li>
+            <button
+              type="button"
+              class="result-row"
+              [class.result-row--added]="isAdded(result)"
+              [disabled]="isAdded(result)"
+              (click)="open(result)"
+            >
+              @if (result.poster_url) {
+                <img [src]="result.poster_url" class="result-poster" alt="" />
+              } @else {
+                <div class="result-poster"></div>
+              }
+              <div class="result-info">
+                <span class="result-title"
+                  >{{ result.title
+                  }}{{
+                    result.release_date ? ' (' + (result.release_date | date: 'yyyy') + ')' : ''
+                  }}</span
+                >
+                <span class="result-meta">
+                  {{ result.type }}
+                  @if (result.genres.length) {
+                    · {{ result.genres.slice(0, 2).join(', ') }}
+                  }
+                  @if (result.vote_average) {
+                    · {{ result.vote_average | number: '1.1-1' }}/10
+                  }
                 </span>
               </div>
-              <span class="result-meta">{{ result.type }} · {{ result.genres.slice(0, 2).join(', ') }}</span>
-            </div>
-          </div>
-        </mat-option>
-      }
-      }
+              @if (isAdded(result)) {
+                <span class="result-added"><mat-icon>check</mat-icon>Added</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
     }
-   
-  </mat-autocomplete>
-</mat-form-field>
+  }
 </div>
