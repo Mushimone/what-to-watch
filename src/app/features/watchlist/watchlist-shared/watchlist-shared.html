@@ -14,89 +14,123 @@
           Invite a friend
         </button>
       </div>
-    } @else {
-      @if (!introDismissed()) {
-        <div class="intro-card">
-          <span>Pick a friend to see your shared list, then run a tournament to decide.</span>
-          <button mat-icon-button aria-label="Dismiss" (click)="dismissIntro()">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
+    } @else if (!selectedFriend()) {
+      <!-- ── Friend list: pick who you're watching with ─────────────────── -->
+      <header class="roster-head">
+        <h2>Who are you watching with?</h2>
+        <p>Sorted by how much you already agree on.</p>
+      </header>
+
+      @if (rosterLoading()) {
+        <p class="hint">Loading…</p>
       }
 
-      <div class="controls">
-        <mat-form-field appearance="outline" class="friend-select">
-          <mat-label>Friend</mat-label>
-          <mat-select
-            [value]="selectedFriend()"
-            (selectionChange)="selectFriend($event.value)"
-          >
-            @for (f of friends; track f.id) {
-              <mat-option [value]="f">{{ f.username || 'Friend' }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <button mat-stroked-button (click)="invite()">
-          <mat-icon>person_add</mat-icon>
-          Invite
+      <ul class="roster" role="list">
+        @for (entry of roster(); track entry.friend.id) {
+          <li>
+            <button class="friend-card" (click)="selectFriend(entry.friend)">
+              <span class="friend-card__avatar" aria-hidden="true">
+                @if (entry.friend.avatar_url) {
+                  <img [src]="entry.friend.avatar_url" alt="" />
+                } @else {
+                  {{ (entry.friend.username || '?').charAt(0) }}
+                }
+              </span>
+
+              <span class="friend-card__body">
+                <span class="friend-card__name">{{ entry.friend.username || 'Friend' }}</span>
+                <span class="friend-card__meta">
+                  <strong>{{ entry.both }}</strong> you both want
+                  <span class="friend-card__dot">·</span>
+                  {{ entry.total }} on their list
+                </span>
+              </span>
+
+              @if (entry.peek.length) {
+                <span class="friend-card__peek" aria-hidden="true">
+                  @for (url of entry.peek; track url) {
+                    <img [src]="url" alt="" />
+                  }
+                </span>
+              }
+
+              <mat-icon class="friend-card__go">chevron_right</mat-icon>
+            </button>
+          </li>
+        }
+
+        <li>
+          <button class="friend-card friend-card--invite" (click)="invite()">
+            <span class="friend-card__avatar friend-card__avatar--ghost" aria-hidden="true">
+              <mat-icon>person_add</mat-icon>
+            </span>
+            <span class="friend-card__body">
+              <span class="friend-card__name">Invite a friend</span>
+              <span class="friend-card__meta">Send a one-time link</span>
+            </span>
+          </button>
+        </li>
+      </ul>
+    } @else {
+      <!-- ── Shared list with the picked friend ─────────────────────────── -->
+      <header class="detail-head">
+        <button mat-icon-button aria-label="Back to friends" (click)="clearFriend()">
+          <mat-icon>arrow_back</mat-icon>
         </button>
+        <span class="friend-card__avatar friend-card__avatar--sm" aria-hidden="true">
+          @if (selectedFriend()!.avatar_url) {
+            <img [src]="selectedFriend()!.avatar_url" alt="" />
+          } @else {
+            {{ (selectedFriend()!.username || '?').charAt(0) }}
+          }
+        </span>
+        <h2>You &amp; {{ selectedFriend()!.username || 'Friend' }}</h2>
+      </header>
+
+      <div class="actions">
+        <mat-slide-toggle
+          [checked]="overlapOnlyView()"
+          (change)="overlapOnlyView.set($event.checked)"
+          >Only what you both want</mat-slide-toggle
+        >
+        <div class="actions-right">
+          <button mat-stroked-button color="primary" (click)="askAiToPick()">
+            <mat-icon>auto_awesome</mat-icon>
+            Ask AI
+          </button>
+          <button mat-flat-button color="primary" (click)="startTournament()">
+            <mat-icon>emoji_events</mat-icon>
+            Tournament pick
+          </button>
+        </div>
       </div>
 
-      @if (selectedFriend()) {
-        <div class="actions">
-          <mat-slide-toggle
-            [checked]="overlapOnlyView()"
-            (change)="overlapOnlyView.set($event.checked)"
-            >Only what you both want</mat-slide-toggle
-          >
-          <div class="actions-right">
-            <mat-form-field appearance="outline" class="size-select" subscriptSizing="dynamic">
-              <mat-label>Bracket size</mat-label>
-              <mat-select
-                [value]="tournamentSize()"
-                (selectionChange)="tournamentSize.set($event.value)"
-              >
-                @for (n of sizeOptions(); track n) {
-                  <mat-option [value]="n">{{ n }} titles</mat-option>
-                }
-                <mat-option [value]="'all'">All ({{ displayedPool().length }})</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <button mat-stroked-button color="primary" (click)="askAiToPick()">
-              <mat-icon>auto_awesome</mat-icon>
-              Ask AI
+      @if (loading()) {
+        <p class="hint">Loading…</p>
+      } @else if (displayedPool().length === 0) {
+        <p class="hint">No shared titles to show. Try turning off the overlap filter.</p>
+      } @else {
+        <div class="grid">
+          @for (entry of displayedPool(); track entry.item.id) {
+            <button [class]="'poster poster--' + entry.owner" (click)="openDetail(entry)">
+              @if (entry.item.poster_url) {
+                <img [src]="entry.item.poster_url" [alt]="entry.item.title" />
+              } @else {
+                <span class="poster-fallback">{{ entry.item.title }}</span>
+              }
+              @if (entry.owner === 'both') {
+                <span class="badge badge--both">
+                  <mat-icon>favorite</mat-icon>
+                  Both
+                </span>
+              } @else if (entry.owner === 'them') {
+                <span class="badge badge--them">Theirs</span>
+              } @else {
+                <span class="badge badge--me">Yours</span>
+              }
             </button>
-            <button mat-flat-button color="primary" (click)="startTournament()">
-              <mat-icon>emoji_events</mat-icon>
-              Tournament pick
-            </button>
-          </div>
+          }
         </div>
-
-        @if (loading()) {
-          <p class="hint">Loading…</p>
-        } @else if (displayedPool().length === 0) {
-          <p class="hint">No shared titles to show. Try turning off the overlap filter.</p>
-        } @else {
-          <div class="grid">
-            @for (entry of displayedPool(); track entry.item.id) {
-              <button class="poster" (click)="openDetail(entry)">
-                @if (entry.item.poster_url) {
-                  <img [src]="entry.item.poster_url" [alt]="entry.item.title" />
-                } @else {
-                  <span class="poster-fallback">{{ entry.item.title }}</span>
-                }
-                @if (entry.owner === 'both') {
-                  <span class="badge badge--both">Both</span>
-                } @else if (entry.owner === 'them') {
-                  <span class="badge badge--them">Theirs</span>
-                } @else {
-                  <span class="badge badge--me">Yours</span>
-                }
-              </button>
-            }
-          </div>
-        }
       }
     }
   }

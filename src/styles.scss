@@ -25,6 +25,8 @@
   --color-text: #f0f0f0;
   --color-text-muted: #a0a0a0;
   --color-focus: var(--color-malachite);
+  // Bare channels so glows can vary alpha — keep in sync with --color-malachite.
+  --rgb-accent: 22 219 101;
 
   // Scrims — overlays on top of poster art
   --color-scrim-0: rgb(0 0 0 / 0.1);

@@ -103,6 +103,21 @@ export class FriendsService {
     return data ?? [];
   }
 
+  /** Every friend's watchlist in one round-trip — feeds the friend-list overlap counts. */
+  async getFriendsWatchlists(friendIds: string[]): Promise<WatchlistItem[]> {
+    if (friendIds.length === 0) return [];
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('watchlist_items')
+      .select('*')
+      .in('user_id', friendIds);
+    if (error) {
+      console.error('Error loading friend watchlists:', error);
+      return [];
+    }
+    return data ?? [];
+  }
+
   /** Removes the friendship in either canonical order. */
   async removeFriend(friendId: string): Promise<boolean> {
     const me = this.supabase.getCurrentUser()?.id;

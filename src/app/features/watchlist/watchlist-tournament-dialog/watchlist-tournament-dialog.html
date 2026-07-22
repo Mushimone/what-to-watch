@@ -5,14 +5,24 @@
       <p class="round">Round {{ s.round }} of {{ s.totalRounds }}</p>
       <p class="prompt">Which one?</p>
       <div class="matchup">
-        <button class="contender" (click)="pick('a')">
+        <button
+          class="contender"
+          [class.contender--won]="picked() === 'a'"
+          [class.contender--lost]="picked() === 'b'"
+          (click)="pick('a')"
+        >
           @if (s.current.a.poster_url) {
             <img [src]="s.current.a.poster_url" [alt]="s.current.a.title" />
           }
           <span class="contender-title">{{ s.current.a.title }}</span>
         </button>
         <span class="vs">vs</span>
-        <button class="contender" (click)="pick('b')">
+        <button
+          class="contender"
+          [class.contender--won]="picked() === 'b'"
+          [class.contender--lost]="picked() === 'a'"
+          (click)="pick('b')"
+        >
           @if (s.current.b.poster_url) {
             <img [src]="s.current.b.poster_url" [alt]="s.current.b.title" />
           }
@@ -30,12 +40,30 @@
         </button>
       </div>
     }
+  } @else {
+    <!-- Size step — asked before the first matchup is dealt. -->
+    <p class="prompt">How many titles enter the bracket?</p>
+    <div class="sizes" role="group" aria-label="Bracket size">
+      @for (n of sizeOptions(); track n) {
+        <button class="size-chip" (click)="start(n)">
+          <strong>{{ n }}</strong>
+          <span>titles</span>
+        </button>
+      }
+      <button class="size-chip size-chip--all" (click)="start('all')">
+        <strong>All</strong>
+        <span>{{ poolSize }} titles</span>
+      </button>
+    </div>
+    <p class="size-note">Fewer titles, faster night — entrants are drawn at random.</p>
   }
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button (click)="restart()">
-    <mat-icon>replay</mat-icon>
-    Restart
-  </button>
+  @if (state()) {
+    <button mat-button (click)="restart()">
+      <mat-icon>replay</mat-icon>
+      Restart
+    </button>
+  }
   <button mat-button mat-dialog-close>Close</button>
 </mat-dialog-actions>
