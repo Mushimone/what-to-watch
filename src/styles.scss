@@ -184,6 +184,39 @@ app-root {
   }
 }
 
+// ─── Detail sheet ──────────────────────────────────────────────────────────────
+// The detail dialog renders in the CDK overlay, so its shell lives here: a
+// centred card on desktop, a bottom-anchored drag-to-dismiss sheet on mobile.
+.detail-sheet .mat-mdc-dialog-surface {
+  border-radius: 20px;
+  overflow: hidden; // clip the hero to the rounded corners
+  background: var(--color-surface);
+  padding: 0;
+}
+
+@media (max-width: 599px) {
+  // Pin the pane to the bottom edge instead of the overlay's default centring.
+  .cdk-global-overlay-wrapper:has(.detail-sheet) {
+    align-items: flex-end;
+  }
+
+  .detail-sheet {
+    width: 100vw !important;
+    max-width: 100vw !important;
+
+    .mat-mdc-dialog-surface {
+      border-radius: 20px 20px 0 0;
+      animation: sheet-rise var(--dur-med) var(--ease-out);
+    }
+  }
+}
+
+@keyframes sheet-rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+
 // ─── Shared: like/dislike reaction button (list cards + detail dialog) ─────────
 .reaction-btn {
   background: var(--color-scrim-2);

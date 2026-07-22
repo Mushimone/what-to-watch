@@ -65,11 +65,6 @@ export class WatchlistTimePickerDialog {
 
   open(item: WatchlistItem): void {
     this.dialogRef.close();
-    this.dialog.open(WatchlistDetailDialog, {
-      data: item,
-      width: '680px',
-      maxWidth: '95vw',
-      autoFocus: false,
-    });
+    WatchlistDetailDialog.open(this.dialog, item);
   }
 }

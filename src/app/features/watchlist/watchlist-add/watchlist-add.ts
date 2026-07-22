@@ -80,11 +80,7 @@ export class WatchlistAdd {
 
   onResultSelected(event: MatAutocompleteSelectedEvent): void {
     const result: SearchResult = event.option.value;
-    const dialogRef = this.dialog.open(WatchlistDetailDialog, {
-      data: { mode: 'preview', result },
-      maxWidth: '680px',
-      width: '100%',
-    });
+    const dialogRef = WatchlistDetailDialog.open(this.dialog, { mode: 'preview', result });
 
     dialogRef.afterClosed().subscribe((status: DetailDialogStatus | undefined) => {
       if (status === 'added') {
