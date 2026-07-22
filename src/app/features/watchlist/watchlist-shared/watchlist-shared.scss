@@ -200,13 +200,17 @@
 .detail-head {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-xs);
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
 
   h2 {
     font-family: var(--font-display);
     font-size: 1.25rem;
     margin: 0;
+    // Takes the slack so the actions land on the trailing edge, and truncates
+    // rather than pushing them off it.
+    flex: 1;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -214,19 +218,33 @@
   }
 }
 
-.actions {
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+
+  // Too narrow for name + both buttons: drop to their own full row, split evenly.
+  @media (max-width: 599px) {
+    flex: 1 0 100%;
+
+    button {
+      flex: 1;
+    }
+  }
+}
+
+.view-filter {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
 }
 
-.actions-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.count {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
 }
 
 .hint {
