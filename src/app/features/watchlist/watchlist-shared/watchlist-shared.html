@@ -85,15 +85,9 @@
           }
         </span>
         <h2>You &amp; {{ selectedFriend()!.username || 'Friend' }}</h2>
-      </header>
 
-      <div class="actions">
-        <mat-slide-toggle
-          [checked]="overlapOnlyView()"
-          (change)="overlapOnlyView.set($event.checked)"
-          >Only what you both want</mat-slide-toggle
-        >
-        <div class="actions-right">
+        <!-- Both act on the pair, so they belong with the pair's name. -->
+        <div class="head-actions">
           <button mat-stroked-button color="primary" (click)="askAiToPick()">
             <mat-icon>auto_awesome</mat-icon>
             Ask AI
@@ -103,6 +97,18 @@
             Tournament pick
           </button>
         </div>
+      </header>
+
+      <!-- A view filter, not an action — so it sits directly above what it filters. -->
+      <div class="view-filter">
+        <mat-slide-toggle
+          [checked]="overlapOnlyView()"
+          (change)="overlapOnlyView.set($event.checked)"
+          >Only what you both want</mat-slide-toggle
+        >
+        @if (!loading() && displayedPool().length) {
+          <span class="count">{{ displayedPool().length }}</span>
+        }
       </div>
 
       @if (loading()) {
