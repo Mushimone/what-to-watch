@@ -5,6 +5,10 @@
   bottom: var(--space-lg);
   right: var(--space-lg);
   z-index: var(--z-fab);
+  // Circular, not M3's 16px squircle — it sits inside a round notch.
+  // The token also rounds the ripple/state layer; border-radius alone doesn't.
+  --mdc-fab-container-shape: 50%;
+  border-radius: 50%;
 
   @media (min-width: 900px) {
     display: none;
