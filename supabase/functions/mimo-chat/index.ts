@@ -24,7 +24,12 @@ Deno.serve(async (req) => {
   const baseUrl = Deno.env.get('MIMO_BASE_URL') ?? 'https://token-plan-ams.xiaomimimo.com/v1';
   if (!apiKey || !model) return json({ error: 'MiMo not configured' }, 500);
 
-  let payload: { messages?: unknown; maxTokens?: number; reasoningEffort?: string };
+  let payload: {
+    messages?: unknown;
+    maxTokens?: number;
+    reasoningEffort?: string;
+    stream?: boolean;
+  };
   try {
     payload = await req.json();
   } catch {
@@ -44,10 +49,25 @@ Deno.serve(async (req) => {
     body: JSON.stringify({
       model,
       messages: payload.messages,
+      ...(payload.stream ? { stream: true } : {}),
       ...(payload.maxTokens ? { max_tokens: payload.maxTokens } : {}),
       ...(payload.reasoningEffort ? { reasoning_effort: payload.reasoningEffort } : {}),
     }),
   });
+
+  // Streaming callers get MiMo's SSE body piped straight through, so the first
+  // tokens reach the browser instead of waiting for the whole completion.
+  if (payload.stream && res.ok && res.body) {
+    return new Response(res.body, {
+      status: res.status,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
+    });
+  }
 
   return json(await res.json(), res.status);
 });

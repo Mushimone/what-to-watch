@@ -42,10 +42,11 @@ export class WatchlistAiChatComponent implements OnChanges {
   private openai = inject(OpenAiService);
   private watchlist = inject(WatchlistService);
 
-  private scrollToBottom(): void {
+  // Smooth scrolling per streamed token fights itself, so streaming jumps instead.
+  private scrollToBottom(behavior: ScrollBehavior = 'smooth'): void {
     setTimeout(() => {
       const el = this.messagesContainer?.nativeElement;
-      if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      if (el) el.scrollTo({ top: el.scrollHeight, behavior });
     }, 0);
   }
 
@@ -101,17 +102,35 @@ export class WatchlistAiChatComponent implements OnChanges {
     this.history.push(userTurn);
 
     this.isLoading.set(true);
-    this.openai.chat(this.history).subscribe({
-      next: (modelReply) => {
-        const reply = modelReply.trim()
-          ? modelReply
-          : "I couldn't put that into words — try rephrasing?";
-        this.history.push({ role: 'assistant', content: reply });
-        this.displayMessages.update((msgs) => [...msgs, { role: 'model', text: reply }]);
+    // Streamed: the typing indicator gives way to the reply bubble on the first
+    // token, and the text grows in place while the model keeps writing.
+    let reply = '';
+    this.openai.stream(this.history).subscribe({
+      next: (delta) => {
+        if (!reply) {
+          this.isLoading.set(false);
+          this.displayMessages.update((msgs) => [...msgs, { role: 'model', text: '' }]);
+        }
+        reply += delta;
+        this.displayMessages.update((msgs) =>
+          msgs.map((m, i) => (i === msgs.length - 1 ? { ...m, text: reply } : m)),
+        );
+        this.scrollToBottom('auto');
+      },
+      complete: () => {
         this.isLoading.set(false);
+        if (!reply.trim()) {
+          this.displayMessages.update((msgs) => [
+            ...msgs,
+            { role: 'model', text: "I couldn't put that into words — try rephrasing?" },
+          ]);
+        } else {
+          this.history.push({ role: 'assistant', content: reply });
+        }
         this.scrollToBottom();
       },
       error: () => {
+        this.isLoading.set(false);
         this.displayMessages.update((msgs) => [
           ...msgs,
           {
@@ -119,7 +138,6 @@ export class WatchlistAiChatComponent implements OnChanges {
             text: 'Something went wrong. Please try again.',
           },
         ]);
-        this.isLoading.set(false);
         this.scrollToBottom();
       },
     });
