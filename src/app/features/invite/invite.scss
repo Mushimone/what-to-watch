@@ -1,10 +1,30 @@
-.invite {
-  min-height: 100dvh;
+// Panel, bloom and CTA come from the entry-surface styles in styles.scss.
+
+.invite-title {
+  margin: var(--space-sm) 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.invite-sub {
+  margin: var(--space-xs) 0 var(--space-lg);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+// Still working: nothing to say yet, so the spinner and its line share one row
+// instead of a near-empty card.
+.invite-panel:has(mat-spinner) {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  text-align: center;
-  padding: 24px;
+  gap: var(--space-md);
+
+  .invite-sub {
+    margin: 0;
+  }
 }

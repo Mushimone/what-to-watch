@@ -336,14 +336,19 @@
 }
 
 // ── Mobile: the AI button docks in the bottom-bar notch ─────────────────────
-// Offsets derive from --nav-h / --notch-r (styles.scss) so the dock survives a
-// change to the bar's height: the 56px FAB is centred on the notch's arc.
+// Offsets derive from --nav-h / --notch-r / --fab-d (styles.scss) so the dock
+// survives a change to the bar's height.
+//
+// The notch is a --notch-r circle centred on the bar's top edge, so the FAB is
+// centred when its own centre sits there too: one FAB radius below the edge.
+// The old offset was a whole --notch-r, which dropped the button to the bottom
+// of the arc — 12px of gap above it, none below. Now the 6px ring is even.
 @media (max-width: 899px) {
   .chat-fab {
     right: auto;
     left: 50%;
     transform: translateX(-50%);
-    bottom: calc(var(--nav-h) - 34px + env(safe-area-inset-bottom));
+    bottom: calc(var(--nav-h) - var(--fab-d) / 2 + env(safe-area-inset-bottom));
   }
 
   .chat-panel {

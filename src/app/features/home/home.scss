@@ -1,57 +1,59 @@
+// Left-biased marquee hero: the headline is the page. Bloom, wordmark, panel
+// radius and CTA voice all come from styles.scss — this file only sizes the
+// hero's own type and rhythm.
+
 .hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 16px;
-  padding: 48px 24px;
-  max-width: 480px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 620px;
+  margin-inline: auto;
 
-  .hero-icon {
-    font-size: 4rem;
-    width: 4rem;
-    height: 4rem;
-    color: var(--mat-sys-primary);
+  // Wide screens: hold the copy off the left edge rather than centring it, so
+  // the top-left bloom has something to fall across.
+  @media (min-width: 900px) {
+    max-width: 720px;
+    margin-inline: 0 auto;
+    padding-left: var(--space-xl);
   }
+}
 
-  .hero-title {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0;
-  }
+.hero-title {
+  // 29 characters — short enough to carry display size without wrapping to four
+  // lines on a 320px screen.
+  margin: var(--space-md) 0 0;
+  font-size: clamp(2.5rem, 9vw, 4.25rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  text-wrap: balance;
+}
 
-  .hero-subtitle {
-    font-size: 1rem;
-    color: var(--mat-sys-outline);
-    margin: 0;
-  }
+.hero-sub {
+  margin: var(--space-md) 0 0;
+  max-width: 42ch; // measure, not container width
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
 
-  .feature-list {
-    list-style: none;
-    padding: 0;
-    margin: 8px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    text-align: left;
-    align-self: stretch;
+.btn-accent {
+  margin-top: var(--space-lg);
+}
 
-    li {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.9375rem;
+// The three capabilities: hairline-ruled rows. An icon on every row is the
+// generated-landing-page tell, and none of these three earn one.
+.hero-points {
+  list-style: none;
+  margin: var(--space-xl) 0 0;
+  padding: 0;
+  max-width: 42ch;
+  border-top: 1px solid var(--color-hairline-soft);
 
-      mat-icon {
-        color: var(--mat-sys-primary);
-        flex-shrink: 0;
-      }
-    }
-  }
-
-  button {
-    margin-top: 8px;
-    min-width: 160px;
+  li {
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-hairline-soft);
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
   }
 }

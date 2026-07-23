@@ -284,10 +284,16 @@
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
+  transition: transform var(--dur-instant) var(--ease-out);
 
   &:hover:not(:disabled) {
     border-color: var(--color-accent);
     color: var(--color-accent);
+  }
+
+  // Stepping episodes is a repeated tap — it needs to answer every press.
+  &:active:not(:disabled) {
+    transform: scale(0.92);
   }
 
   &:disabled {
@@ -320,10 +326,15 @@
   transition:
     background var(--dur-short) var(--ease-out),
     color var(--dur-short) var(--ease-out),
-    border-color var(--dur-short) var(--ease-out);
+    border-color var(--dur-short) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
 
   &:hover {
     border-color: var(--color-accent);
+  }
+
+  &:active {
+    transform: scale(0.97);
   }
 
   &--watched {

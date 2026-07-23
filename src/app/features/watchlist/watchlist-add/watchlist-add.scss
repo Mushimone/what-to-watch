@@ -1,11 +1,7 @@
+// .search-field and its parts are shared with the list toolbar (styles.scss).
 .search-container {
   width: 100%;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-.search-field {
-  width: 100%;
+  padding: var(--space-md);
 }
 
 .sr-only {
@@ -37,7 +33,7 @@
   transition: background var(--dur-short) var(--ease-out);
 
   &:hover {
-    background: var(--mat-sys-surface-container-high);
+    background: var(--color-surface-hi);
   }
 
   // Added rows stay in place — removing them would shift every row below out
@@ -68,10 +64,7 @@
   cursor: pointer;
   transition: transform var(--dur-short) var(--ease-out);
 
-  &:focus-visible {
-    outline: 2px solid var(--mat-sys-primary);
-    outline-offset: 2px;
-  }
+  // Focus ring comes from the global :focus-visible rule.
 
   &:active {
     transform: scale(0.99);
@@ -80,7 +73,7 @@
 
 .result-add {
   flex-shrink: 0;
-  color: var(--mat-sys-primary);
+  color: var(--color-accent);
 }
 
 .result-adding {
@@ -94,7 +87,7 @@
   object-fit: cover;
   border-radius: 4px;
   flex-shrink: 0;
-  background: var(--mat-sys-surface-container-high);
+  background: var(--color-surface-hi);
 }
 
 .result-info {
@@ -130,7 +123,7 @@
   padding-right: 8px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--mat-sys-primary);
+  color: var(--color-accent);
 
   mat-icon {
     font-size: 18px;
@@ -149,7 +142,7 @@
 .skeleton-line {
   height: 12px;
   border-radius: 4px;
-  background: var(--mat-sys-surface-container-high);
+  background: var(--color-surface-hi);
   animation: skeleton-pulse 1.4s var(--ease-in-out) infinite;
 
   &--title {

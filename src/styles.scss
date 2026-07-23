@@ -25,6 +25,10 @@
   --color-text: #f0f0f0;
   --color-text-muted: #a0a0a0;
   --color-focus: var(--color-malachite);
+  // Two lifted evergreens the base palette doesn't carry: what an elevated
+  // surface (dialog, menu) and a hover fill sit on above --color-surface.
+  --color-surface-hi: color-mix(in srgb, var(--color-surface) 88%, var(--color-text));
+  --color-surface-max: color-mix(in srgb, var(--color-surface) 80%, var(--color-text));
   // Bare channels so glows can vary alpha — keep in sync with --color-malachite.
   --rgb-accent: 22 219 101;
 
@@ -77,6 +81,10 @@
   // chat panel derive their offsets from these; change them in one place only.
   --nav-h: 64px;
   --notch-r: 34px;
+  // M3's FAB diameter. Material owns the actual size; this mirrors it so the
+  // notch can be centred on the button instead of guessed at. The ring left
+  // around the FAB is --notch-r minus half of this — currently 6px.
+  --fab-d: 56px;
 
   // Desktop rail width, and the usable row width inside it.
   --rail-w: 220px;
@@ -91,6 +99,13 @@
 
 html {
   height: 100%;
+  // clip, not hidden — hidden on the root kills position: sticky in the shell.
+  overflow-x: clip;
+  // Mobile WebKit/Chrome flash a translucent blue box over any tapped element
+  // before its own :active fires. Every control here already answers a press
+  // (scale, translate, background), so the browser's default is a second,
+  // off-palette signal arriving first. Inherits — set once.
+  -webkit-tap-highlight-color: transparent;
   @include mat.theme(
     (
       color: (
@@ -101,6 +116,84 @@ html {
       density: 0,
     )
   );
+}
+
+// ─── Material bridge ───────────────────────────────────────────────────────────
+// mat.theme() above generates an M3 ramp from $green-palette — a desaturated
+// green that is not this app's malachite. Every Material component, and the 44
+// --mat-sys-* references still in feature stylesheets, read from it.
+//
+// So point the roles at the tokens instead of restyling components one by one.
+// :root (0,1,0) outranks mat.theme()'s html (0,0,1), so this wins wherever it
+// sits in the file. Nothing below declares a raw colour — same rule as above.
+:root {
+  // Surfaces — black → evergreen → lifted evergreen
+  --mat-sys-background: var(--color-bg);
+  --mat-sys-surface: var(--color-bg);
+  --mat-sys-surface-dim: var(--color-bg);
+  --mat-sys-surface-container-lowest: var(--color-bg);
+  --mat-sys-surface-container-low: var(--color-surface);
+  --mat-sys-surface-container: var(--color-surface);
+  --mat-sys-surface-container-high: var(--color-surface-hi);
+  --mat-sys-surface-container-highest: var(--color-surface-max);
+  --mat-sys-surface-bright: var(--color-surface-hi);
+  --mat-sys-surface-variant: var(--color-surface);
+  --mat-sys-surface-tint: var(--color-accent);
+  --mat-sys-neutral10: var(--color-bg);
+  --mat-sys-neutral-variant20: var(--color-surface);
+
+  // Ink
+  --mat-sys-on-background: var(--color-text);
+  --mat-sys-on-surface: var(--color-text);
+  --mat-sys-on-surface-variant: var(--color-text-muted);
+
+  // Primary — malachite on near-black, dimming to sea green on hover
+  --mat-sys-primary: var(--color-accent);
+  --mat-sys-on-primary: var(--color-black);
+  --mat-sys-primary-container: var(--color-black-forest);
+  --mat-sys-on-primary-container: var(--color-text);
+  --mat-sys-primary-fixed: var(--color-accent);
+  --mat-sys-primary-fixed-dim: var(--color-accent-muted);
+  --mat-sys-on-primary-fixed: var(--color-black);
+  --mat-sys-on-primary-fixed-variant: var(--color-black);
+
+  // Secondary — the quiet selected state (active nav row)
+  --mat-sys-secondary: var(--color-accent-muted);
+  --mat-sys-on-secondary: var(--color-black);
+  --mat-sys-secondary-container: var(--color-black-forest);
+  --mat-sys-on-secondary-container: var(--color-text);
+  --mat-sys-secondary-fixed: var(--color-black-forest);
+  --mat-sys-secondary-fixed-dim: var(--color-accent-muted);
+  --mat-sys-on-secondary-fixed: var(--color-text);
+  --mat-sys-on-secondary-fixed-variant: var(--color-text);
+
+  // Tertiary — folded onto the same green. The theme's cyan was a third hue
+  // nothing in the app ever asked for.
+  --mat-sys-tertiary: var(--color-accent-muted);
+  --mat-sys-on-tertiary: var(--color-black);
+  --mat-sys-tertiary-container: var(--color-black-forest);
+  --mat-sys-on-tertiary-container: var(--color-text);
+  --mat-sys-tertiary-fixed: var(--color-black-forest);
+  --mat-sys-tertiary-fixed-dim: var(--color-accent-muted);
+  --mat-sys-on-tertiary-fixed: var(--color-text);
+  --mat-sys-on-tertiary-fixed-variant: var(--color-text);
+
+  // Edges
+  --mat-sys-outline: var(--color-text-muted);
+  --mat-sys-outline-variant: var(--color-hairline-soft);
+
+  // Signal
+  --mat-sys-error: var(--color-danger);
+  --mat-sys-on-error: var(--color-text);
+  --mat-sys-error-container: var(--color-danger-scrim);
+  --mat-sys-on-error-container: var(--color-text);
+
+  // Inverse (snackbars) + shadow
+  --mat-sys-inverse-surface: var(--color-text);
+  --mat-sys-inverse-on-surface: var(--color-bg);
+  --mat-sys-inverse-primary: var(--color-accent-muted);
+  --mat-sys-scrim: var(--color-black);
+  --mat-sys-shadow: var(--color-black);
 }
 
 body {
@@ -114,6 +207,7 @@ body {
   font: var(--mat-sys-body-medium);
   margin: 0;
   height: 100%;
+  overflow-x: clip;
 }
 
 // ─── Box model reset ───────────────────────────────────────────────────────────
@@ -219,7 +313,11 @@ app-root {
   }
 }
 
-// ─── Shared: like/dislike reaction button (list cards + detail dialog) ─────────
+// ─── Like/dislike reaction button ──────────────────────────────────────────────
+// The detail sheet is the only consumer since the list cards dropped theirs, so
+// this belongs in that component — except moving it there puts the sheet 306
+// bytes over the 6kB anyComponentStyle budget, and loosening that check for
+// every component is a worse trade than one misplaced block.
 .reaction-btn {
   background: var(--color-scrim-2);
   border: none;
@@ -287,13 +385,205 @@ app-root {
   }
 }
 
-// ─── Utility: full-page centered layout (used for login, home hero) ────────────
-.page-center {
+// ─── Shared: the pill search field ─────────────────────────────────────────────
+// One field shape for both places this app searches — the list toolbar filters
+// what you own, the add pane queries TMDB. Two visual languages for the same
+// gesture is what made the app feel assembled rather than designed.
+// The field carries the focus ring; the inner input suppresses its own.
+.search-field {
+  flex: 1;
+  min-width: 0;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0 var(--space-2xs) 0 var(--space-sm);
+  height: 42px;
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 99px;
+  background: var(--color-surface);
+  transition: border-color var(--dur-short) var(--ease-out);
+
+  &:focus-within {
+    border-color: var(--color-accent);
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+.search-icon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.95rem;
+
+  &::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &::-webkit-search-cancel-button {
+    display: none; // replaced by the styled clear button
+  }
+}
+
+// Hairline between typing and filtering — separate jobs sharing one shell.
+.field-sep {
+  flex-shrink: 0;
+  width: 1px;
+  height: 20px;
+  background: var(--color-hairline-soft);
+}
+
+.icon-btn {
+  flex-shrink: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    color var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+
+  // Sits outside the field, so it needs its own edge to read as a control.
+  &--framed {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--color-hairline-soft);
+
+    &:hover {
+      border-color: var(--color-hairline);
+    }
+  }
+
+  &--on {
+    color: var(--color-accent);
+  }
+
+  mat-icon {
+    font-size: 1.15rem;
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+}
+
+// ─── Entry surfaces (home · login · invite) ────────────────────────────────────
+// The three signed-out pages share one canvas: near-black lit by a single static
+// accent bloom, top-left. Same bloom language as the chat panel — it is the one
+// place this app spends colour, so it should read the same everywhere it appears.
+.entry {
+  position: relative;
+  isolation: isolate; // keeps the bloom above the fill, below the content
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   min-height: 100dvh;
-  padding: 24px 16px;
-  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+
+  // One bloom, never animated.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(60% 45% at 15% 0%, rgb(var(--rgb-accent) / 0.16), transparent 70%);
+  }
+
+  // Panelled entries (login, invite) centre their card; the hero is left-biased.
+  &--panel {
+    align-items: center;
+  }
+}
+
+// Mono eyebrow — the wordmark on entry pages, matching the chat panel's mode tabs.
+.entry-mark {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.entry-panel {
+  width: 100%;
+  max-width: 380px;
+  padding: var(--space-lg);
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+  text-align: left;
+}
+
+// ─── Shared: the accent CTA (entry pages) ──────────────────────────────────────
+// Filled malachite pill dimming to sea green — the same verb voice as the rail's
+// Add button and the chat panel's send button.
+.btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 46px;
+  padding: 0 var(--space-lg);
+  border: none;
+  border-radius: 99px;
+  background: var(--color-accent);
+  color: var(--color-black);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap; // a CTA that wraps to two lines stops reading as a button
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background var(--dur-short) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
+
+  &:hover:not(:disabled) {
+    background: var(--color-accent-muted);
+    color: var(--color-text);
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &--block {
+    display: flex;
+    width: 100%;
+  }
 }

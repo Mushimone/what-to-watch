@@ -101,10 +101,6 @@ export class WatchlistList {
   toggleWatched(item: WatchlistItem) {
     this.watchlist.toggleWatchedStatus(item.id, !item.watched);
   }
-  /** Tapping the active reaction again clears it. */
-  setReaction(item: WatchlistItem, reaction: 'liked' | 'disliked') {
-    this.watchlist.setReaction(item.id, item.reaction === reaction ? null : reaction);
-  }
   /** Picking the active type again clears it — the menu doubles as its own reset. */
   applyType(key: string) {
     this.activeType.update((current) => (current === key ? null : key));

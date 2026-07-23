@@ -1,26 +1,28 @@
 <div class="search-container">
-  <mat-form-field appearance="outline" class="search-field">
-    <mat-label>Search for movies or TV shows</mat-label>
+  <!-- Same pill as the list toolbar (styles.scss): one search shape per app. -->
+  <div class="search-field">
+    <mat-icon class="search-icon">search</mat-icon>
     <input
-      matInput
       #input
+      type="search"
+      class="search-input"
       [formControl]="searchControl"
-      placeholder="Type a title"
+      placeholder="Search movies, series &amp; anime"
+      aria-label="Search TMDB for a title to add"
       autocomplete="off"
       (keydown.escape)="clear()"
     />
     @if (searchControl.value) {
       <button
-        matIconSuffix
-        mat-icon-button
         type="button"
+        class="icon-btn"
         aria-label="Clear search"
         (click)="clear(); input.focus()"
       >
         <mat-icon>close</mat-icon>
       </button>
     }
-  </mat-form-field>
+  </div>
 
   <span class="sr-only" role="status" aria-live="polite">{{ statusMessage() }}</span>
 

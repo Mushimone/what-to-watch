@@ -1,21 +1,15 @@
-﻿<div class="login-page">
-  <mat-card class="login-card">
-    <mat-card-header>
-      <div class="login-logo"></div>
-      <h1>What to Watch</h1>
-    </mat-card-header>
+<div class="entry entry--panel">
+  <div class="entry-panel">
+    <span class="entry-mark">What to Watch</span>
 
-    <mat-card-subtitle>
-      Your personal watchlist for movies, series and anime
-    </mat-card-subtitle>
+    <h1 class="login-title">Sign in</h1>
+    <p class="login-sub">Your personal watchlist for movies, series and anime.</p>
 
-    <mat-card-content>
-      <button mat-raised-button class="google-btn" (click)="loginWithGoogle()">
-        <span class="google-icon">G</span>
-        Continue with Google
-      </button>
-    </mat-card-content>
-  </mat-card>
+    <button class="btn-accent btn-accent--block" (click)="loginWithGoogle()">
+      <span class="google-g" aria-hidden="true">G</span>
+      Continue with Google
+    </button>
+  </div>
 
-  <p class="login-footer">By signing in you agree to our terms of service (there are none)</p>
+  <p class="login-foot">By signing in you agree to our terms of service (there are none)</p>
 </div>

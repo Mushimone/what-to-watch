@@ -291,6 +291,11 @@
     transform: translateY(-3px);
   }
 
+  // Touch never fires :hover, so the press is the only feedback there.
+  &:active {
+    transform: scale(0.97);
+  }
+
   &:focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: 3px;

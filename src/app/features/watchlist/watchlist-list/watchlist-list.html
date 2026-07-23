@@ -125,6 +125,7 @@
                   <div class="card" (click)="openDetail(item)">
                     <img [class.watched]="item.watched" [src]="item.poster_url" alt="{{ item.title }} poster" class="poster" />
                     <div class="details">
+                      <span class="type-badge">{{ item.type }}</span>
                       <div class="card-actions">
                         <button class="card-icon-btn" (click)="$event.stopPropagation(); toggleWatched(item)" [title]="item.watched ? 'Mark unwatched' : 'Mark watched'">
                           <mat-icon>{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
@@ -133,7 +134,6 @@
                           <mat-icon>delete</mat-icon>
                         </button>
                       </div>
-                      <span class="type-badge">{{ item.type }}</span>
                       @if (item.has_update) {
                         <span class="new-season-badge">{{ (item.season_count ?? 0) >= 2 ? 'New season' : 'New episodes' }}</span>
                       }
@@ -154,26 +154,6 @@
                         </p>
                       }
                       <p class="genres">{{ item.genres.join(', ') }}</p>
-                      <div class="reactions">
-                        <button
-                          class="reaction-btn reaction-btn--like"
-                          [class.reaction-btn--active]="item.reaction === 'liked'"
-                          [attr.aria-pressed]="item.reaction === 'liked'"
-                          (click)="$event.stopPropagation(); setReaction(item, 'liked')"
-                          title="I liked this"
-                        >
-                          <mat-icon>{{ item.reaction === 'liked' ? 'favorite' : 'favorite_border' }}</mat-icon>
-                        </button>
-                        <button
-                          class="reaction-btn reaction-btn--down"
-                          [class.reaction-btn--active]="item.reaction === 'disliked'"
-                          [attr.aria-pressed]="item.reaction === 'disliked'"
-                          (click)="$event.stopPropagation(); setReaction(item, 'disliked')"
-                          title="I didn't like this"
-                        >
-                          <mat-icon>thumb_down</mat-icon>
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </li>

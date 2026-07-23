@@ -98,27 +98,11 @@
       cursor: not-allowed;
     }
 
-    // Active state carries weight + a dot as well as colour — colour alone is
-    // not a state anyone can read.
+    // Active state carries weight as well as colour — colour alone is not a
+    // state anyone can read. The template also sets aria-current.
     &--active {
       color: var(--mat-sys-primary);
       font-weight: 700;
-
-      mat-icon {
-        position: relative;
-      }
-
-      mat-icon::after {
-        content: '';
-        position: absolute;
-        left: 50%;
-        bottom: -3px;
-        width: 4px;
-        height: 4px;
-        margin-left: -2px;
-        border-radius: 50%;
-        background: currentColor;
-      }
     }
   }
 }

@@ -23,11 +23,18 @@ li {
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
+  transition: transform var(--dur-instant) var(--ease-out);
 
   // Keyboard users get the overlay too — hover alone strands them.
   &:hover .details,
   &:focus-within .details {
     opacity: 1;
+  }
+
+  // On touch the overlay is always up and hover never fires, so this press is
+  // the card's only acknowledgement of a tap.
+  &:active {
+    transform: scale(0.97);
   }
 }
 .watched {
@@ -106,16 +113,13 @@ li {
   }
 }
 
-// .reaction-btn visual lives in global styles.scss (shared with the detail dialog).
-.reactions {
-  display: flex;
-  gap: var(--space-xs);
-  margin-top: var(--space-xs);
-}
-
-// Category label — quiet, outlined. The accent fill is reserved for the one
-// badge that's actually news (a new season).
+// Category label — quiet, outlined, pinned opposite the card's action buttons.
+// The accent fill is reserved for the one badge that's actually news (a new
+// season), which stays in the flow above the title.
 .type-badge {
+  position: absolute;
+  top: var(--space-xs);
+  left: var(--space-xs);
   font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -209,112 +213,8 @@ li {
   }
 }
 
-.search-field {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: 0 var(--space-2xs) 0 var(--space-sm);
-  height: 42px;
-  border: 1px solid var(--color-hairline-soft);
-  border-radius: 99px;
-  background: var(--color-surface);
-  transition: border-color var(--dur-short) var(--ease-out);
-
-  // The input's own ring is suppressed below, so the field carries it instead.
-  &:focus-within {
-    border-color: var(--color-accent);
-    outline: 2px solid var(--color-focus);
-    outline-offset: 2px;
-  }
-}
-
-.search-icon {
-  flex-shrink: 0;
-  color: var(--color-text-muted);
-  font-size: 1.2rem;
-  width: 1.2rem;
-  height: 1.2rem;
-}
-
-.search-input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: none;
-  color: var(--color-text);
-  font: inherit;
-  font-size: 0.95rem;
-
-  &::placeholder {
-    color: var(--color-text-muted);
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  &::-webkit-search-cancel-button {
-    display: none; // replaced by the styled clear button
-  }
-}
-
-// Hairline between typing and filtering — they're separate jobs sharing one shell.
-.field-sep {
-  flex-shrink: 0;
-  width: 1px;
-  height: 20px;
-  background: var(--color-hairline-soft);
-}
-
-.icon-btn {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: none;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition:
-    color var(--dur-short) var(--ease-out),
-    border-color var(--dur-short) var(--ease-out),
-    transform var(--dur-instant) var(--ease-out);
-
-  &:hover {
-    color: var(--color-text);
-  }
-
-  &:active {
-    transform: scale(0.92);
-  }
-
-  // Sort sits outside the field, so it needs its own edge to read as a control.
-  &--framed {
-    width: 42px;
-    height: 42px;
-    border: 1px solid var(--color-hairline-soft);
-
-    &:hover {
-      border-color: var(--color-hairline);
-    }
-  }
-
-  &--on {
-    color: var(--color-accent);
-  }
-
-  mat-icon {
-    font-size: 1.15rem;
-    width: 1.15rem;
-    height: 1.15rem;
-  }
-}
+// .search-field / .search-icon / .search-input / .field-sep / .icon-btn are
+// shared with the add pane — they live in styles.scss.
 
 .time-btn {
   flex-shrink: 0;
