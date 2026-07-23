@@ -10,20 +10,22 @@
 
 ## Features
 
-|                |                                                                                                                                   |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 🔍 **Search**  | Find movies, series and anime via the TMDB API                                                                                    |
-| ✅ **Track**   | Mark titles as watched / unwatched, filter and sort your list                                                                     |
-| 🤖 **AI chat** | Context-aware assistant (MiMo) that knows your list and reasons about mood, tone and atmosphere — not just genre tags            |
-| 📱 **PWA**     | Installable on mobile, works like a native app                                                                                    |
-| 🔐 **Auth**    | Google OAuth via Supabase, per-user data with Row Level Security                                                                  |
+|                 |                                                                                                                       |
+| --------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 🔍 **Search**   | Find movies, series and anime via the TMDB API                                                                        |
+| ✅ **Track**    | Mark titles watched / unwatched, follow seasons and episodes, filter and sort your list                               |
+| 👥 **Friends**  | Invite by one-time link, then see both lists merged with what you each already want                                   |
+| 🎲 **Decide**   | Pick tonight's title by knockout tournament, by how much time you have, or by asking the AI                           |
+| 🤖 **AI chat**  | Context-aware assistant (MiMo) that knows your list and reasons about mood, tone and atmosphere — not just genre tags |
+| 📱 **PWA**      | Installable on mobile, works like a native app                                                                        |
+| 🔐 **Auth**     | Google OAuth via Supabase, per-user data with Row Level Security                                                      |
 
 ---
 
 ## Tech stack
 
 - **Framework** — Angular 21 (standalone components, signals, control flow)
-- **UI** — Angular Material 3, dark theme, mobile-first
+- **UI** — Angular Material 3 bridged onto a project token system (see [Design](#design)), dark, mobile-first
 - **Reactive layer** — RxJS (`combineLatest`, `BehaviorSubject`, `takeUntilDestroyed`)
 - **Backend / Auth** — Supabase (PostgreSQL + RLS + Google OAuth)
 - **AI** — MiMo (OpenAI-compatible chat-completions API)
@@ -36,7 +38,7 @@
 
 ### Prerequisites
 
-- Node.js ≥ 18
+- Node.js `^20.19` · `^22.12` · `≥24` (Angular 21's supported range)
 - A [Supabase](https://supabase.com) project with Google OAuth enabled
 - A [TMDB](https://www.themoviedb.org/settings/api) API key
 - A MiMo API key + model name
@@ -44,7 +46,7 @@
 ### Setup
 
 ```bash
-git clone https://github.com/your-username/what-to-watch.git
+git clone https://github.com/Mushimone/what-to-watch.git
 cd what-to-watch
 npm install
 ```
@@ -89,23 +91,50 @@ src/app/
 ├── core/
 │   ├── guards/          # auth.guard, redirect-if-auth.guard
 │   ├── models/          # TypeScript interfaces
-│   └── services/        # SupabaseService, WatchlistService, SearchService, OpenAiService
+│   └── services/        # Supabase, Watchlist, Search, Friends, Profile, OpenAi
 ├── features/
 │   ├── home/            # Landing page (unauthenticated)
-│   ├── auth/            # Login (Google OAuth)
+│   ├── auth/            # Login (Google OAuth) + username dialog
+│   ├── invite/          # Accepts a friend's one-time invite link
 │   └── watchlist/
-│       ├── watchlist-list/     # Grid, filters, sort
-│       ├── watchlist-add/      # Search + add flow
-│       └── watchlist-ai-chat/  # FAB + AI chat panel
+│       ├── watchlist-list/           # Grid, filters, sort
+│       ├── watchlist-add/            # Search + add flow
+│       ├── watchlist-shared/         # Friends roster, shared pool, tournament
+│       ├── watchlist-detail-dialog/  # Title sheet (details, seasons, reactions)
+│       ├── watchlist-ai-chat/        # FAB + AI chat panel
+│       └── watchlist-*-dialog/       # Time picker, group pick, tournament
 └── shared/
     └── pipes/           # MarkdownPipe (renders AI replies)
+
+supabase/
+├── functions/           # mimo-chat, refresh-series (edge functions)
+└── migrations/          # Schema, RLS policies, cron
 ```
+
+---
+
+## Design
+
+One token system, declared at the top of `src/styles.scss`. Nothing in the app
+declares a raw colour, duration, easing or z-index — if a value is needed, it
+gets a name there first.
+
+- **Palette** — near-black tinted toward evergreen, malachite accent
+- **Type** — Bricolage Grotesque (display) + Roboto (body) + system mono
+- **Spacing** — 4pt scale
+- **Motion** — three named easings; `prefers-reduced-motion` collapses it
+
+Angular Material's M3 colour roles are pointed at those tokens in a single
+`:root` bridge block rather than restyled component by component, so Material
+components and hand-built ones draw from one palette. `mat.theme()` still
+generates the ramp; the bridge overrides its colours (a `:root` selector
+outranks the `html` one the mixin emits).
 
 ---
 
 ## Deployment
 
-The app deploys automatically to Vercel on every push to `main`.
+The app deploys automatically to Vercel on every push to `master`.
 
 To inject keys at build time without committing them, set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `TMDB_API_KEY`, `MIMO_API_KEY` and `MIMO_MODEL` in your Vercel project environment variables — the `prebuild` script (`scripts/set-env.js`) generates `environment.prod.ts` from them before `ng build` runs.
 
@@ -116,13 +145,3 @@ A GitHub Actions workflow (`.github/workflows/supabase-keep-alive.yml`) pings th
 ## License
 
 MIT
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
