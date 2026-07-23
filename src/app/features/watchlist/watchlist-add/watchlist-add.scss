@@ -4,6 +4,21 @@
   padding: var(--space-md);
 }
 
+.search-sticky {
+  position: sticky;
+  // Parks under the mobile top bar; on desktop .content is the scroller.
+  top: var(--header-h);
+  z-index: var(--z-sticky);
+  // Bleeds over the container's padding so rows don't slide through the gutters.
+  margin: calc(var(--space-md) * -1) calc(var(--space-md) * -1) 0;
+  padding: var(--space-md);
+  background: var(--mat-sys-surface);
+
+  @media (min-width: 900px) {
+    top: 0;
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -79,6 +94,12 @@
 .result-adding {
   flex-shrink: 0;
   margin: 10px;
+}
+
+.result-sentinel {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
 }
 
 .result-poster {

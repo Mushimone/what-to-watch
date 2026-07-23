@@ -10,6 +10,10 @@
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
+  // Fixed to the token the panes' sticky bars offset themselves by — measuring
+  // it isn't possible in CSS, so the token is the single source of truth.
+  height: var(--header-h);
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: var(--space-2xs);

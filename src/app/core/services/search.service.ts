@@ -23,18 +23,28 @@ export class SearchService {
   tmdbTvGenreMap: Record<number, string> = {};
   tmdbMovieGenreMap: Record<number, string> = {};
 
-  searchTmdb(query: string): Observable<SearchResult[]> {
+  /**
+   * One page of results — TMDB serves 20 per page and `page` is 1-based.
+   * `totalPages` is what tells the caller whether another page exists.
+   */
+  searchTmdb(
+    query: string,
+    page = 1,
+  ): Observable<{ results: SearchResult[]; totalPages: number }> {
     const params = {
       api_key: environment.tmdb.apiKey,
       query: query,
+      page,
     };
     return this.http.get<TmdbSearchResponse>(this.url, { params }).pipe(
-      map((response) =>
-        (response.results || []).filter(
-          (result) => result.media_type === 'movie' || result.media_type === 'tv',
+      map((response) => ({
+        results: this.mapToSearchResults(
+          (response.results || []).filter(
+            (result) => result.media_type === 'movie' || result.media_type === 'tv',
+          ),
         ),
-      ),
-      map((response) => this.mapToSearchResults(response)),
+        totalPages: response.total_pages ?? 1,
+      })),
     );
   }
   mapToSearchResults(results: TmdbSearchResponse['results']): SearchResult[] {
@@ -49,7 +59,9 @@ export class SearchService {
         : null,
       external_id: result.id.toString(),
       external_source: 'tmdb',
-      release_date: result.media_type === 'movie' ? result.release_date : result.first_air_date,
+      // TMDB sends "" for unreleased/unknown dates — Postgres rejects it as a date
+      release_date:
+        (result.media_type === 'movie' ? result.release_date : result.first_air_date) || undefined,
       vote_average: result.vote_average,
     }));
   }

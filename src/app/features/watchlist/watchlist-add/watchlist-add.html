@@ -1,30 +1,33 @@
 <div class="search-container">
-  <!-- Same pill as the list toolbar (styles.scss): one search shape per app. -->
-  <div class="search-field">
-    <mat-icon class="search-icon">search</mat-icon>
-    <input
-      #input
-      type="search"
-      class="search-input"
-      [formControl]="searchControl"
-      placeholder="Search movies, series &amp; anime"
-      aria-label="Search TMDB for a title to add"
-      autocomplete="off"
-      (keydown.escape)="clear()"
-    />
-    @if (searchControl.value) {
-      <button
-        type="button"
-        class="icon-btn"
-        aria-label="Clear search"
-        (click)="clear(); input.focus()"
-      >
-        <mat-icon>close</mat-icon>
-      </button>
-    }
-  </div>
+  <!-- Sticky bar: the field stays put while the results scroll under it. -->
+  <div class="search-sticky">
+    <!-- Same pill as the list toolbar (styles.scss): one search shape per app. -->
+    <div class="search-field">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        #input
+        type="search"
+        class="search-input"
+        [formControl]="searchControl"
+        placeholder="Search movies, series &amp; anime"
+        aria-label="Search TMDB for a title to add"
+        autocomplete="off"
+        (keydown.escape)="clear()"
+      />
+      @if (searchControl.value) {
+        <button
+          type="button"
+          class="icon-btn"
+          aria-label="Clear search"
+          (click)="clear(); input.focus()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
 
-  <span class="sr-only" role="status" aria-live="polite">{{ statusMessage() }}</span>
+    <span class="sr-only" role="status" aria-live="polite">{{ statusMessage() }}</span>
+  </div>
 
   @let search = state();
 
@@ -96,6 +99,12 @@
                 <mat-icon>add</mat-icon>
               </button>
             }
+          </li>
+        }
+        <!-- Scrolls into view a little before the bottom and pulls the next page. -->
+        @if (hasMore()) {
+          <li class="result-sentinel" appInfiniteScroll (reached)="loadMore()">
+            <mat-spinner [diameter]="20"></mat-spinner>
           </li>
         }
       </ul>

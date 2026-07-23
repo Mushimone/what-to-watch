@@ -72,7 +72,7 @@
                 }
               </mat-menu>
             </div>
-        @if (displayedItems$ | async; as items) {
+        @let items = displayedItems();
           @if( isLoading()){
             <p class="list-note">Loading your watchlist...</p>
           }
@@ -115,8 +115,8 @@
                   <mat-icon>close</mat-icon>
                 </button>
               }
-              @if (items.length < totalCount()) {
-                <span class="count">{{ items.length }} of {{ totalCount() }}</span>
+              @if (matched().length < totalCount()) {
+                <span class="count">{{ matched().length }} of {{ totalCount() }}</span>
               }
             </div>
             <ul class="watchlist-grid">
@@ -159,8 +159,9 @@
                 </li>
               }
             </ul>
+            <!-- Scrolls into view a little before the bottom and paints the next page. -->
+            @if (hasMore()) {
+              <div class="list-sentinel" appInfiniteScroll (reached)="loadMore()" aria-hidden="true"></div>
+            }
           }
-        } @else {
-          <p>Loading your watchlist...</p>
-        }
       </div>

@@ -1,5 +1,5 @@
-import { AsyncPipe, DecimalPipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,11 +7,14 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { WatchlistService } from '../../../core/services/watchlist.service';
-import { combineLatest, map } from 'rxjs';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { InfiniteScroll } from '../../../core/directives/infinite-scroll';
 import { WatchlistItem } from '../../../core/models/watchlist-item.model';
 import { WatchlistDetailDialog } from '../watchlist-detail-dialog/watchlist-detail-dialog';
 import { WatchlistTimePickerDialog } from '../watchlist-time-picker-dialog/watchlist-time-picker-dialog';
+
+/** Cards rendered per scroll step — the whole list is already in memory. */
+const PAGE = 24;
 
 @Component({
   selector: 'app-watchlist-list',
@@ -20,9 +23,9 @@ import { WatchlistTimePickerDialog } from '../watchlist-time-picker-dialog/watch
     MatButtonModule,
     MatMenuModule,
     MatTooltipModule,
-    AsyncPipe,
     DecimalPipe,
     MatIconModule,
+    InfiniteScroll,
   ],
   templateUrl: './watchlist-list.html',
   styleUrl: './watchlist-list.scss',
@@ -72,22 +75,29 @@ export class WatchlistList {
     return this.typeFilters.find((t) => t.key === this.activeType())?.label ?? null;
   }
 
-  watchlistItems$ = this.watchlist.watchlistItems$;
+  private items = toSignal(this.watchlist.watchlistItems$, { initialValue: [] as WatchlistItem[] });
   /** Total count regardless of the active filter — drives empty-state messaging. */
-  totalCount = toSignal(this.watchlistItems$.pipe(map((items) => items.length)), {
-    initialValue: 0,
-  });
-  displayedItems$ = combineLatest([
-    this.watchlistItems$,
-    toObservable(this.query),
-    toObservable(this.activeType),
-    toObservable(this.unwatchedOnly),
-    toObservable(this.activeSort),
-  ]).pipe(
-    map(([items, query, type, unwatched, sort]) =>
-      this.sortItems(this.filterItems(items, query, type, unwatched), sort),
+  totalCount = computed(() => this.items().length);
+  /** Everything matching the filters — what the "x of y" chip counts. */
+  matched = computed(() =>
+    this.sortItems(
+      this.filterItems(this.items(), this.query(), this.activeType(), this.unwatchedOnly()),
+      this.activeSort(),
     ),
   );
+  // The full list is fetched once and filtered in memory, so paging here is
+  // rendering only: cards are cheap to keep but not to paint all at once.
+  // Any change to the narrowing starts the scroll over at the first page.
+  private limit = linkedSignal({
+    source: () => [this.query(), this.activeType(), this.unwatchedOnly(), this.activeSort()],
+    computation: () => PAGE,
+  });
+  displayedItems = computed(() => this.matched().slice(0, this.limit()));
+  hasMore = computed(() => this.limit() < this.matched().length);
+
+  loadMore() {
+    this.limit.update((count) => count + PAGE);
+  }
 
   async ngOnInit() {
     await this.watchlist.getWatchlist();

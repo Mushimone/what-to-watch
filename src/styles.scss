@@ -81,6 +81,9 @@
   // chat panel derive their offsets from these; change them in one place only.
   --nav-h: 64px;
   --notch-r: 34px;
+  // Height of the sticky top bar: one 40px icon button plus its padding. The
+  // panes' own sticky bars park directly under it, so they read it from here.
+  --header-h: calc(40px + var(--space-xs) + max(var(--space-xs), env(safe-area-inset-top)));
   // M3's FAB diameter. Material owns the actual size; this mirrors it so the
   // notch can be centred on the button instead of guessed at. The ring left
   // around the FAB is --notch-r minus half of this — currently 6px.

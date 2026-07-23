@@ -30,7 +30,15 @@ describe('WatchlistAdd', () => {
       providers: [
         {
           provide: SearchService,
-          useValue: { searchTmdb: () => of([result('1', 'Dune'), result('2', 'Dune: Part Two')]) },
+          useValue: {
+            // Page 2 repeats Dune on purpose — TMDB does, and duplicate keys throw.
+            searchTmdb: (_query: string, page = 1) =>
+              of(
+                page === 1
+                  ? { results: [result('1', 'Dune'), result('2', 'Dune: Part Two')], totalPages: 2 }
+                  : { results: [result('1', 'Dune'), result('3', 'Dune Messiah')], totalPages: 2 },
+              ),
+          },
         },
         {
           provide: WatchlistService,
@@ -94,6 +102,20 @@ describe('WatchlistAdd', () => {
 
     await component.quickAdd(result('2', 'Dune: Part Two'));
     expect(saved.value.length).toBe(2);
+  });
+
+  it('appends the next page on scroll, without duplicates, and stops at the last', () => {
+    component.searchControl.setValue('dune');
+    vi.advanceTimersByTime(300);
+    expect(component.hasMore()).toBe(true);
+
+    component.loadMore();
+    expect(component.state().results.map((r) => r.external_id)).toEqual(['1', '2', '3']);
+    expect(component.hasMore()).toBe(false);
+
+    // Nothing left to page in — the sentinel is gone, but a stray call is a no-op.
+    component.loadMore();
+    expect(component.state().results.length).toBe(3);
   });
 
   it('clears the results as soon as the query is cleared', () => {
