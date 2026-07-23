@@ -81,8 +81,10 @@
       <app-watchlist-shared [hidden]="activeSection() !== 'shared'"></app-watchlist-shared>
     </main>
 
-    <!-- Add: floating action button, bottom-right (hidden while already adding) -->
-    @if (activeSection() !== 'add') {
+    <!-- Add: floating action button, bottom-right. Hidden while already adding,
+         and while the chat is up — it sits at z-fab and would punch a hole in
+         the panel's bottom-right corner. One floating action at a time. -->
+    @if (activeSection() !== 'add' && !chat.isOpen) {
       <button mat-fab class="add-fab" (click)="setSection('add')" aria-label="Add a title">
         <mat-icon>add</mat-icon>
       </button>

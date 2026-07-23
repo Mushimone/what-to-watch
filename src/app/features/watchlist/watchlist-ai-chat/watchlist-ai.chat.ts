@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   ElementRef,
   inject,
   Input,
@@ -10,9 +11,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { take } from 'rxjs';
 import { OpenAiMessage } from '../../../core/models/openai.models';
 import { WatchlistItem } from '../../../core/models/watchlist-item.model';
@@ -23,13 +22,17 @@ import { fmtItem, RECOMMEND_STYLE } from '../recommend.prompt';
 
 export type ChatMode = 'list' | 'add';
 
+/** One rendered bubble — the model's text is markdown, the user's is plain. */
+export interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
+}
+
 @Component({
   selector: 'app-watchlist-ai-chat',
   imports: [
     MatButtonModule,
     MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
     FormsModule,
     MarkdownPipe,
   ],
@@ -50,8 +53,11 @@ export class WatchlistAiChatComponent implements OnChanges {
     }, 0);
   }
 
-  /** Passed by the parent — changes whenever the user switches tabs */
+  /** Starting mode from the parent — changes whenever the user switches tabs */
   @Input() mode: ChatMode = 'list';
+
+  /** What the chat is actually doing — the header toggle can override the tab. */
+  activeMode = signal<ChatMode>('list');
 
   private _isOpen = false;
   get isOpen() {
@@ -71,73 +77,89 @@ export class WatchlistAiChatComponent implements OnChanges {
     }
   }
 
-  isLoading = signal(false);
+  /** Which thread is waiting on a reply, so the caret shows in that one only. */
+  streamingMode = signal<ChatMode | null>(null);
   inputText = '';
 
-  history: OpenAiMessage[] = [];
-  displayMessages = signal<{ role: 'user' | 'model'; text: string }[]>([]);
-
   /**
-   * ngOnChanges fires whenever an @Input changes after the first render.
-   * We use it to rebuild context (and reset chat) when the user switches tabs.
+   * Each mode keeps its own thread — the two system prompts contradict each
+   * other, so switching must not carry turns across, and coming back should
+   * find the conversation where you left it.
    */
+  history: Record<ChatMode, OpenAiMessage[]> = { list: [], add: [] };
+  private transcripts = signal<Record<ChatMode, ChatMessage[]>>({ list: [], add: [] });
+
+  /** Only the thread of the mode on screen is rendered. */
+  displayMessages = computed(() => this.transcripts()[this.activeMode()]);
+
+  private pushMessage(mode: ChatMode, msg: ChatMessage): void {
+    this.transcripts.update((t) => ({ ...t, [mode]: [...t[mode], msg] }));
+  }
+
+  /** Rewrite the tail of a thread — the growing reply while tokens stream in. */
+  private setLastText(mode: ChatMode, text: string): void {
+    this.transcripts.update((t) => ({
+      ...t,
+      [mode]: t[mode].map((m, i) => (i === t[mode].length - 1 ? { ...m, text } : m)),
+    }));
+  }
+
+  /** Switching tabs realigns the chat, same as tapping the header toggle. */
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['mode'] && !changes['mode'].firstChange) {
-      this.watchlist.watchlistItems$.pipe(take(1)).subscribe((items) => {
-        this.buildContext(items);
-        this.displayMessages.set([]); // fresh conversation for the new mode
-      });
-    }
+    if (changes['mode']) this.setMode(this.mode);
+  }
+
+  setMode(mode: ChatMode): void {
+    if (mode === this.activeMode()) return;
+    this.activeMode.set(mode);
+    this.watchlist.watchlistItems$.pipe(take(1)).subscribe((items) => {
+      this.buildContext(items);
+    });
   }
 
   onSend(): void {
     const text = this.inputText.trim();
-    if (!text || this.isLoading()) return;
+    // The mode is pinned for the whole exchange: switching mid-stream must not
+    // drop the reply into the other thread.
+    const mode = this.activeMode();
+    if (!text || this.streamingMode() === mode) return;
 
     this.inputText = '';
-    this.displayMessages.update((msgs) => [...msgs, { role: 'user', text }]);
+    this.pushMessage(mode, { role: 'user', text });
     this.scrollToBottom();
 
     const userTurn: OpenAiMessage = { role: 'user', content: text };
-    this.history.push(userTurn);
+    this.history[mode].push(userTurn);
 
-    this.isLoading.set(true);
+    this.streamingMode.set(mode);
     // Streamed: the typing indicator gives way to the reply bubble on the first
     // token, and the text grows in place while the model keeps writing.
     let reply = '';
-    this.openai.stream(this.history).subscribe({
+    this.openai.stream(this.history[mode]).subscribe({
       next: (delta) => {
         if (!reply) {
-          this.isLoading.set(false);
-          this.displayMessages.update((msgs) => [...msgs, { role: 'model', text: '' }]);
+          this.streamingMode.set(null);
+          this.pushMessage(mode, { role: 'model', text: '' });
         }
         reply += delta;
-        this.displayMessages.update((msgs) =>
-          msgs.map((m, i) => (i === msgs.length - 1 ? { ...m, text: reply } : m)),
-        );
+        this.setLastText(mode, reply);
         this.scrollToBottom('auto');
       },
       complete: () => {
-        this.isLoading.set(false);
+        this.streamingMode.set(null);
         if (!reply.trim()) {
-          this.displayMessages.update((msgs) => [
-            ...msgs,
-            { role: 'model', text: "I couldn't put that into words — try rephrasing?" },
-          ]);
+          this.pushMessage(mode, {
+            role: 'model',
+            text: "I couldn't put that into words — try rephrasing?",
+          });
         } else {
-          this.history.push({ role: 'assistant', content: reply });
+          this.history[mode].push({ role: 'assistant', content: reply });
         }
         this.scrollToBottom();
       },
       error: () => {
-        this.isLoading.set(false);
-        this.displayMessages.update((msgs) => [
-          ...msgs,
-          {
-            role: 'model',
-            text: 'Something went wrong. Please try again.',
-          },
-        ]);
+        this.streamingMode.set(null);
+        this.pushMessage(mode, { role: 'model', text: 'Something went wrong. Please try again.' });
         this.scrollToBottom();
       },
     });
@@ -194,8 +216,13 @@ ALREADY IN MY LIST — never suggest these:
 ${[...watched, ...unwatched].map(fmt).join('\n') || 'Nothing added yet'}
     `.trim();
 
-    this.history = [
-      { role: 'system', content: this.mode === 'list' ? listContext : addContext },
+    // Refresh the system prompt in place — the turns already exchanged in this
+    // thread stay, so reopening the panel doesn't make the model forget them.
+    const mode = this.activeMode();
+    const turns = this.history[mode].filter((m) => m.role !== 'system');
+    this.history[mode] = [
+      { role: 'system', content: mode === 'list' ? listContext : addContext },
+      ...turns,
     ];
   }
 }

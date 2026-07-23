@@ -36,6 +36,7 @@
   --color-scrim-4: rgb(0 0 0 / 0.85);
   --color-hairline: rgb(255 255 255 / 0.25);
   --color-hairline-soft: rgb(255 255 255 / 0.12);
+  --color-fill-soft: rgb(255 255 255 / 0.04); // barely-there fill on dark surfaces
 
   // Signal colours
   --color-danger: #e5534b;
@@ -46,6 +47,7 @@
   // Type
   --font-display: 'Bricolage Grotesque', Roboto, system-ui, sans-serif;
   --font-body: Roboto, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Roboto Mono', 'Cascadia Code', monospace;
 
   // Spacing — 4pt scale
   --space-2xs: 4px;
