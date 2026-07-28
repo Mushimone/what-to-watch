@@ -35,7 +35,29 @@
     />
   </head>
   <body>
-    <app-root></app-root>
+    <!-- The fallback inside <app-root> is what crawlers and no-JS visitors read
+         (Angular replaces it on bootstrap), so it states the app's purpose in
+         plain HTML — Google's OAuth review fetches this page without running JS. -->
+    <app-root>
+      <main style="max-width: 34rem; margin: 0 auto; padding: 3rem 1rem; color: #f0f0f0; font-family: Roboto, system-ui, sans-serif">
+        <h1 style="font-size: 1.75rem; line-height: 1.1">What to Watch</h1>
+        <p>
+          What to Watch is a personal watchlist for movies, series and anime. Sign in with Google to
+          track what you have watched, share your list with friends, and get AI suggestions when
+          neither of you can decide.
+        </p>
+        <ul>
+          <li>Search movies, series and anime via TMDB</li>
+          <li>Track what you have watched, season by season</li>
+          <li>Compare watchlists with friends</li>
+          <li>Get AI recommendations tailored to your mood</li>
+        </ul>
+        <p>
+          <a href="/privacy" style="color: #16db65">Privacy Policy</a> ·
+          <a href="/terms" style="color: #16db65">Terms of Service</a>
+        </p>
+      </main>
+    </app-root>
     <noscript>Please enable JavaScript to continue using this application.</noscript>
   </body>
 </html>
