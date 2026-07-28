@@ -365,9 +365,15 @@ export class WatchlistDetailDialog {
             'You recommend movies and TV shows. Given one title the user likes, suggest exactly 4 ' +
             'similar titles they would enjoy, matching on plot, tone and themes — not just genre ' +
             'labels. Prefer well-known, findable titles.\n' +
-            'Output ONLY a markdown bullet list, nothing before or after it. Each bullet must be ' +
-            'exactly: "**Title (Year)** — reason." where the reason is a single sentence of at ' +
-            'most 15 words. Never repeat the source title or any title in the exclusion list.',
+            'Open with ONE line of at most 25 words naming the 2–3 specific qualities that make ' +
+            'the source title work — its pace, tone, subject, the feeling it leaves. Pick from ' +
+            'those qualities, not from the genre label; every suggestion must share at least one.\n' +
+            'Then output a markdown bullet list and nothing after it. Each bullet must be ' +
+            'exactly: "**Title (Year)** — reason." where the reason names which of those qualities ' +
+            'it shares, in at most 15 words. Never repeat the source title or any title in the ' +
+            'exclusion list.\n' +
+            `Write the whole reply in the language of locale "${navigator.language}" ` +
+            '(e.g. it-* → Italian, en-* → English).',
         },
         {
           role: 'user',

@@ -18,7 +18,7 @@ import { WatchlistItem } from '../../../core/models/watchlist-item.model';
 import { OpenAiService } from '../../../core/services/openai.service';
 import { WatchlistService } from '../../../core/services/watchlist.service';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
-import { fmtItem, RECOMMEND_STYLE } from '../recommend.prompt';
+import { fmtItem, LANGUAGE_RULE, RECOMMEND_STYLE } from '../recommend.prompt';
 
 export type ChatMode = 'list' | 'add';
 
@@ -176,12 +176,13 @@ HOW TO RECOMMEND:
 1. First infer my taste from the WATCHED list — recurring tones, themes, pacing, eras, directors, and what I rated highly (★). A 👍 means I loved that title and 👎 means I disliked it; weight my 👍/👎 more heavily than ★, and steer away from what a 👎 represents. Treat that as my profile.
 2. Work out what I'm actually asking for: a mood/vibe, a time constraint, something similar to a title, help deciding, or just browsing options.
 3. Match against BOTH my request and my taste profile, using your real knowledge of each title's plot, tone and atmosphere. Genre tags are rough; the year, director, ★rating and short synopsis are only there to help you identify the exact title and gauge what I like.
-4. Be adaptive and decisive about the shape of your answer:
-   - If I'm asking what to watch / for help picking / for a specific mood: lead with ONE confident top pick on its own line as "**Watch this: Title (Year)**" and a reason, then offer 2–3 shorter alternates.
+4. Before you name ANY title, open with ONE short line (max 25 words): what I'm in the mood for, and the thread in my taste it should match. The pick has to follow from that line — don't decide first and justify after.
+5. Then be adaptive and decisive about the shape of your answer:
+   - If I'm asking what to watch / for help picking / for a specific mood: ONE confident top pick on its own line as "**Watch this: Title (Year)**" and a reason, then offer 2–3 shorter alternates.
    - If I'm clearly browsing or asking for options/a list: give a ranked shortlist of up to 4, best first.
-5. Every reason must connect the pick to what I asked AND, whenever possible, to something specific I've watched (e.g. "you rated Sicario highly").
-6. If my request is vague, make a sensible assumption and recommend — don't interrogate me with clarifying questions.
-7. Never repeat a title you already suggested earlier in this conversation.`.trim();
+6. Every reason must connect the pick to what I asked AND, whenever possible, to something specific I've watched (e.g. "you rated Sicario highly").
+7. If my request is vague, make a sensible assumption and recommend — don't interrogate me with clarifying questions.
+8. Never repeat a title you already suggested earlier in this conversation.`.trim();
 
     const style = RECOMMEND_STYLE;
 
@@ -199,6 +200,8 @@ ${watched.map(fmt).join('\n') || 'None yet'}
 
 UNWATCHED — recommend from here:
 ${unwatched.map(fmt).join('\n') || 'Nothing here yet'}
+
+${LANGUAGE_RULE}
     `.trim();
 
     const addContext = `
@@ -214,6 +217,8 @@ ${watched.map(fmt).join('\n') || 'None yet'}
 
 ALREADY IN MY LIST — never suggest these:
 ${[...watched, ...unwatched].map(fmt).join('\n') || 'Nothing added yet'}
+
+${LANGUAGE_RULE}
     `.trim();
 
     // Refresh the system prompt in place — the turns already exchanged in this
