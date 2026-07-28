@@ -47,6 +47,15 @@ export class WatchlistAdd {
 
   searchControl = new FormControl('');
 
+  /** Title search (default) or by-director. Flipping it re-runs the query. */
+  readonly searchMode = signal<'title' | 'director'>('title');
+
+  setSearchMode(mode: 'title' | 'director'): void {
+    if (mode === this.searchMode()) return;
+    this.searchMode.set(mode);
+    this.startSearch((this.searchControl.value ?? '').trim());
+  }
+
   /**
    * Results render inline under the field, so the list has to survive an add —
    * that's the whole point of adding several in a row. Nothing here resets on
@@ -117,7 +126,12 @@ export class WatchlistAdd {
   private fetchNextPage(): void {
     const query = this.query;
     const page = this.page() + 1;
-    this.searchService.searchTmdb(query, page).subscribe({
+    // Director search comes back unpaged (totalPages 1), so page > 1 never fires.
+    const request =
+      this.searchMode() === 'director'
+        ? this.searchService.searchByDirector(query)
+        : this.searchService.searchTmdb(query, page);
+    request.subscribe({
       next: ({ results, totalPages }) => {
         if (query !== this.query) return; // a newer query already won
         this.page.set(page);

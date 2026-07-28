@@ -4,11 +4,13 @@ import { environment } from '../../../environments/environment';
 import {
   TmdbDetails,
   TmdbEnrichment,
+  TmdbMovieCreditsResponse,
+  TmdbPersonSearchResponse,
   TmdbSearchResponse,
   TmdbWatchProvider,
   TmdbWatchProvidersResponse,
 } from '../models/tmdb.model';
-import { map, Observable } from 'rxjs';
+import { map, Observable, of, switchMap } from 'rxjs';
 import { MediaType, SearchResult } from '../models/watchlist-item.model';
 @Injectable({
   providedIn: 'root',
@@ -47,6 +49,44 @@ export class SearchService {
       })),
     );
   }
+  /**
+   * Search by director: resolve the name to a person, then return the movies
+   * they directed. TMDB has no "search by role" endpoint, so it's two calls —
+   * person lookup, then filter their movie credits to Director. Movies only;
+   * TV rarely credits a per-title Director (it uses created_by instead).
+   * Credits come unpaged, so everything lands in one page (totalPages = 1).
+   */
+  searchByDirector(query: string): Observable<{ results: SearchResult[]; totalPages: number }> {
+    const apiKey = environment.tmdb.apiKey;
+    const personUrl = 'https://api.themoviedb.org/3/search/person';
+    return this.http
+      .get<TmdbPersonSearchResponse>(personUrl, { params: { api_key: apiKey, query } })
+      .pipe(
+        switchMap((res) => {
+          const people = res.results ?? [];
+          // Prefer an actual director over an actor who once directed one thing.
+          const person =
+            people.find((p) => p.known_for_department === 'Directing') ?? people[0];
+          if (!person) return of({ results: [], totalPages: 1 });
+
+          const creditsUrl = `https://api.themoviedb.org/3/person/${person.id}/movie_credits`;
+          return this.http
+            .get<TmdbMovieCreditsResponse>(creditsUrl, { params: { api_key: apiKey } })
+            .pipe(
+              map((credits) => {
+                const seen = new Set<number>();
+                const directed = (credits.crew ?? [])
+                  .filter((c) => c.job === 'Director')
+                  .filter((c) => (seen.has(c.id) ? false : seen.add(c.id)))
+                  .sort((a, b) => (b.release_date ?? '').localeCompare(a.release_date ?? ''))
+                  .map((c) => ({ ...c, media_type: 'movie' as const }));
+                return { results: this.mapToSearchResults(directed), totalPages: 1 };
+              }),
+            );
+        }),
+      );
+  }
+
   mapToSearchResults(results: TmdbSearchResponse['results']): SearchResult[] {
     return results.map((result) => ({
       title: result.media_type === 'movie' ? (result.title ?? '') : (result.name ?? ''),

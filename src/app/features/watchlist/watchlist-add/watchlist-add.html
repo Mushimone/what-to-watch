@@ -9,8 +9,14 @@
         type="search"
         class="search-input"
         [formControl]="searchControl"
-        placeholder="Search movies, series &amp; anime"
-        aria-label="Search TMDB for a title to add"
+        [placeholder]="
+          searchMode() === 'director' ? 'Search by director' : 'Search movies, series & anime'
+        "
+        [attr.aria-label]="
+          searchMode() === 'director'
+            ? 'Search TMDB by director name'
+            : 'Search TMDB for a title to add'
+        "
         autocomplete="off"
         (keydown.escape)="clear()"
       />
@@ -24,6 +30,28 @@
           <mat-icon>close</mat-icon>
         </button>
       }
+    </div>
+
+    <!-- Search by title (default) or by director name. -->
+    <div class="search-mode" role="group" aria-label="Search by">
+      <button
+        type="button"
+        class="search-mode__btn"
+        [class.search-mode__btn--active]="searchMode() === 'title'"
+        [attr.aria-pressed]="searchMode() === 'title'"
+        (click)="setSearchMode('title')"
+      >
+        Title
+      </button>
+      <button
+        type="button"
+        class="search-mode__btn"
+        [class.search-mode__btn--active]="searchMode() === 'director'"
+        [attr.aria-pressed]="searchMode() === 'director'"
+        (click)="setSearchMode('director')"
+      >
+        Director
+      </button>
     </div>
 
     <span class="sr-only" role="status" aria-live="polite">{{ statusMessage() }}</span>

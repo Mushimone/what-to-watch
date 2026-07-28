@@ -20,6 +20,22 @@ export interface TmdbSearchResponse {
   total_results: number;
 }
 
+export interface TmdbPerson {
+  id: number;
+  name: string;
+  known_for_department?: string;
+  popularity: number;
+}
+
+export interface TmdbPersonSearchResponse {
+  results: TmdbPerson[];
+}
+
+/** /person/{id}/movie_credits — crew rows carry the same movie fields as search. */
+export interface TmdbMovieCreditsResponse {
+  crew: (Omit<TmdbSearchResult, 'media_type'> & { job: string })[];
+}
+
 export interface TmdbCrewMember {
   job: string;
   name: string;
