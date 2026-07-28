@@ -325,8 +325,8 @@ app-root {
   background: var(--color-scrim-2);
   border: none;
   border-radius: 50%;
-  width: 34px;
-  height: 34px;
+  width: 46px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -339,9 +339,9 @@ app-root {
     transform var(--dur-instant) var(--ease-out);
 
   mat-icon {
-    font-size: 1.1rem;
-    width: 1.1rem;
-    height: 1.1rem;
+    font-size: 1.4rem;
+    width: 1.4rem;
+    height: 1.4rem;
   }
 
   // ponytail: one hover signal — background, not scale.
