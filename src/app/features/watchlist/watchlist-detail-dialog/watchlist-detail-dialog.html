@@ -161,13 +161,25 @@
         </div>
 
         <!-- More like this -->
-        <div class="similar-section">
+        <!-- polite, not assertive: the model takes a few seconds, and the wait,
+             the result and the failure all land in this one region. -->
+        <div class="similar-section" aria-live="polite">
           @if (similar(); as suggestions) {
             <span class="section-label">More like this</span>
             <div class="similar-content" [innerHTML]="suggestions | markdown"></div>
           } @else {
-            <button mat-stroked-button (click)="findSimilar()" [disabled]="similarLoading()">
-              <mat-icon>auto_awesome</mat-icon>
+            <button
+              mat-stroked-button
+              (click)="findSimilar()"
+              [disabled]="similarLoading()"
+              [attr.aria-busy]="similarLoading()"
+            >
+              <!-- progress_activity is Material Symbols' own spinner glyph, so it
+                   rides the button's existing icon slot instead of needing a
+                   second element laid out beside it. -->
+              <mat-icon [class.spin]="similarLoading()">{{
+                similarLoading() ? 'progress_activity' : 'auto_awesome'
+              }}</mat-icon>
               {{ similarLoading() ? 'Finding…' : 'Find similar' }}
             </button>
             @if (similarError()) {
@@ -204,7 +216,8 @@
             (click)="setReaction('liked')"
             title="I liked this"
           >
-            <mat-icon>{{ item.reaction === 'liked' ? 'favorite' : 'favorite_border' }}</mat-icon>
+            <!-- One glyph; .reaction-btn--active fills it via the FILL axis. -->
+            <mat-icon>favorite</mat-icon>
           </button>
           <button
             class="reaction-btn reaction-btn--down"
@@ -216,9 +229,18 @@
             <mat-icon>thumb_down</mat-icon>
           </button>
         </div>
-        <button mat-stroked-button (click)="toggleWatched()">
-          <mat-icon>{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
-          {{ item.watched ? 'Mark unwatched' : 'Mark watched' }}
+        <!-- A state the user holds, not a verb they perform — same shape as the
+             two reaction buttons to its left. The label stays put and the press
+             state carries the answer. -->
+        <button
+          mat-stroked-button
+          class="watched-toggle"
+          [attr.aria-pressed]="item.watched"
+          [title]="item.watched ? 'Watched — tap to undo' : 'Not watched yet'"
+          (click)="toggleWatched()"
+        >
+          <mat-icon>visibility</mat-icon>
+          Watched
         </button>
         <button mat-stroked-button color="warn" (click)="remove()">
           <mat-icon>delete</mat-icon>

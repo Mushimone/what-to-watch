@@ -101,6 +101,14 @@ li {
       transform: scale(0.92);
     }
 
+    // Watched: the eye fills. Same on/off language as the sheet's toggle, and
+    // it means the icon shows the state rather than swapping to name the
+    // opposite action — which read backwards next to the dimmed poster.
+    &[aria-pressed='true'] mat-icon {
+      color: var(--color-accent);
+      font-variation-settings: 'FILL' 1, var(--icon-axes);
+    }
+
     &.delete:hover {
       background: var(--color-danger-scrim);
     }

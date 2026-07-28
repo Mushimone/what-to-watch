@@ -127,8 +127,8 @@
                     <div class="details">
                       <span class="type-badge">{{ item.type }}</span>
                       <div class="card-actions">
-                        <button class="card-icon-btn" (click)="$event.stopPropagation(); toggleWatched(item)" [title]="item.watched ? 'Mark unwatched' : 'Mark watched'">
-                          <mat-icon>{{ item.watched ? 'visibility_off' : 'remove_red_eye' }}</mat-icon>
+                        <button class="card-icon-btn" (click)="$event.stopPropagation(); toggleWatched(item)" [attr.aria-pressed]="item.watched" [title]="item.watched ? 'Watched — tap to undo' : 'Not watched yet'">
+                          <mat-icon>visibility</mat-icon>
                         </button>
                         <button class="card-icon-btn delete" (click)="$event.stopPropagation(); removeFromWatchlist(item.id)" title="Remove">
                           <mat-icon>delete</mat-icon>

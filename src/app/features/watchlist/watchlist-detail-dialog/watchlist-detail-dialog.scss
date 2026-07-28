@@ -392,7 +392,11 @@
   padding: 0.9rem var(--space-md);
   padding-bottom: max(0.9rem, env(safe-area-inset-bottom));
   border-top: 1px solid var(--color-hairline-soft);
-  background: var(--color-surface);
+  // On mobile the sheet is full-height, so this row sits on the device's bottom
+  // edge — it ends in black rather than butting the phone's black band with a
+  // flat surface. The hairline above still separates it from the scroller; that
+  // edge is a divider between two jobs, not the one the fade is for.
+  background: var(--fade-bottom);
 
   // Bigger tap targets for the footer actions.
   button {
@@ -409,6 +413,26 @@
   display: flex;
   gap: 8px;
   margin-right: auto; // reactions left, watched/remove pushed right
+}
+
+// Pressed = watched. aria-pressed is both the semantics and the style hook, so
+// the two can't drift apart. Accent outline + filled eye: the same on/off
+// language the reaction buttons next to it already speak.
+.watched-toggle {
+  // An outlined button's label defaults to --mat-sys-primary, i.e. malachite —
+  // which would read as "on" before it has been pressed. Off is muted; the
+  // outline keeps Material's default so the control's boundary stays at 3:1.
+  --mat-button-outlined-label-text-color: var(--color-text-muted);
+
+  // The icon inherits the label colour, so the fill axis is all this needs.
+  &[aria-pressed='true'] {
+    --mat-button-outlined-label-text-color: var(--color-accent);
+    --mat-button-outlined-outline-color: var(--color-accent);
+
+    mat-icon {
+      font-variation-settings: 'FILL' 1, var(--icon-axes);
+    }
+  }
 }
 
 @media (max-width: 560px) {

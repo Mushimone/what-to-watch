@@ -53,6 +53,10 @@
   --font-body: Roboto, system-ui, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Roboto Mono', 'Cascadia Code', monospace;
 
+  // Material Symbols' variable axes, minus FILL — that one is the state, so it
+  // gets declared per-rule and this carries the three that never change.
+  --icon-axes: 'wght' 400, 'GRAD' 0, 'opsz' 24;
+
   // Spacing — 4pt scale
   --space-2xs: 4px;
   --space-xs: 8px;
@@ -68,6 +72,13 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  // Bottom-docked chrome — the nav bar, the sheet's action footer. A phone puts
+  // its own black band (home indicator, rounded corners) directly below these,
+  // and a flat surface colour meeting it draws a seam. So they end in the page
+  // background instead: the last ~45% melts to black and the seam has nothing
+  // to land on. Read it bottom-up — a small gradient from black.
+  --fade-bottom: linear-gradient(to bottom, var(--color-surface) 0 55%, var(--color-bg) 100%);
 
   // Elevation
   --shadow-nav: 0 -1px 12px rgb(0 0 0 / 0.16);
@@ -232,6 +243,40 @@ h3,
   letter-spacing: -0.01em;
 }
 
+// ─── Icons ─────────────────────────────────────────────────────────────────────
+// Material Symbols Rounded, not the 2014 Material Icons set. The class comes
+// from MAT_ICON_DEFAULT_OPTIONS (app.config.ts) and Google's stylesheet defines
+// it too, so this needs the element as well to outrank the served defaults.
+//
+// Outlined is the resting state; FILL 1 is reserved for "this one is on" —
+// the active nav destination, a liked title. It's a second channel next to
+// colour, which is what makes a variable icon set worth the swap.
+mat-icon.material-symbols-rounded {
+  font-variation-settings: 'FILL' 0, var(--icon-axes);
+  transition: font-variation-settings var(--dur-short) var(--ease-out);
+}
+
+mat-icon.material-symbols-rounded.icon-filled {
+  font-variation-settings: 'FILL' 1, var(--icon-axes);
+}
+
+// The one thing in this app that spins — everything else fades. Pair it with
+// the `progress_activity` glyph and it rides whatever icon slot already exists
+// (a button's, a row's) instead of needing an element laid out beside it.
+//
+// Global rather than component-local for the same reason .reaction-btn is: the
+// detail sheet is its only consumer today and is 5 bytes from the 6kB
+// anyComponentStyle budget.
+mat-icon.spin {
+  animation: icon-spin 900ms linear infinite;
+}
+
+@keyframes icon-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
 // ─── Focus: one visible ring for every interactive element, never animated ─────
 :focus-visible {
   outline: 2px solid var(--color-focus);
@@ -359,6 +404,13 @@ app-root {
   &--active {
     background: var(--color-accent);
     color: var(--color-black);
+
+    // The glyph fills when the reaction is on — Symbols' FILL axis replaces the
+    // old outline/solid name pair (favorite_border → favorite), so the state is
+    // one axis on one icon instead of two ligatures swapped by a ternary.
+    mat-icon {
+      font-variation-settings: 'FILL' 1, var(--icon-axes);
+    }
   }
   &--down.reaction-btn--active {
     background: var(--color-danger);
