@@ -103,15 +103,8 @@
   // around the FAB is --notch-r minus half of this — currently 6px.
   --fab-d: 56px;
 
-  // Desktop rail width, and the usable row width inside it.
+  // Desktop rail width.
   --rail-w: 220px;
-  --rail-row-w: calc(var(--rail-w) - var(--space-sm) * 2);
-}
-
-// The account menu renders in the CDK overlay, outside component styles — it
-// has to be told to match the rail row that opened it.
-.rail-account-menu.mat-mdc-menu-panel {
-  min-width: var(--rail-row-w);
 }
 
 html {

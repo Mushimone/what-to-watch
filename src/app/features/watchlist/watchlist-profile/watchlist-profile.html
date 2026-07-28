@@ -1,0 +1,50 @@
+<div class="profile">
+  <header class="identity">
+    @if (profile()?.avatar_url) {
+      <img class="identity__avatar" [src]="profile()!.avatar_url" alt="" width="72" height="72" />
+    } @else {
+      <span class="identity__avatar identity__avatar--letter" aria-hidden="true">{{
+        initial()
+      }}</span>
+    }
+    <div class="identity__who">
+      <h2>{{ profile()?.username || 'Your account' }}</h2>
+      <p class="identity__email">{{ email }}</p>
+      @if (profile()?.created_at) {
+        <p class="identity__since">Here since {{ profile()!.created_at | date: 'MMMM y' }}</p>
+      }
+    </div>
+  </header>
+
+  <section class="tally" aria-label="Your numbers">
+    <div class="tally__cell">
+      <span class="tally__figure">{{ tracked() }}</span>
+      <span class="tally__label">titles tracked</span>
+    </div>
+    <div class="tally__cell">
+      <span class="tally__figure">{{ watched() }}</span>
+      <span class="tally__label">watched</span>
+    </div>
+    <div class="tally__cell">
+      <span class="tally__figure">{{ friendCount() }}</span>
+      <span class="tally__label">{{ friendCount() === 1 ? 'friend' : 'friends' }}</span>
+    </div>
+  </section>
+
+  <section class="actions">
+    <button class="chip" (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      Sign out
+    </button>
+    <button class="chip chip--danger" (click)="deleteAccount()">
+      <mat-icon>delete_forever</mat-icon>
+      Delete account
+    </button>
+  </section>
+
+  <p class="actions__note">
+    Signing out leaves everything where it is. Deleting erases your list, your friends and your
+    profile, and cannot be undone —
+    <a routerLink="/delete-account">what that removes</a>.
+  </p>
+</div>

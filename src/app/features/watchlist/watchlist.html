@@ -40,17 +40,15 @@
           <span>Ask AI</span>
         </button>
 
-        <button class="rail-account" [matMenuTriggerFor]="accountMenu">
+        <button
+          class="rail-account"
+          [class.rail-account--active]="activeSection() === 'profile'"
+          [attr.aria-current]="activeSection() === 'profile' ? 'page' : null"
+          (click)="setSection('profile')"
+        >
           <mat-icon>account_circle</mat-icon>
           <span class="rail-account__name">{{ username() }}</span>
-          <mat-icon class="rail-account__caret">expand_more</mat-icon>
         </button>
-        <mat-menu #accountMenu="matMenu" panelClass="rail-account-menu">
-          <button mat-menu-item (click)="logout()">
-            <mat-icon>logout</mat-icon>
-            <span>Sign out</span>
-          </button>
-        </mat-menu>
       </nav>
 
       <!-- Panes stay mounted and are hidden, not destroyed: switching sections
@@ -59,19 +57,28 @@
         <app-watchlist-list [hidden]="activeSection() !== 'list'"></app-watchlist-list>
         <app-watchlist-add [hidden]="activeSection() !== 'add'"></app-watchlist-add>
         <app-watchlist-shared [hidden]="activeSection() !== 'shared'"></app-watchlist-shared>
+        <app-watchlist-profile [hidden]="activeSection() !== 'profile'"></app-watchlist-profile>
       </main>
     </div>
   } @else {
     <!-- ── Mobile: top bar (title/context) + scrolling pane + bottom nav ── -->
     <div class="page-header">
-      @if (activeSection() === 'add') {
+      <!-- Add and Profile are reached from here, not from the bottom nav, so
+           they are the two that need a way back to the list. -->
+      @if (activeSection() === 'add' || activeSection() === 'profile') {
         <button mat-icon-button (click)="setSection('list')" aria-label="Back">
           <mat-icon>arrow_back</mat-icon>
         </button>
       }
       <span class="page-title">{{ sectionTitle() }}</span>
-      <button mat-icon-button (click)="logout()" aria-label="Sign out" matTooltip="Sign out">
-        <mat-icon>logout</mat-icon>
+      <button
+        mat-icon-button
+        (click)="setSection('profile')"
+        [attr.aria-current]="activeSection() === 'profile' ? 'page' : null"
+        aria-label="Profile"
+        matTooltip="Profile"
+      >
+        <mat-icon>account_circle</mat-icon>
       </button>
     </div>
 
@@ -79,6 +86,7 @@
       <app-watchlist-list [hidden]="activeSection() !== 'list'"></app-watchlist-list>
       <app-watchlist-add [hidden]="activeSection() !== 'add'"></app-watchlist-add>
       <app-watchlist-shared [hidden]="activeSection() !== 'shared'"></app-watchlist-shared>
+      <app-watchlist-profile [hidden]="activeSection() !== 'profile'"></app-watchlist-profile>
     </main>
 
     <!-- Add: floating action button, bottom-right. Hidden while already adding,

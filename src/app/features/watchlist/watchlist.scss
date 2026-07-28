@@ -244,17 +244,24 @@
     background: var(--mat-sys-surface-container-high);
   }
 
+  // The account row is now a destination like My list and Friends, so it takes
+  // the same selected treatment rather than a menu caret.
+  &--active {
+    background: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+    font-weight: 700;
+
+    mat-icon {
+      color: var(--mat-sys-on-secondary-container);
+      font-variation-settings: 'FILL' 1, var(--icon-axes);
+    }
+  }
+
   &__name {
     flex: 1;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  &__caret {
-    font-size: 1.1rem;
-    width: 1.1rem;
-    height: 1.1rem;
   }
 }
 

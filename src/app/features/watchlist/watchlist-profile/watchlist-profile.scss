@@ -1,0 +1,183 @@
+/* Hallmark · macrostructure: Stat-Led · tone: utilitarian · anchor hue: malachite
+ * Deviation: the numeric hero is demoted — an account screen's subject is the
+ * person, so identity heads the page and the counts carry the body. Stat-Led's
+ * other four axes stand: hairline rules between blocks, tabular figures,
+ * outlined chip buttons, no imagery.
+ */
+
+.profile {
+  padding: var(--space-sm) var(--space-md) var(--space-xl);
+  max-width: 560px;
+
+  @media (min-width: 900px) {
+    padding: var(--space-lg);
+  }
+}
+
+// ─── Identity ────────────────────────────────────────────────────────────────
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: var(--space-xs) 0 var(--space-xl);
+
+  &__avatar {
+    flex: none;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--color-hairline-soft);
+
+    // No Google picture: the initial stands in, sized to match the photo.
+    &--letter {
+      display: grid;
+      place-items: center;
+      background: var(--color-surface-hi);
+      color: var(--color-accent);
+      font-family: var(--font-display);
+      font-size: 2rem;
+      line-height: 1;
+    }
+  }
+
+  &__who {
+    min-width: 0;
+  }
+
+  h2 {
+    margin: 0 0 var(--space-2xs);
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  &__email {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+  }
+
+  &__since {
+    margin: var(--space-2xs) 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+}
+
+// ─── Tally ───────────────────────────────────────────────────────────────────
+// Three real counts, hairline-ruled. Figures are tabular so they don't shimmy
+// as the numbers change under the panes that stay mounted behind this one.
+.tally {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--color-hairline-soft);
+  border-bottom: 1px solid var(--color-hairline-soft);
+
+  &__cell {
+    padding: var(--space-md) 0;
+
+    & + & {
+      padding-left: var(--space-md);
+      border-left: 1px solid var(--color-hairline-soft);
+    }
+  }
+
+  &__figure {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--color-accent);
+  }
+
+  &__label {
+    display: block;
+    margin-top: var(--space-2xs);
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    color: var(--color-text-muted);
+  }
+}
+
+// ─── Actions ─────────────────────────────────────────────────────────────────
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-xl);
+
+  &__note {
+    margin: var(--space-md) 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+
+    a {
+      color: var(--color-accent);
+    }
+  }
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--color-hairline);
+  border-radius: 999px;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-out);
+
+  mat-icon {
+    font-size: 1.125rem;
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  &:hover {
+    background: var(--color-fill-soft);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  &:active {
+    background: var(--color-surface-hi);
+  }
+
+  // The destructive one stays outlined too — it is one tap away from a dialog
+  // that does the real asking, so it should not shout on a page you visit to
+  // read your numbers.
+  &--danger {
+    border-color: var(--color-danger);
+    color: var(--color-danger-text);
+
+    &:hover {
+      background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    }
+
+    &:active {
+      background: color-mix(in srgb, var(--color-danger) 20%, transparent);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    transition: none;
+  }
+}

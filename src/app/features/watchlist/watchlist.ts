@@ -1,22 +1,20 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog } from '@angular/material/dialog';
 import { WatchlistList } from './watchlist-list/watchlist-list';
 import { WatchlistAdd } from './watchlist-add/watchlist-add';
 import { WatchlistShared } from './watchlist-shared/watchlist-shared';
+import { WatchlistProfile } from './watchlist-profile/watchlist-profile';
 import { WatchlistAiChatComponent, ChatMode } from './watchlist-ai-chat/watchlist-ai.chat';
 import { UsernameDialog } from '../auth/username-dialog/username-dialog';
-import { SupabaseService } from '../../core/services/supabase.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { FriendsService } from '../../core/services/friends.service';
 
-export type WatchlistSection = 'list' | 'add' | 'shared';
+export type WatchlistSection = 'list' | 'add' | 'shared' | 'profile';
 
 @Component({
   selector: 'app-watchlist',
@@ -24,27 +22,28 @@ export type WatchlistSection = 'list' | 'add' | 'shared';
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
-    MatMenuModule,
     WatchlistList,
     WatchlistAdd,
     WatchlistShared,
+    WatchlistProfile,
     WatchlistAiChatComponent,
   ],
   templateUrl: './watchlist.html',
   styleUrl: './watchlist.scss',
 })
 export class Watchlist implements OnInit {
-  private supabase = inject(SupabaseService);
   private profile = inject(ProfileService);
   private friends = inject(FriendsService);
   private dialog = inject(MatDialog);
-  private router = inject(Router);
 
   isDesktop = signal(false);
   /** Which section the content pane shows — same model on desktop and mobile. */
   activeSection = signal<WatchlistSection>('list');
   sectionTitle = computed(
-    () => ({ list: 'What to Watch', add: 'Add a title', shared: 'Friends' })[this.activeSection()],
+    () =>
+      ({ list: 'What to Watch', add: 'Add a title', shared: 'Friends', profile: 'Profile' })[
+        this.activeSection()
+      ],
   );
   chatMode: ChatMode = 'list';
   /** Shown in the desktop rail's account row. */
@@ -79,10 +78,5 @@ export class Watchlist implements OnInit {
         autoFocus: true,
       });
     }
-  }
-
-  async logout(): Promise<void> {
-    await this.supabase.signOut();
-    this.router.navigate(['/']);
   }
 }

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { Watchlist } from './watchlist';
 
@@ -8,9 +9,10 @@ describe('Watchlist', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Watchlist]
-    })
-    .compileComponents();
+      imports: [Watchlist],
+      // The profile pane links out to /delete-account, so the tree needs a router.
+      providers: [provideRouter([])],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(Watchlist);
     component = fixture.componentInstance;
