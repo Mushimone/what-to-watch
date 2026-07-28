@@ -251,7 +251,14 @@ h3,
 // Outlined is the resting state; FILL 1 is reserved for "this one is on" —
 // the active nav destination, a liked title. It's a second channel next to
 // colour, which is what makes a variable icon set worth the swap.
+//
+// Symbols' metrics run 1.1em up / 0.1em down, so a glyph resting on its
+// baseline never lands in the middle of the box it's given — it reads high or
+// low by a pixel or two depending on how the box was sized. Centring the line
+// box instead is metric-proof at every size, so no call site needs a nudge.
 mat-icon.material-symbols-rounded {
+  display: inline-grid;
+  place-items: center;
   font-variation-settings: 'FILL' 0, var(--icon-axes);
   transition: font-variation-settings var(--dur-short) var(--ease-out);
 }
@@ -465,7 +472,9 @@ app-root {
   }
 }
 
-.search-icon {
+// Element-qualified so it outranks Material's own `.mat-icon` box (same
+// specificity, injected later) — otherwise the sizes below are dead letters.
+mat-icon.search-icon {
   flex-shrink: 0;
   color: var(--color-text-muted);
   font-size: 1.2rem;
