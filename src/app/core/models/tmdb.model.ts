@@ -13,22 +13,24 @@ export interface TmdbSearchResult {
   vote_average: number;
 }
 
-export interface TmdbSearchResponse {
-  page: number;
-  results: TmdbSearchResult[];
-  total_pages: number;
-  total_results: number;
-}
-
-export interface TmdbPerson {
+/**
+ * A person row in /search/multi. TMDB ranks one into the top few whenever the
+ * query is a name, and returns none at all for a plain title — which is what
+ * lets a single search fold in a director's films without a second mode.
+ */
+export interface TmdbPersonResult {
   id: number;
   name: string;
+  media_type: 'person';
   known_for_department?: string;
   popularity: number;
 }
 
-export interface TmdbPersonSearchResponse {
-  results: TmdbPerson[];
+export interface TmdbSearchResponse {
+  page: number;
+  results: (TmdbSearchResult | TmdbPersonResult)[];
+  total_pages: number;
+  total_results: number;
 }
 
 /** /person/{id}/movie_credits — crew rows carry the same movie fields as search. */

@@ -21,7 +21,7 @@ describe('Watchlist', () => {
     expect(component).toBeTruthy();
   });
 
-  it('on mobile the tab preselects the chat mode', () => {
+  it('the tab preselects the chat mode', () => {
     component.isDesktop.set(false);
 
     component.setSection('add');
@@ -37,12 +37,15 @@ describe('Watchlist', () => {
     expect(component.chatMode).toBe('list');
   });
 
-  it('on desktop the chat keeps the mode its own toggle set', () => {
+  it('preselects on desktop too — the chat follows the section everywhere', () => {
     component.isDesktop.set(true);
     component.chatMode = 'add';
 
     component.setSection('list');
     expect(component.activeSection()).toBe('list');
+    expect(component.chatMode).toBe('list');
+
+    component.setSection('add');
     expect(component.chatMode).toBe('add');
   });
 });

@@ -4,7 +4,26 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SearchService } from './search.service';
 
-describe('SearchService.searchByDirector', () => {
+/** A /search/multi movie row — only the fields the mapper reads. */
+const movie = (id: number, title: string, date = '2000-01-01') => ({
+  id,
+  title,
+  media_type: 'movie',
+  genre_ids: [],
+  poster_path: null,
+  release_date: date,
+  vote_average: 7,
+});
+
+const person = (id: number, name: string, known_for_department: string) => ({
+  id,
+  name,
+  media_type: 'person',
+  known_for_department,
+  popularity: 5,
+});
+
+describe('SearchService.searchTmdb', () => {
   let service: SearchService;
   let http: HttpTestingController;
 
@@ -20,41 +39,93 @@ describe('SearchService.searchByDirector', () => {
 
   afterEach(() => http.verify());
 
-  it('resolves the director, keeps only Director credits, dedups and sorts newest-first', async () => {
+  it('folds in the films of the director a name query matched, newest first', () => {
     let out: any;
-    service.searchByDirector('Nolan').subscribe((r) => (out = r));
+    service.searchTmdb('Nolan').subscribe((r) => (out = r));
 
-    // 1) person lookup — an actor named Nolan comes first, the real director second.
-    const person = http.expectOne((r) => r.url.includes('/search/person'));
-    person.flush({
+    // An actor shares the surname and outranks him — "Directing" wins.
+    http.expectOne((r) => r.url.includes('/search/multi')).flush({
       results: [
-        { id: 1, name: 'Some Actor', known_for_department: 'Acting', popularity: 9 },
-        { id: 42, name: 'Christopher Nolan', known_for_department: 'Directing', popularity: 8 },
+        person(1, 'Jeanette Nolan', 'Acting'),
+        person(42, 'Christopher Nolan', 'Directing'),
+        movie(900, "Interstellar: Nolan's Odyssey"),
       ],
+      total_pages: 1,
     });
 
-    // 2) credits for the chosen director (id 42).
-    const credits = http.expectOne((r) => r.url.includes('/person/42/movie_credits'));
-    credits.flush({
+    http.expectOne((r) => r.url.includes('/person/42/movie_credits')).flush({
       crew: [
-        { id: 100, title: 'Inception', job: 'Director', genre_ids: [], poster_path: null, release_date: '2010-07-16', vote_average: 8.4 },
-        { id: 100, title: 'Inception', job: 'Producer', genre_ids: [], poster_path: null, release_date: '2010-07-16', vote_average: 8.4 },
-        { id: 200, title: 'Oppenheimer', job: 'Director', genre_ids: [], poster_path: null, release_date: '2023-07-21', vote_average: 8.1 },
-        { id: 300, title: 'The Wolf of Wall Street', job: 'Producer', genre_ids: [], poster_path: null, release_date: '2013-12-25', vote_average: 8.2 },
+        { ...movie(100, 'Inception', '2010-07-16'), job: 'Director' },
+        // Second credit on his own film — must not repeat the title.
+        { ...movie(100, 'Inception', '2010-07-16'), job: 'Producer' },
+        { ...movie(200, 'Oppenheimer', '2023-07-21'), job: 'Director' },
+        { ...movie(300, 'The Wolf of Wall Street', '2013-12-25'), job: 'Producer' },
       ],
     });
 
-    expect(out.totalPages).toBe(1);
-    // Only the two Director credits, deduped, newest first.
-    expect(out.results.map((r: any) => r.title)).toEqual(['Oppenheimer', 'Inception']);
-    expect(out.results.every((r: any) => r.type === 'movie')).toBe(true);
+    // Directed films first, newest first, then the leftover title match.
+    expect(out.results.map((r: any) => r.title)).toEqual([
+      'Oppenheimer',
+      'Inception',
+      "Interstellar: Nolan's Odyssey",
+    ]);
   });
 
-  it('returns empty when no person matches', async () => {
+  it('leaves a plain title search untouched — no person, no second call', () => {
     let out: any;
-    service.searchByDirector('zzzz').subscribe((r) => (out = r));
-    http.expectOne((r) => r.url.includes('/search/person')).flush({ results: [] });
+    service.searchTmdb('Inception').subscribe((r) => (out = r));
 
-    expect(out.results).toEqual([]);
+    http.expectOne((r) => r.url.includes('/search/multi')).flush({
+      results: [movie(100, 'Inception'), movie(101, 'Bikini Inception')],
+      total_pages: 3,
+    });
+
+    // http.verify() in afterEach proves no credits call was made.
+    expect(out.results.map((r: any) => r.title)).toEqual(['Inception', 'Bikini Inception']);
+    expect(out.totalPages).toBe(3);
+  });
+
+  it('drops a film from the title matches when the director already supplied it', () => {
+    let out: any;
+    service.searchTmdb('Gerwig').subscribe((r) => (out = r));
+
+    // Tagged "Acting", but still the person to ask about — she directs.
+    http.expectOne((r) => r.url.includes('/search/multi')).flush({
+      results: [person(7, 'Greta Gerwig', 'Acting'), movie(500, 'Barbie', '2023-07-19')],
+      total_pages: 1,
+    });
+    http.expectOne((r) => r.url.includes('/person/7/movie_credits')).flush({
+      crew: [{ ...movie(500, 'Barbie', '2023-07-19'), job: 'Director' }],
+    });
+
+    expect(out.results.map((r: any) => r.title)).toEqual(['Barbie']);
+  });
+
+  it('keeps the title matches when the credits lookup fails', () => {
+    let out: any;
+    service.searchTmdb('Nolan').subscribe((r) => (out = r));
+
+    http.expectOne((r) => r.url.includes('/search/multi')).flush({
+      results: [person(42, 'Christopher Nolan', 'Directing'), movie(900, 'Facing Nolan')],
+      total_pages: 1,
+    });
+    http
+      .expectOne((r) => r.url.includes('/person/42/movie_credits'))
+      .flush('boom', { status: 500, statusText: 'Server Error' });
+
+    expect(out.results.map((r: any) => r.title)).toEqual(['Facing Nolan']);
+  });
+
+  it('does not re-fetch the filmography on later pages', () => {
+    let out: any;
+    service.searchTmdb('Nolan', 2).subscribe((r) => (out = r));
+
+    http.expectOne((r) => r.url.includes('/search/multi')).flush({
+      results: [person(42, 'Christopher Nolan', 'Directing'), movie(901, 'Nolan Doc')],
+      total_pages: 3,
+    });
+
+    // http.verify() proves page 2 made no credits call.
+    expect(out.results.map((r: any) => r.title)).toEqual(['Nolan Doc']);
   });
 });

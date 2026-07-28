@@ -5,12 +5,13 @@ import {
   TmdbDetails,
   TmdbEnrichment,
   TmdbMovieCreditsResponse,
-  TmdbPersonSearchResponse,
+  TmdbPersonResult,
   TmdbSearchResponse,
+  TmdbSearchResult,
   TmdbWatchProvider,
   TmdbWatchProvidersResponse,
 } from '../models/tmdb.model';
-import { map, Observable, of, switchMap } from 'rxjs';
+import { catchError, map, Observable, of, switchMap } from 'rxjs';
 import { MediaType, SearchResult } from '../models/watchlist-item.model';
 @Injectable({
   providedIn: 'root',
@@ -28,6 +29,11 @@ export class SearchService {
   /**
    * One page of results — TMDB serves 20 per page and `page` is 1-based.
    * `totalPages` is what tells the caller whether another page exists.
+   *
+   * Searching a director's name is the same search: /search/multi already ranks
+   * the person into the top few for a name, and returns none at all for a plain
+   * title, so page 1 uses that to pull in the films they directed. One box, no
+   * mode to pick.
    */
   searchTmdb(
     query: string,
@@ -39,55 +45,79 @@ export class SearchService {
       page,
     };
     return this.http.get<TmdbSearchResponse>(this.url, { params }).pipe(
-      map((response) => ({
-        results: this.mapToSearchResults(
-          (response.results || []).filter(
-            (result) => result.media_type === 'movie' || result.media_type === 'tv',
+      switchMap((response) => {
+        const all = response.results || [];
+        const titles = this.mapToSearchResults(
+          all.filter(
+            (result): result is TmdbSearchResult =>
+              result.media_type === 'movie' || result.media_type === 'tv',
           ),
-        ),
-        totalPages: response.total_pages ?? 1,
-      })),
+        );
+        const totalPages = response.total_pages ?? 1;
+
+        // Only the first page carries the filmography — later pages just
+        // continue the title matches, and the caller dedups across pages.
+        const person = page === 1 ? this.pickPerson(all) : undefined;
+        if (!person) return of({ results: titles, totalPages });
+
+        return this.directedBy(person.id).pipe(
+          map((directed) => {
+            const seen = new Set(directed.map((d) => `${d.type}:${d.external_id}`));
+            return {
+              results: [
+                ...directed,
+                ...titles.filter((t) => !seen.has(`${t.type}:${t.external_id}`)),
+              ],
+              totalPages,
+            };
+          }),
+          // The title matches are already in hand — a failed credits lookup
+          // must not take the whole search down with it.
+          catchError(() => of({ results: titles, totalPages })),
+        );
+      }),
     );
   }
-  /**
-   * Search by director: resolve the name to a person, then return the movies
-   * they directed. TMDB has no "search by role" endpoint, so it's two calls —
-   * person lookup, then filter their movie credits to Director. Movies only;
-   * TV rarely credits a per-title Director (it uses created_by instead).
-   * Credits come unpaged, so everything lands in one page (totalPages = 1).
-   */
-  searchByDirector(query: string): Observable<{ results: SearchResult[]; totalPages: number }> {
-    const apiKey = environment.tmdb.apiKey;
-    const personUrl = 'https://api.themoviedb.org/3/search/person';
-    return this.http
-      .get<TmdbPersonSearchResponse>(personUrl, { params: { api_key: apiKey, query } })
-      .pipe(
-        switchMap((res) => {
-          const people = res.results ?? [];
-          // Prefer an actual director over an actor who once directed one thing.
-          const person =
-            people.find((p) => p.known_for_department === 'Directing') ?? people[0];
-          if (!person) return of({ results: [], totalPages: 1 });
 
-          const creditsUrl = `https://api.themoviedb.org/3/person/${person.id}/movie_credits`;
-          return this.http
-            .get<TmdbMovieCreditsResponse>(creditsUrl, { params: { api_key: apiKey } })
-            .pipe(
-              map((credits) => {
-                const seen = new Set<number>();
-                const directed = (credits.crew ?? [])
-                  .filter((c) => c.job === 'Director')
-                  .filter((c) => (seen.has(c.id) ? false : seen.add(c.id)))
-                  .sort((a, b) => (b.release_date ?? '').localeCompare(a.release_date ?? ''))
-                  .map((c) => ({ ...c, media_type: 'movie' as const }));
-                return { results: this.mapToSearchResults(directed), totalPages: 1 };
-              }),
-            );
+  /**
+   * The person a name query most likely meant. TMDB's own ranking does the
+   * work; "Directing" wins over an actor who happens to share the surname
+   * (Hayao Miyazaki outranked by an actor named Miyazaki, say). Anyone who
+   * directs is still worth asking about — Gerwig and Affleck are filed under
+   * "Acting" — and a non-director simply comes back with no Director credits.
+   */
+  private pickPerson(results: TmdbSearchResponse['results']) {
+    const people = results
+      .slice(0, 5)
+      .filter((r): r is TmdbPersonResult => r.media_type === 'person');
+    return people.find((p) => p.known_for_department === 'Directing') ?? people[0];
+  }
+
+  /**
+   * The movies a person directed, newest first. Movies only: TV credits a
+   * series to created_by rather than a per-title Director. Credits come
+   * unpaged, so this is the whole filmography in one response.
+   */
+  private directedBy(personId: number): Observable<SearchResult[]> {
+    const url = `https://api.themoviedb.org/3/person/${personId}/movie_credits`;
+    return this.http
+      .get<TmdbMovieCreditsResponse>(url, { params: { api_key: environment.tmdb.apiKey } })
+      .pipe(
+        map((credits) => {
+          // A director often holds a second credit on their own film (writer,
+          // producer), which repeats the title — keep the first of each id.
+          const seen = new Set<number>();
+          const directed = (credits.crew ?? [])
+            .filter((c) => c.job === 'Director')
+            .filter((c) => (seen.has(c.id) ? false : seen.add(c.id)))
+            .sort((a, b) => (b.release_date ?? '').localeCompare(a.release_date ?? ''))
+            .map((c) => ({ ...c, media_type: 'movie' as const }));
+          return this.mapToSearchResults(directed);
         }),
       );
   }
 
-  mapToSearchResults(results: TmdbSearchResponse['results']): SearchResult[] {
+  mapToSearchResults(results: TmdbSearchResult[]): SearchResult[] {
     return results.map((result) => ({
       title: result.media_type === 'movie' ? (result.title ?? '') : (result.name ?? ''),
       type: result.media_type === 'movie' ? 'movie' : 'series',
