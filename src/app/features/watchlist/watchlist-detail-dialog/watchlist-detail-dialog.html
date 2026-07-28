@@ -86,6 +86,8 @@
                   type="button"
                   class="season-chip"
                   [class.season-chip--watched]="isSeasonWatched(season)"
+                  [class.season-chip--current]="season === currentSeason"
+                  [style.--season-progress]="seasonProgress(season)"
                   [attr.aria-pressed]="isSeasonWatched(season)"
                   (click)="toggleSeason(season)"
                 >
@@ -94,9 +96,11 @@
               }
             </div>
           </div>
-        } @else if (mode() === 'saved' && isOwn && hasEpisodes) {
+        }
+
+        @if (mode() === 'saved' && isOwn && (hasEpisodes || (hasSeasons && episodeTotal))) {
           <div class="episodes-section">
-            <span class="section-label">Episodes watched — {{ watchedEpisodes }} / {{ episodeTotal }}</span>
+            <span class="section-label">{{ episodeLabel }} — {{ watchedEpisodes }} / {{ episodeTotal }}</span>
             <div class="episode-stepper">
               <button
                 type="button"
@@ -116,7 +120,9 @@
                 [value]="watchedEpisodes"
                 (input)="previewEpisodes(+epSlider.value)"
                 (change)="setEpisodes(+epSlider.value)"
-                [attr.aria-valuetext]="watchedEpisodes + ' of ' + episodeTotal + ' episodes'"
+                [attr.aria-valuetext]="
+                  episodeLabel + ' — ' + watchedEpisodes + ' of ' + episodeTotal + ' episodes'
+                "
               />
               <button
                 type="button"

@@ -149,12 +149,16 @@ export class SearchService {
       : null;
     // Count only aired, non-special seasons — TMDB's number_of_seasons includes
     // renewed-but-unaired seasons (0 episodes), which show up as phantom chips.
-    const airedSeasons = details.seasons?.filter(
-      (s) => s.season_number >= 1 && s.episode_count > 0,
-    ).length;
+    const airedSeasons = details.seasons
+      ?.filter((s) => s.season_number >= 1 && s.episode_count > 0)
+      .sort((a, b) => a.season_number - b.season_number);
     const season_count =
-      type === 'movie' ? null : (airedSeasons ?? details.number_of_seasons ?? null);
+      type === 'movie' ? null : (airedSeasons?.length ?? details.number_of_seasons ?? null);
     const episode_count = type === 'movie' ? null : (details.number_of_episodes ?? null);
+    // ponytail: index 0 = season 1, which drifts if a middle season aired nothing
+    // and got filtered out. Key by season_number if that ever shows up in the wild.
+    const season_episodes =
+      type === 'movie' ? [] : (airedSeasons?.map((s) => s.episode_count) ?? []);
     return {
       duration_minutes,
       director,
@@ -162,6 +166,7 @@ export class SearchService {
       backdrop_url,
       season_count,
       episode_count,
+      season_episodes,
     };
   }
 

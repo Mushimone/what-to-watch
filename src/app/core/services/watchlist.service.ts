@@ -143,6 +143,8 @@ export class WatchlistService {
       patch.watched_seasons = watched
         ? Array.from({ length: current!.season_count! }, (_, i) => i + 1)
         : [];
+      // No season is part-way through once every one is ticked or cleared.
+      patch.watched_episodes = 0;
     } else if ((current?.episode_count ?? 0) > 1) {
       patch.watched_episodes = watched ? current!.episode_count! : 0;
     }
@@ -189,16 +191,18 @@ export class WatchlistService {
   }
 
   /**
-   * Sets how many episodes are watched (for shows tracked by episode). `watched`
-   * is derived: fully watched only once every episode is reached — otherwise it
-   * stays in the Not Watched list.
+   * Sets how many episodes are watched. On a flat show that is the whole run, and
+   * `watched` is derived from it — fully watched only once every episode is
+   * reached. On a multi-season show the count is episodes into the season in
+   * progress, so `watched` belongs to the season chips and is left untouched here.
    */
   public async setWatchedEpisodes(id: string, watchedEpisodes: number) {
     const current = this.watchlistItemsSubject.value.find((item) => item.id === id);
-    const total = current?.episode_count ?? null;
+    const perSeason = (current?.season_count ?? 0) >= 2;
+    const total = perSeason ? null : (current?.episode_count ?? null);
     const clamped = total != null ? Math.max(0, Math.min(watchedEpisodes, total)) : Math.max(0, watchedEpisodes);
-    const watched = total != null && clamped >= total;
-    const patch: Partial<WatchlistItem> = { watched_episodes: clamped, watched };
+    const patch: Partial<WatchlistItem> = { watched_episodes: clamped };
+    if (!perSeason) patch.watched = total != null && clamped >= total;
     const { error } = await this.supabase
       .getClient()
       .from('watchlist_items')

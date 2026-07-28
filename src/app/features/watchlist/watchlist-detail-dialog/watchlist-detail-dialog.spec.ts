@@ -77,3 +77,105 @@ describe('WatchlistDetailDialog · add flow', () => {
     expect(close).toHaveBeenCalledWith('duplicate');
   });
 });
+
+describe('WatchlistDetailDialog · season progress', () => {
+  /** 3 seasons of 10, 8 and 6 episodes; S1 already watched. */
+  const show = {
+    ...savedRow,
+    type: 'series',
+    season_count: 3,
+    episode_count: 24,
+    watched_seasons: [1],
+    watched_episodes: 0,
+  } as WatchlistItem;
+
+  let setWatchedEpisodes: ReturnType<typeof vi.fn>;
+  let setWatchedSeasons: ReturnType<typeof vi.fn>;
+
+  const build = () => {
+    setWatchedEpisodes = vi.fn();
+    setWatchedSeasons = vi.fn();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [WatchlistDetailDialog],
+      providers: [
+        { provide: MAT_DIALOG_DATA, useValue: show },
+        { provide: MatDialogRef, useValue: { close: vi.fn(), afterClosed: () => of(undefined) } },
+        {
+          provide: SearchService,
+          useValue: {
+            watchRegion: 'IT',
+            getTmdbDetails: () => of(null),
+            getWatchProviders: () => of([]),
+          },
+        },
+        { provide: SupabaseService, useValue: { getCurrentUser: () => ({ id: USER }) } },
+        { provide: OpenAiService, useValue: { chat: () => of('') } },
+        {
+          provide: WatchlistService,
+          useValue: {
+            watchlistItems$: of([]),
+            clearUpdateFlag: vi.fn(),
+            updateDetails: vi.fn(),
+            setWatchedEpisodes,
+            setWatchedSeasons,
+          },
+        },
+      ],
+    });
+    const dialog = TestBed.createComponent(WatchlistDetailDialog).componentInstance;
+    dialog.seasonEpisodes.set([10, 8, 6]);
+    return dialog;
+  };
+
+  it('steps episodes within the first unwatched season', () => {
+    const dialog = build();
+    expect(dialog.currentSeason).toBe(2);
+    expect(dialog.episodeTotal).toBe(8);
+
+    dialog.setEpisodes(4);
+
+    expect(dialog.watchedEpisodes).toBe(4);
+    expect(dialog.seasonProgress(2)).toBe('50%');
+    expect(setWatchedEpisodes).toHaveBeenCalledWith('row-1', 4);
+    // Part-way through a season is not the whole series watched.
+    expect(dialog.item().watched).toBe(false);
+    expect(setWatchedSeasons).not.toHaveBeenCalled();
+  });
+
+  it('ticks the season and hands the stepper to the next one at the last episode', () => {
+    const dialog = build();
+
+    dialog.setEpisodes(8);
+
+    expect(dialog.item().watched_seasons).toEqual([1, 2]);
+    expect(setWatchedSeasons).toHaveBeenCalledWith('row-1', [1, 2]);
+    expect(dialog.currentSeason).toBe(3);
+    expect(dialog.watchedEpisodes).toBe(0);
+    expect(dialog.episodeTotal).toBe(6);
+    expect(setWatchedEpisodes).toHaveBeenLastCalledWith('row-1', 0);
+    expect(dialog.item().watched).toBe(false);
+  });
+
+  it('marks the series watched once the last season is finished', () => {
+    const dialog = build();
+    dialog.toggleSeason(2);
+
+    dialog.setEpisodes(6);
+
+    expect(dialog.item().watched_seasons).toEqual([1, 2, 3]);
+    expect(dialog.item().watched).toBe(true);
+    expect(dialog.currentSeason).toBeNull();
+  });
+
+  it('clears a stale part-watched count when a season chip is tapped', () => {
+    const dialog = build();
+    dialog.setEpisodes(4);
+
+    dialog.toggleSeason(1);
+
+    // S1 is unticked, so S1 is now in progress — the 4 belonged to S2.
+    expect(dialog.currentSeason).toBe(1);
+    expect(dialog.watchedEpisodes).toBe(0);
+  });
+});

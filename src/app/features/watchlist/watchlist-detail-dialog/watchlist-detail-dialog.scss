@@ -315,12 +315,17 @@
 }
 
 .season-chip {
+  // Set per-chip from the component: how far into the season in progress the
+  // user is, so the chip row alone reads as "S1 S2 done, part-way through S3".
+  --season-progress: 0%;
+  --season-fill: color-mix(in srgb, var(--color-accent-muted) 50%, transparent);
+
   font-size: 0.8rem;
   font-weight: 600;
   padding: 4px 12px;
   border-radius: 99px;
   border: 1px solid var(--color-hairline);
-  background: transparent;
+  background: linear-gradient(to right, var(--season-fill) var(--season-progress), transparent 0);
   color: var(--color-text-muted);
   cursor: pointer;
   transition:
@@ -337,8 +342,13 @@
     transform: scale(0.97);
   }
 
+  // The season in progress: full-strength text so it stays legible over the fill.
+  &--current {
+    color: var(--color-text);
+  }
+
   &--watched {
-    background: var(--color-accent);
+    --season-fill: var(--color-accent);
     border-color: var(--color-accent);
     color: var(--color-black);
   }

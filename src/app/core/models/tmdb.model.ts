@@ -75,6 +75,12 @@ export interface TmdbEnrichment {
   season_count: number | null;
   /** Total episodes — series/anime only; null for movies */
   episode_count: number | null;
+  /**
+   * Episodes per aired season, index 0 = season 1 — series/anime only, empty for
+   * movies. Not persisted: it comes free with every details fetch and only the
+   * detail sheet needs it, to cap the stepper at the season in progress.
+   */
+  season_episodes: number[];
 }
 
 export interface TmdbWatchProvider {

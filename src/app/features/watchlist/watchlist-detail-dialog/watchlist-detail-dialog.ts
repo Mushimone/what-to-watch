@@ -81,6 +81,9 @@ export class WatchlistDetailDialog {
   alreadyAdded = signal(false);
   adding = signal(false);
 
+  /** Episodes per season, index 0 = season 1. Never persisted — refetched with details. */
+  seasonEpisodes = signal<number[]>([]);
+
   providers = signal<TmdbWatchProvider[]>([]);
   providersLoading = signal(false);
 
@@ -99,8 +102,9 @@ export class WatchlistDetailDialog {
         .subscribe((details) => {
           this.enriching.set(false);
           if (!details) return;
-          const { backdrop_url, ...itemFields } = details;
+          const { backdrop_url, season_episodes, ...itemFields } = details;
           this.item.update((it) => ({ ...it, ...itemFields }));
+          this.seasonEpisodes.set(season_episodes);
           if (backdrop_url) this.backdrop.set(backdrop_url);
         });
 
@@ -130,8 +134,10 @@ export class WatchlistDetailDialog {
           .subscribe((details) => {
             this.enriching.set(false);
             if (!details) return;
-            const { backdrop_url, ...itemFields } = details;
+            // season_episodes is view-only — it has no column, so keep it out of the patch.
+            const { backdrop_url, season_episodes, ...itemFields } = details;
             if (backdrop_url) this.backdrop.set(backdrop_url);
+            this.seasonEpisodes.set(season_episodes);
             // Backfill sparse enrichment; always refresh season/episode counts
             // since they grow over time as new episodes air (and are stale/null
             // in rows added before this was tracked).
@@ -229,11 +235,39 @@ export class WatchlistDetailDialog {
     return count ? Array.from({ length: count }, (_, i) => i + 1) : [];
   }
 
+  /**
+   * The season the stepper tracks: the first one not ticked. Null once every
+   * season is watched, or on a flat show.
+   *
+   * ponytail: derived rather than stored, so watching out of order (S1 then S3)
+   * points it at S2. Store an explicit "in progress" season if that comes up.
+   */
+  get currentSeason(): number | null {
+    if (!this.hasSeasons) return null;
+    const watched = new Set(this.item().watched_seasons ?? []);
+    return this.seasons.find((season) => !watched.has(season)) ?? null;
+  }
+
+  /** Episodes into the current season for multi-season shows; into the run for flat ones. */
   get watchedEpisodes(): number {
     return this.item().watched_episodes ?? 0;
   }
   get episodeTotal(): number {
-    return this.item().episode_count ?? 0;
+    if (!this.hasSeasons) return this.item().episode_count ?? 0;
+    const season = this.currentSeason;
+    return season ? (this.seasonEpisodes()[season - 1] ?? 0) : 0;
+  }
+
+  get episodeLabel(): string {
+    const season = this.currentSeason;
+    return season ? `Watching S${season}` : 'Episodes watched';
+  }
+
+  /** Chip fill: full for a watched season, partial for the one in progress, empty otherwise. */
+  seasonProgress(season: number): string {
+    if (this.isSeasonWatched(season)) return '100%';
+    if (season !== this.currentSeason || !this.episodeTotal) return '0%';
+    return `${Math.round((this.watchedEpisodes / this.episodeTotal) * 100)}%`;
   }
 
   /** Live preview while dragging the slider — no DB write. */
@@ -241,10 +275,12 @@ export class WatchlistDetailDialog {
     if (!this.isOwn) return;
     const total = this.episodeTotal;
     const clamped = Math.max(0, Math.min(count, total));
+    const perSeason = this.hasSeasons;
     this.item.update((it) => ({
       ...it,
       watched_episodes: clamped,
-      watched: total > 0 && clamped >= total,
+      // On a multi-season show the chips own `watched`, not the stepper.
+      watched: perSeason ? it.watched : total > 0 && clamped >= total,
     }));
   }
 
@@ -252,6 +288,12 @@ export class WatchlistDetailDialog {
   setEpisodes(count: number): void {
     if (!this.isOwn) return;
     this.previewEpisodes(count);
+    const season = this.currentSeason;
+    // Season finished: tick its chip, which hands the stepper to the next season.
+    if (season != null && this.episodeTotal > 0 && this.watchedEpisodes >= this.episodeTotal) {
+      this.toggleSeason(season);
+      return;
+    }
     this.watchlist.setWatchedEpisodes(this.item().id, this.watchedEpisodes);
   }
 
@@ -271,6 +313,9 @@ export class WatchlistDetailDialog {
       watched: count != null && watchedSeasons.length >= count,
     }));
     this.watchlist.setWatchedSeasons(this.item().id, watchedSeasons);
+    // Any whole-season tap moves which season is in progress, so a part-watched
+    // count left over from the old one would be read against the wrong season.
+    if (this.watchedEpisodes) this.setEpisodes(0);
   }
 
   private buildItem(): WatchlistItem {
@@ -368,6 +413,7 @@ export class WatchlistDetailDialog {
     const patch: Partial<WatchlistItem> = { watched };
     if ((it.season_count ?? 0) >= 2) {
       patch.watched_seasons = watched ? this.seasons : [];
+      patch.watched_episodes = 0;
     } else if ((it.episode_count ?? 0) > 1) {
       patch.watched_episodes = watched ? it.episode_count! : 0;
     }
