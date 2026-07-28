@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "dev.mushimone.watch.twa",
+      "sha256_cert_fingerprints": [
+        "76:BA:22:41:55:91:A5:3E:D4:E9:45:DE:C4:89:5E:2E:0D:23:B3:0F:6C:EE:73:6E:BB:F5:AA:DD:15:6B:70:A0"
+      ]
+    }
+  }
+]
