@@ -45,6 +45,9 @@
   // Signal colours
   --color-danger: #e5534b;
   --color-danger-scrim: rgb(180 0 0 / 0.75);
+  // --color-danger reads 3.6:1 as text on --color-surface — fine for a border,
+  // short of 4.5:1 for the message beside it. This is the same red, lifted.
+  --color-danger-text: color-mix(in srgb, var(--color-danger) 70%, white);
   --color-heart: #e0245e;
   --color-rating: #f5c518; // IMDb-style gold
 

@@ -37,6 +37,10 @@ export class SupabaseService {
     });
   }
 
+  public signInWithPassword(email: string, password: string) {
+    return this.supabase.auth.signInWithPassword({ email, password });
+  }
+
   public getClient() {
     return this.supabase;
   }

@@ -1,3 +1,9 @@
+/* Hallmark · component: auth sign-in block · genre: atmospheric · theme: project tokens
+ * pre-emit critique: P4 H5 E4 S4 R5 V4
+ * states: default · hover · focus · active · disabled · loading · error · success
+ * contrast: pass (40–41) · tokens: pass (48) · inputs: pass (39) · icons: pass (30)
+ */
+
 // The panel, bloom and CTA are shared entry-surface styles in styles.scss. What
 // is left here is this page's own type — and no !important, because there is no
 // Material card to argue with any more.
@@ -24,6 +30,212 @@
   font-size: 1.05rem;
   font-weight: 700;
   line-height: 1;
+}
+
+// ─── The email path ───────────────────────────────────────────────────────────
+// Google is the one filled button on this page. Everything below it is quieter
+// on purpose: a text affordance to open the form, an outlined button to submit
+// it. Two filled pills stacked would make the page ask the same question twice.
+
+.auth-reveal {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-md);
+  padding: var(--space-xs) 0; // pads the row out to a 44px-tall hit target
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color var(--dur-short) var(--ease-out);
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &[aria-expanded='true'] {
+    display: none; // the form it opens is the affordance now
+  }
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  animation: auth-reveal var(--dur-med) var(--ease-out);
+}
+
+@keyframes auth-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+// Labels sit above and stay visible. A placeholder is a format hint, never the
+// label — it vanishes exactly when the user needs to check what they typed.
+.auth-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--color-text-muted);
+}
+
+// Border width is 1px in every state and the outline slot is pre-allocated at
+// 2px, so focusing or failing never moves the box by a pixel. Radius is the
+// panel's, not the search pill's — credentials are not a search.
+.auth-shell {
+  display: flex;
+  align-items: center;
+  height: 46px; // matches .btn-accent's min-height; mismatched rows read untuned
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 10px;
+  background: var(--color-fill-soft);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition:
+    background var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out);
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--color-surface-hi);
+    }
+  }
+
+  // Elevation on a dark canvas comes from lightness, not from a glow.
+  &:focus-within {
+    border-color: var(--color-accent);
+    outline-color: var(--color-focus);
+  }
+
+  &--error {
+    border-color: var(--color-danger);
+
+    .auth-glyph::before {
+      content: '!';
+    }
+  }
+}
+
+.auth-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9375rem;
+
+  &::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  &:focus {
+    outline: none; // the shell carries the ring for the whole control
+  }
+}
+
+// A permanently reserved right-edge slot: the warning mark appears into space
+// that was already there, so nothing reflows at the moment of failure.
+.auth-glyph {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-danger-text);
+}
+
+// Reserves one line whether or not it speaks. Colour alone never carries the
+// error — the border, the glyph, aria-invalid and this sentence all do.
+.auth-note {
+  margin: 0;
+  min-height: 1lh;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-danger-text);
+}
+
+.btn-ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  width: 100%;
+  min-height: 46px;
+  padding: 0 var(--space-lg);
+  border: 1px solid var(--color-accent-muted);
+  border-radius: 99px;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
+
+  @media (hover: hover) {
+    // One signal, not three: the edge goes to full accent. That's the whole hover.
+    &:hover:not(:disabled) {
+      border-color: var(--color-accent);
+    }
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.auth-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-accent-muted);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: auth-spin 700ms linear infinite;
+}
+
+@keyframes auth-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+.auth-tick {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+// The global reduced-motion block in styles.scss cuts every animation to 0.01ms
+// with !important, which is right for the reveal and wrong here: a frozen
+// spinner isn't calm, it's a broken progress indicator. Essential feedback slows
+// down instead of stopping.
+@media (prefers-reduced-motion: reduce) {
+  .auth-spinner {
+    animation-duration: 1400ms !important;
+    animation-iteration-count: infinite !important;
+  }
 }
 
 .login-foot {

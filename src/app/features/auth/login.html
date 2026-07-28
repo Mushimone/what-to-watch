@@ -9,6 +9,80 @@
       <span class="google-g" aria-hidden="true">G</span>
       Continue with Google
     </button>
+
+    <button
+      class="auth-reveal"
+      type="button"
+      [attr.aria-expanded]="showForm()"
+      aria-controls="auth-form"
+      (click)="showForm.set(true)"
+    >
+      Sign in with email instead
+    </button>
+
+    @if (showForm()) {
+      <form id="auth-form" class="auth-form" (ngSubmit)="loginWithPassword()">
+        <div class="auth-field">
+          <label class="auth-label" for="auth-email">Email</label>
+          <div class="auth-shell" [class.auth-shell--error]="error()">
+            <input
+              #emailInput
+              id="auth-email"
+              class="auth-input"
+              type="email"
+              name="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              required
+              [attr.aria-invalid]="error() ? 'true' : null"
+              aria-describedby="auth-note"
+              [ngModel]="email()"
+              (ngModelChange)="edit('email', $event)"
+            />
+            <span class="auth-glyph" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label" for="auth-password">Password</label>
+          <div class="auth-shell" [class.auth-shell--error]="error()">
+            <input
+              id="auth-password"
+              class="auth-input"
+              type="password"
+              name="password"
+              autocomplete="current-password"
+              required
+              [attr.aria-invalid]="error() ? 'true' : null"
+              aria-describedby="auth-note"
+              [ngModel]="password()"
+              (ngModelChange)="edit('password', $event)"
+            />
+            <span class="auth-glyph" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <!-- Height is reserved whether or not there is a message, so arriving
+             text never pushes the button out from under the pointer. -->
+        <p id="auth-note" class="auth-note" role="alert">{{ error() }}</p>
+
+        <button class="btn-ghost" type="submit" [disabled]="state() !== 'idle'">
+          @switch (state()) {
+            @case ('busy') {
+              <span class="auth-spinner" aria-hidden="true"></span>
+              Signing in
+            }
+            @case ('ok') {
+              <span class="auth-tick" aria-hidden="true">&check;</span>
+              Signed in
+            }
+            @default {
+              Sign in
+            }
+          }
+        </button>
+      </form>
+    }
   </div>
 
   <p class="login-foot">
