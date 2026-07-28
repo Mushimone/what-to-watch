@@ -29,6 +29,11 @@ export const routes: Routes = [
     data: { doc: 'terms' },
   },
   {
+    path: 'delete-account',
+    loadComponent: () => import('./features/legal/legal').then((m) => m.Legal),
+    data: { doc: 'delete-account' },
+  },
+  {
     path: 'invite/:token',
     loadComponent: () => import('./features/invite/invite').then((m) => m.Invite),
   },

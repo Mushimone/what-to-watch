@@ -1,0 +1,41 @@
+<h2 mat-dialog-title>Delete your account</h2>
+<mat-dialog-content>
+  <p class="lede">This cannot be undone. Deleting your account erases:</p>
+  <ul class="losses">
+    <li>your profile — username, avatar and the Google details you signed in with</li>
+    <li>your whole watchlist, with every rating, status and episode you tracked</li>
+    <li>your friend connections and any invite links you made</li>
+  </ul>
+  <p class="fine">
+    Backups and server logs rotate out within 30 days. Nothing is exported first — save what you
+    want to keep before you continue.
+  </p>
+
+  <p class="prompt">Type <strong>DELETE</strong> to confirm.</p>
+  <mat-form-field appearance="outline" class="confirm-field">
+    <mat-label>Confirmation</mat-label>
+    <input
+      matInput
+      [(ngModel)]="confirmValue"
+      [disabled]="deleting()"
+      (keyup.enter)="remove()"
+      autocomplete="off"
+      autocapitalize="characters"
+      spellcheck="false"
+    />
+  </mat-form-field>
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close [disabled]="deleting()">Keep my account</button>
+  <button
+    mat-flat-button
+    class="delete-action"
+    (click)="remove()"
+    [disabled]="!confirmed() || deleting()"
+  >
+    {{ deleting() ? 'Deleting…' : 'Delete my account' }}
+  </button>
+</mat-dialog-actions>

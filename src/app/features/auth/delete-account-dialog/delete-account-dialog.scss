@@ -1,0 +1,56 @@
+// A destructive dialog earns exactly one red thing — the button you press. The
+// list of what you lose is carried by a hairline, not by colouring the words.
+.lede {
+  margin: 0 0 var(--space-xs);
+}
+
+.losses {
+  margin: 0 0 var(--space-md);
+  padding: var(--space-2xs) 0 var(--space-2xs) var(--space-md);
+  list-style: none;
+  border-left: 2px solid var(--color-danger);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+
+  li + li {
+    margin-top: var(--space-2xs);
+  }
+}
+
+.fine {
+  margin: 0 0 var(--space-lg);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.prompt {
+  margin: 0 0 var(--space-xs);
+  font-size: 0.875rem;
+
+  strong {
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+  }
+}
+
+.confirm-field {
+  width: 100%;
+}
+
+.error {
+  margin: 0;
+  color: var(--color-danger-text);
+  font-size: 0.875rem;
+}
+
+.delete-action:not(:disabled) {
+  background: var(--color-danger);
+  color: #fff;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}

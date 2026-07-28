@@ -9,6 +9,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
   styleUrl: './legal.scss',
 })
 export class Legal {
-  doc = inject(ActivatedRoute).snapshot.data['doc'] as 'privacy' | 'terms';
+  doc = inject(ActivatedRoute).snapshot.data['doc'] as 'privacy' | 'terms' | 'delete-account';
   updated = 'July 28, 2026';
 }

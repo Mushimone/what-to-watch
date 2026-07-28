@@ -77,39 +77,45 @@
         <h2>Google user data</h2>
         <p>
           The Service's use of information received from Google APIs adheres to the
-          <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">
-            Google API Services User Data Policy</a>, including the Limited Use requirements. Your
-          Google name, email and profile picture are used solely to create and identify your account
-          and are never sold or used for advertising.
+          <a
+            href="https://developers.google.com/terms/api-services-user-data-policy"
+            target="_blank"
+            rel="noopener"
+          >
+            Google API Services User Data Policy</a
+          >, including the Limited Use requirements. Your Google name, email and profile picture are
+          used solely to create and identify your account and are never sold or used for
+          advertising.
         </p>
 
         <h2>How long we keep it</h2>
         <p>
           Your account and watchlist are kept while your account exists. Delete your account and the
           associated data is removed; server logs and encrypted backups may retain copies for a
-          short period before they rotate out. To delete your account, or to ask for a copy or
+          short period before they rotate out. See
+          <a routerLink="/delete-account">how to delete your account</a>; to ask for a copy or
           correction of your data, email us at the address below and we will action it.
         </p>
 
         <h2>Security</h2>
         <p>
-          Data is stored on Supabase with row-level security, so a signed-in user can reach their own
-          rows and those their friends have shared, and nothing else. No system is perfectly secure,
-          but we use the protections our providers offer and keep secrets on the server.
+          Data is stored on Supabase with row-level security, so a signed-in user can reach their
+          own rows and those their friends have shared, and nothing else. No system is perfectly
+          secure, but we use the protections our providers offer and keep secrets on the server.
         </p>
 
         <h2>Children</h2>
         <p>
-          The Service is not directed at anyone under 16, and we do not knowingly collect their data.
-          If you believe a child has created an account, contact us and we will remove it.
+          The Service is not directed at anyone under 16, and we do not knowingly collect their
+          data. If you believe a child has created an account, contact us and we will remove it.
         </p>
 
         <h2>Your rights</h2>
         <p>
           If you are in the EEA or the UK, you have the right to access, correct, export, delete or
           restrict the processing of your personal data, and to complain to your local data
-          protection authority. We rely on your consent and on the necessity of processing to provide
-          the Service you asked for. Email us to exercise any of these rights.
+          protection authority. We rely on your consent and on the necessity of processing to
+          provide the Service you asked for. Email us to exercise any of these rights.
         </p>
 
         <h2>Changes</h2>
@@ -173,9 +179,9 @@
 
         <h2>Availability and warranty</h2>
         <p>
-          The Service is provided "as is", without warranty of any kind. It is a personal project: it
-          may be changed, interrupted or discontinued at any time, and data loss, while something we
-          try to avoid, is possible. Keep your own copy of anything you cannot afford to lose.
+          The Service is provided "as is", without warranty of any kind. It is a personal project:
+          it may be changed, interrupted or discontinued at any time, and data loss, while something
+          we try to avoid, is possible. Keep your own copy of anything you cannot afford to lose.
         </p>
 
         <h2>Liability</h2>
@@ -207,6 +213,120 @@
         <p><a href="mailto:simonerizzo.pvt&#64;gmail.com">simonerizzo.pvt&#64;gmail.com</a></p>
 
         <p class="legal-foot"><a routerLink="/privacy">Privacy Policy</a></p>
+      }
+
+      @case ('delete-account') {
+        <span class="entry-mark">Account</span>
+        <h1>Delete your What to Watch account</h1>
+        <p class="legal-date">Last updated: {{ updated }}</p>
+
+        <p>
+          This page explains how to delete your account, and the data associated with it, in
+          <strong>What to Watch</strong>, the app published by Simone Rizzo. You can do it yourself
+          from inside the app, or ask us by email. Either way it is free, permanent and cannot be
+          undone.
+        </p>
+
+        <h2>How to delete your account in the app</h2>
+        <ol>
+          <li>Open What to Watch and sign in.</li>
+          <li>
+            Tap the <strong>account icon</strong> — top right on phones, the bottom of the sidebar
+            on a wide screen.
+          </li>
+          <li>Choose <strong>Delete account</strong>.</li>
+          <li>
+            Type <strong>DELETE</strong> to confirm, then tap <strong>Delete my account</strong>.
+            The deletion happens immediately and cannot be undone.
+          </li>
+        </ol>
+
+        <h2>How to request deletion by email</h2>
+        <p>
+          If you cannot reach the app — you lost access to the device or the account — write to us.
+        </p>
+        <ol>
+          <li>
+            Send an email to
+            <a
+              href="mailto:simonerizzo.pvt&#64;gmail.com?subject=Delete%20my%20What%20to%20Watch%20account"
+            >
+              simonerizzo.pvt&#64;gmail.com</a
+            >
+            <strong>from the same Google address you use to sign in</strong> — that is how we verify
+            the request is yours.
+          </li>
+          <li>Use the subject line <strong>“Delete my What to Watch account”</strong>.</li>
+          <li>
+            Include the username shown on your profile, so we can match the request if you have more
+            than one account.
+          </li>
+          <li>
+            We reply to confirm within 7 days, and the account is deleted within 30 days of that
+            confirmation. You do not need to do anything else; uninstalling the app on its own does
+            not delete your data.
+          </li>
+        </ol>
+
+        <h2>What is deleted</h2>
+        <p>Everything tied to your account is erased from our database:</p>
+        <ul>
+          <li>
+            <strong>Account and profile</strong> — the name, email address and profile picture URL
+            received from Google when you sign in, your chosen username and avatar.
+          </li>
+          <li>
+            <strong>Watchlist</strong> — every title you added, with its status, rating, season and
+            episode progress, and reactions.
+          </li>
+          <li>
+            <strong>Friends</strong> — your connections with other users and any invite links you
+            created. Friends stop seeing your watchlist.
+          </li>
+        </ul>
+        <p>
+          Chat messages sent to the recommendation assistant are not stored on our side at all: they
+          are forwarded to the AI provider to produce a reply and kept only in your browser session.
+        </p>
+
+        <h2>What is kept, and for how long</h2>
+        <ul>
+          <li>
+            <strong>Encrypted database backups</strong> — up to <strong>30 days</strong> after
+            deletion, then overwritten as backups rotate. Your data is not restored from them except
+            to recover the whole database from an incident.
+          </li>
+          <li>
+            <strong>Server logs</strong> (IP address, timestamp, requested URL) held by our hosting
+            and database providers for security and troubleshooting — up to
+            <strong>30 days</strong>, then discarded automatically.
+          </li>
+          <li>
+            <strong>The deletion request email</strong> itself, kept as the record that you asked
+            and we acted, for up to <strong>12 months</strong>.
+          </li>
+        </ul>
+        <p>
+          Nothing is kept for advertising, profiling or resale. If a law requires us to retain
+          something longer, we will say so in our reply.
+        </p>
+
+        <h2>Deleting only some data</h2>
+        <p>
+          You do not have to delete the whole account: you can remove individual titles from your
+          watchlist in the app at any time, and you can ask us by email to remove your friend
+          connections or reset your username while keeping the account.
+        </p>
+
+        <h2>Contact</h2>
+        <p>
+          Developer: Simone Rizzo —
+          <a href="mailto:simonerizzo.pvt&#64;gmail.com">simonerizzo.pvt&#64;gmail.com</a>
+        </p>
+
+        <p class="legal-foot">
+          <a routerLink="/privacy">Privacy Policy</a> · <a routerLink="/terms">Terms of Service</a>
+        </p>
       }
     }
   </article>

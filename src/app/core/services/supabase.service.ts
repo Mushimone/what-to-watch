@@ -26,6 +26,19 @@ export class SupabaseService {
     return this.supabase.auth.signOut();
   }
 
+  /**
+   * Erases the account server-side — the auth.users row and everything the
+   * foreign keys cascade off it. The session it was signed in with is dead the
+   * moment the row goes, so the local sign-out is scoped local: asking the
+   * server to revoke a token whose user no longer exists just errors.
+   */
+  public async deleteAccount(): Promise<boolean> {
+    const { error } = await this.supabase.functions.invoke('delete-account', { method: 'POST' });
+    if (error) return false;
+    await this.supabase.auth.signOut({ scope: 'local' });
+    return true;
+  }
+
   public signInWithGoogle(redirectTo: string = `${window.location.origin}/`) {
     return this.supabase.auth.signInWithOAuth({
       provider: 'google',
