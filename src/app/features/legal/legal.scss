@@ -1,0 +1,75 @@
+// Canvas and bloom come from .entry in styles.scss; a long document reads from
+// the top, so it opts out of that container's vertical centring.
+.legal-page {
+  justify-content: flex-start;
+}
+
+.legal {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+
+  h1 {
+    margin: var(--space-sm) 0 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+  }
+
+  h2 {
+    margin: var(--space-xl) 0 var(--space-xs);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  p {
+    margin: 0 0 var(--space-md);
+  }
+
+  ul {
+    margin: 0 0 var(--space-md);
+    padding-left: var(--space-lg);
+  }
+
+  li {
+    margin-bottom: var(--space-xs);
+  }
+
+  strong {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+
+  a {
+    color: var(--color-accent);
+  }
+}
+
+.legal-back {
+  display: inline-block;
+  margin-bottom: var(--space-lg);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.legal-date {
+  margin: var(--space-xs) 0 var(--space-lg);
+  font-size: 0.8125rem;
+}
+
+.legal-foot {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-hairline-soft);
+  font-size: 0.8125rem;
+}

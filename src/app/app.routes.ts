@@ -19,6 +19,16 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'privacy',
+    loadComponent: () => import('./features/legal/legal').then((m) => m.Legal),
+    data: { doc: 'privacy' },
+  },
+  {
+    path: 'terms',
+    loadComponent: () => import('./features/legal/legal').then((m) => m.Legal),
+    data: { doc: 'terms' },
+  },
+  {
     path: 'invite/:token',
     loadComponent: () => import('./features/invite/invite').then((m) => m.Invite),
   },

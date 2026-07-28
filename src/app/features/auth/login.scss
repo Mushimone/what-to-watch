@@ -33,4 +33,8 @@
   line-height: 1.5;
   text-align: center;
   color: var(--color-text-muted);
+
+  a {
+    color: inherit; // the links are fine print, not a second call to action
+  }
 }
