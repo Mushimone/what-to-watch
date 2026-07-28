@@ -58,14 +58,13 @@ export class Watchlist implements OnInit {
   }
 
   /**
-   * Switch the content pane. On mobile the tab preselects the chat mode — the
-   * chat is one screen among several, so it should follow where you are. On
-   * desktop it sits alongside the panes and keeps whatever mode you picked in
-   * its own toggle; realigning it there would reset a conversation you can see.
+   * Switch the content pane. The tab preselects the chat mode so the chat
+   * follows where you are: the Add screen opens the discovery thread, every
+   * other screen opens the from-your-list thread.
    */
   setSection(section: WatchlistSection): void {
     this.activeSection.set(section);
-    if (!this.isDesktop()) this.chatMode = section === 'add' ? 'add' : 'list';
+    this.chatMode = section === 'add' ? 'add' : 'list';
   }
 
   async ngOnInit(): Promise<void> {
