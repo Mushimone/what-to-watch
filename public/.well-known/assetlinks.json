@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "dev.mushimone.watch.twa",
       "sha256_cert_fingerprints": [
-        "76:BA:22:41:55:91:A5:3E:D4:E9:45:DE:C4:89:5E:2E:0D:23:B3:0F:6C:EE:73:6E:BB:F5:AA:DD:15:6B:70:A0"
+        "76:BA:22:41:55:91:A5:3E:D4:E9:45:DE:C4:89:5E:2E:0D:23:B3:0F:6C:EE:73:6E:BB:F5:AA:DD:15:6B:70:A0",
+        "1F:C5:D2:2F:07:B8:E9:C8:F1:E7:CF:CE:5B:AC:41:3F:AA:FC:76:52:58:EA:0D:82:90:43:39:9C:14:9D:98:A2"
       ]
     }
   }
