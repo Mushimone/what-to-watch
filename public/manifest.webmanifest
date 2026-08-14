@@ -3,7 +3,7 @@
   "short_name": "WtW",
   "description": "Your personal watchlist for movies, series and anime.",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "scope": "./",
   "start_url": "./",
   "theme_color": "#16db65",

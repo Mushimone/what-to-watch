@@ -567,7 +567,12 @@ mat-icon.search-icon {
   flex-direction: column;
   justify-content: center;
   min-height: 100dvh;
-  padding: var(--space-xl) var(--space-md);
+  // Edge-to-edge (Android 15+, iOS): the bars overlay the page, so the padding
+  // has to clear the insets. The watchlist shell does the same in its own file.
+  padding: max(var(--space-xl), env(safe-area-inset-top))
+    max(var(--space-md), env(safe-area-inset-right))
+    max(var(--space-xl), env(safe-area-inset-bottom))
+    max(var(--space-md), env(safe-area-inset-left));
 
   // One bloom, never animated.
   &::before {

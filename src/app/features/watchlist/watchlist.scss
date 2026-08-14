@@ -1,5 +1,8 @@
 .watchlist-page {
   padding: 0;
+  // Landscape on a phone with a display cutout: the bars are transparent under
+  // edge-to-edge, so the shell holds itself off the notch. Zero everywhere else.
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
 }
 
 // ── Mobile shell: sticky header, scrolling pane, docked bottom nav ──────────
@@ -38,7 +41,7 @@
 
 .add-fab {
   position: fixed;
-  right: var(--space-md);
+  right: max(var(--space-md), env(safe-area-inset-right));
   bottom: calc(var(--nav-h) + var(--space-md) + env(safe-area-inset-bottom));
   z-index: var(--z-fab);
 }
@@ -52,6 +55,8 @@
   align-items: stretch;
   height: calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
+  // Fixed, so it escapes the page's inline insets and has to repeat them.
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
   // Ends in the page background rather than a flat slab — see --fade-bottom.
   // The safe-area strip is the part that meets the phone's own black band, and
   // it's the part the gradient has gone black by.
