@@ -19,6 +19,56 @@
   }
 }
 
+// Quiet by design: one line under the field, accent-coloured so it reads as an
+// action, not a heading. Never wraps — a two-line control is a broken tap target.
+.import-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin-top: var(--space-xs);
+  padding: var(--space-2xs) var(--space-xs);
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background var(--dur-short) var(--ease-out);
+
+  mat-icon {
+    flex: none;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: var(--color-surface-hi);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 1ms;
+
+    &:active {
+      transform: none;
+    }
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

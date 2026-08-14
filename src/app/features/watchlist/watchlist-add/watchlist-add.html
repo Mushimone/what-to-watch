@@ -26,6 +26,20 @@
       }
     </div>
 
+    <!-- Sits under the field rather than beside it: adding one title is the
+         common path, importing a whole list is the once-in-a-while one.
+         It steps aside once a search is on screen — by then the rows are the
+         thing to read, and it would only compete with them. The trigger is
+         results arriving, not the first keystroke: searching starts at three
+         characters, so the button leaves as the list appears rather than
+         twitching out from under a half-typed word. -->
+    @if (state().status === 'idle') {
+      <button type="button" class="import-link" (click)="importList()">
+        <mat-icon>playlist_add</mat-icon>
+        Import a list from IMDb or Letterboxd
+      </button>
+    }
+
     <span class="sr-only" role="status" aria-live="polite">{{ statusMessage() }}</span>
   </div>
 

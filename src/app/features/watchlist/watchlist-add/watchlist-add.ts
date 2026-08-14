@@ -16,6 +16,7 @@ import {
   DetailDialogStatus,
   WatchlistDetailDialog,
 } from '../watchlist-detail-dialog/watchlist-detail-dialog';
+import { WatchlistImportDialog } from '../watchlist-import/watchlist-import-dialog';
 
 interface SearchState {
   status: 'idle' | 'loading' | 'error' | 'no-results' | 'success';
@@ -184,6 +185,24 @@ export class WatchlistAdd {
       this.snackBar.open('Something went wrong. Please try again.', 'Dismiss', { duration: 3000 });
     }
     // Success is silent — the row flips to "Added" where the user is looking.
+  }
+
+  /**
+   * The whole import lives in the sheet — it opens, reads the file, reports
+   * what it matched and only then writes. All this pane does is say how many
+   * landed, since the rows themselves are in the list pane by then.
+   */
+  importList(): void {
+    WatchlistImportDialog.open(this.dialog)
+      .afterClosed()
+      .subscribe((outcome) => {
+        if (!outcome?.added) return;
+        this.snackBar.open(
+          `Added ${outcome.added} ${outcome.added === 1 ? 'title' : 'titles'} to your watchlist.`,
+          'OK',
+          { duration: 4000 },
+        );
+      });
   }
 
   open(result: SearchResult): void {

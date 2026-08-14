@@ -1,0 +1,323 @@
+<div class="import">
+  <header class="import__head">
+    <h2 mat-dialog-title class="import__title">Import a list</h2>
+    <button
+      type="button"
+      class="icon-btn"
+      aria-label="Close"
+      [disabled]="phase() === 'saving'"
+      (click)="close()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content class="import__body">
+    @switch (phase()) {
+      <!-- ── Pick ─────────────────────────────────────────────────────────── -->
+      @case ('pick') {
+        <label
+          class="drop"
+          [class.drop--over]="dragging()"
+          (dragover)="$event.preventDefault(); dragging.set(true)"
+          (dragleave)="dragging.set(false)"
+          (drop)="onDrop($event)"
+        >
+          <input type="file" accept=".csv,text/csv" class="drop__input" (change)="onFileInput($event)" />
+          <mat-icon class="drop__icon">upload_file</mat-icon>
+          <span class="drop__lead">Drop your export here, or choose a file</span>
+          <span class="drop__hint">A .csv from IMDb or Letterboxd</span>
+        </label>
+
+        <div class="or"><span>or paste a link</span></div>
+
+        <div class="url">
+          <input
+            type="url"
+            class="url__input"
+            placeholder="letterboxd.com/…/list/…"
+            aria-label="Link to a public Letterboxd list"
+            autocomplete="off"
+            spellcheck="false"
+            [value]="listUrl()"
+            (input)="listUrl.set($any($event.target).value)"
+            (paste)="onUrlPaste($event)"
+            (keydown.enter)="readUrl()"
+          />
+          <button
+            mat-flat-button
+            type="button"
+            class="url__go"
+            [disabled]="!listUrl().trim()"
+            (click)="readUrl()"
+          >
+            Read
+          </button>
+        </div>
+        <p class="url__hint">
+          The list has to be public. Letterboxd only — IMDb blocks other sites from reading its
+          pages, so use its Export instead.
+        </p>
+
+        @if (pickError()) {
+          <p class="notice notice--error" role="alert">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ pickError() }}</span>
+          </p>
+        }
+
+        <details class="how">
+          <summary>Where do I get the file?</summary>
+          <dl class="how__list">
+            <dt>Letterboxd</dt>
+            <dd>
+              Open the list, then <em>⋯ → Export this list</em>. Your whole account exports from
+              <em>Settings → Data</em> as a zip — unzip it and pick the .csv you want.
+            </dd>
+            <dt>IMDb</dt>
+            <dd>
+              Open your list or watchlist, then <em>⋯ → Export</em>. IMDb prepares the file on your
+              <em>Exports</em> page; download it there.
+            </dd>
+          </dl>
+          <p class="how__note">
+            Only your own lists export. To pull in someone else's, it has to be a public list — that
+            is coming as a link you can paste.
+          </p>
+        </details>
+      }
+
+      <!-- ── Reading the list ─────────────────────────────────────────────── -->
+      <!-- One opaque call: the function is walking Letterboxd's pages and there
+           is no honest number to show until it answers. -->
+      @case ('reading') {
+        <div class="run">
+          <p class="run__file">
+            <mat-icon>link</mat-icon>
+            <span>{{ listUrl() }}</span>
+          </p>
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          <p class="run__count" role="status" aria-live="polite">
+            <span class="run__of">Reading the list…</span>
+          </p>
+          <p class="run__note">Long lists take a few seconds — they come 100 films to a page.</p>
+        </div>
+      }
+
+      <!-- ── Matching ─────────────────────────────────────────────────────── -->
+      @case ('matching') {
+        <div class="run">
+          <p class="run__file">
+            <mat-icon>{{ source() === 'letterboxd' && listUrl() ? 'link' : 'description' }}</mat-icon>
+            <span>{{ origin() }}</span>
+          </p>
+          <mat-progress-bar
+            mode="determinate"
+            [value]="total() ? (done() / total()) * 100 : 0"
+          ></mat-progress-bar>
+          <p class="run__count" role="status" aria-live="polite">
+            <span class="run__figure">{{ done() }}</span>
+            <span class="run__of">of {{ total() }} matched against TMDB</span>
+          </p>
+          <p class="run__note">You can leave this open — nothing is added until you say so.</p>
+        </div>
+      }
+
+      <!-- ── Review ───────────────────────────────────────────────────────── -->
+      @default {
+        <p class="summary">
+          <strong>{{ total() }}</strong> in {{ sourceLabel() }}’s list ·
+          <strong>{{ matched().length }}</strong> ready ·
+          <strong>{{ duplicates().length }}</strong> already yours
+          @if (ambiguous().length + notFound().length + failed().length) {
+            · <strong>{{ ambiguous().length + notFound().length + failed().length }}</strong> need
+            you
+          }
+        </p>
+
+        @if (truncated()) {
+          <p class="notice" role="status">
+            <mat-icon>info_outline</mat-icon>
+            <span>
+              That list is longer than one import can walk — these are the first {{ total() }}.
+              Import again later for the rest; anything already added is skipped.
+            </span>
+          </p>
+        }
+
+        @if (saveError()) {
+          <p class="notice notice--error" role="alert">
+            <mat-icon>error_outline</mat-icon>
+            <span>Nothing was added — the save failed. Your picks are still here, try again.</span>
+          </p>
+        }
+
+        @if (matched().length) {
+          <section class="group">
+            <header class="group__head">
+              <h3>Ready to add · {{ matched().length }}</h3>
+              <button type="button" class="link-btn" (click)="toggleAll()">
+                {{ allSelected() ? 'Clear all' : 'Select all' }}
+              </button>
+            </header>
+            <ul class="rows">
+              @for (row of matched(); track row.entry.name + row.entry.year) {
+                <li class="row">
+                  <label class="row__pick">
+                    <input type="checkbox" [checked]="row.selected" (change)="toggle(row)" />
+                    <ng-container
+                      *ngTemplateOutlet="film; context: { $implicit: row.result }"
+                    ></ng-container>
+                  </label>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (ambiguous().length) {
+          <section class="group">
+            <header class="group__head">
+              <h3>Which one? · {{ ambiguous().length }}</h3>
+            </header>
+            <ul class="rows">
+              @for (row of ambiguous(); track row.entry.name + row.entry.year) {
+                <li class="row row--asking">
+                  <p class="row__asked">
+                    {{ row.entry.name }}@if (row.entry.year) {
+                      <span class="row__year"> ({{ row.entry.year }})</span>
+                    }
+                  </p>
+                  <div class="choices">
+                    @for (candidate of row.candidates; track candidate.external_id) {
+                      <button type="button" class="choice" (click)="choose(row, candidate)">
+                        @if (candidate.poster_url) {
+                          <img class="choice__poster" [src]="candidate.poster_url" alt="" />
+                        } @else {
+                          <span class="choice__poster"></span>
+                        }
+                        <span class="choice__title">{{ candidate.title }}</span>
+                        <span class="choice__meta">{{
+                          candidate.release_date ? (candidate.release_date | slice: 0 : 4) : '—'
+                        }}</span>
+                      </button>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (failed().length) {
+          <section class="group">
+            <header class="group__head">
+              <h3>Couldn’t reach TMDB · {{ failed().length }}</h3>
+              <button type="button" class="link-btn" (click)="retryFailed()">
+                Retry {{ failed().length }}
+              </button>
+            </header>
+            <ul class="rows">
+              @for (row of failed(); track row.entry.name + row.entry.year) {
+                <li class="row row--muted">
+                  <span class="row__asked">{{ row.entry.name }}</span>
+                  <span class="row__tag">request failed</span>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (notFound().length) {
+          <section class="group">
+            <header class="group__head">
+              <h3>Not on TMDB · {{ notFound().length }}</h3>
+            </header>
+            <ul class="rows">
+              @for (row of notFound(); track row.entry.name + row.entry.year) {
+                <li class="row row--muted">
+                  <span class="row__asked"
+                    >{{ row.entry.name }}@if (row.entry.year) {
+                      <span class="row__year"> ({{ row.entry.year }})</span>
+                    }</span
+                  >
+                  <button type="button" class="link-btn" (click)="searchFor(row)">Search</button>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (duplicates().length) {
+          <section class="group">
+            <header class="group__head">
+              <h3>Already in your list · {{ duplicates().length }}</h3>
+            </header>
+            <ul class="rows">
+              @for (row of duplicates(); track row.entry.name + row.entry.year) {
+                <li class="row row--muted">
+                  <ng-container
+                    *ngTemplateOutlet="film; context: { $implicit: row.result }"
+                  ></ng-container>
+                  <span class="row__tag"><mat-icon>check</mat-icon>saved</span>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      }
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="import__actions">
+    @switch (phase()) {
+      @case ('pick') {
+        <button mat-button type="button" (click)="close()">Close</button>
+      }
+      @case ('reading') {
+        <button mat-button type="button" (click)="cancel()">Cancel</button>
+      }
+      @case ('matching') {
+        <button mat-button type="button" (click)="cancel()">Cancel</button>
+      }
+      @default {
+        <button mat-button type="button" [disabled]="phase() === 'saving'" (click)="close()">
+          Cancel
+        </button>
+        <button
+          mat-flat-button
+          type="button"
+          class="add-btn"
+          [disabled]="!selectedCount() || phase() === 'saving'"
+          (click)="add()"
+        >
+          @if (phase() === 'saving') {
+            <mat-spinner [diameter]="18"></mat-spinner>
+            Adding…
+          } @else {
+            Add {{ selectedCount() }}
+            {{ selectedCount() === 1 ? 'title' : 'titles' }}
+          }
+        </button>
+      }
+    }
+  </mat-dialog-actions>
+</div>
+
+<!-- One film row, shared by the ready and already-yours groups. -->
+<ng-template #film let-result>
+  @if (result?.poster_url) {
+    <img class="row__poster" [src]="result.poster_url" alt="" />
+  } @else {
+    <span class="row__poster"></span>
+  }
+  <span class="row__info">
+    <span class="row__title">{{ result?.title }}</span>
+    <span class="row__meta">
+      {{ result?.type }}
+      @if (result?.release_date) {
+        · {{ result.release_date | slice: 0 : 4 }}
+      }
+    </span>
+  </span>
+</ng-template>

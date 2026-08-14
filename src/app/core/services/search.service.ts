@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 import {
   TmdbDetails,
   TmdbEnrichment,
+  TmdbFindResponse,
   TmdbMovieCreditsResponse,
   TmdbPersonResult,
   TmdbSearchResponse,
@@ -13,11 +14,31 @@ import {
 } from '../models/tmdb.model';
 import { catchError, map, Observable, of, Subject, switchMap } from 'rxjs';
 import { MediaType, SearchResult } from '../models/watchlist-item.model';
+import { SupabaseService } from './supabase.service';
+
+/**
+ * The `error` code out of an edge function's non-2xx body. supabase-js wraps
+ * those in a FunctionsHttpError with the raw Response hanging off `context`,
+ * which is the only place the function's own message survives.
+ */
+async function readInvokeError(error: unknown): Promise<string | null> {
+  const context = (error as { context?: Response })?.context;
+  if (!context || typeof context.json !== 'function') return null;
+  try {
+    const body = await context.json();
+    return typeof body?.error === 'string' ? body.error : null;
+  } catch {
+    return null;
+  }
+}
 @Injectable({
   providedIn: 'root',
 })
 export class SearchService {
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private supabase: SupabaseService,
+  ) {
     this.getTmdbGenres();
   }
   url = 'https://api.themoviedb.org/3/search/multi';
@@ -88,6 +109,71 @@ export class SearchService {
           catchError(() => of({ results: titles, totalPages })),
         );
       }),
+    );
+  }
+
+  /**
+   * The titles on a public Letterboxd list. Goes through the `import-list` edge
+   * function because letterboxd.com sends no CORS headers — the browser is not
+   * allowed to read it directly. The function returns raw "Title (Year)"
+   * strings and nothing else; matching stays here on the client where progress
+   * can be counted.
+   */
+  async fetchListItems(
+    url: string,
+  ): Promise<{ name: string; items: string[]; truncated: boolean } | { error: string }> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .functions.invoke<{ name: string; items: string[]; truncated: boolean; error?: string }>(
+        'import-list',
+        { body: { url } },
+      );
+    // A non-2xx comes back as an error with the body attached; the body's own
+    // `error` code is the one worth showing, so dig it out before giving up.
+    if (error) {
+      const detail = await readInvokeError(error);
+      return { error: detail ?? 'unreachable' };
+    }
+    if (!data || data.error) return { error: data?.error ?? 'unreachable' };
+    return { name: data.name, items: data.items ?? [], truncated: !!data.truncated };
+  }
+
+  /**
+   * Title matches for one query, no director fold-in and no paging — what an
+   * imported row needs. `searchTmdb` would pull in a filmography whenever the
+   * title happens to read as a name ("Chaplin", "Carrie"), which is right for
+   * someone typing and wrong for a list entry that means one specific film.
+   */
+  searchTitles(query: string): Observable<SearchResult[]> {
+    const params = { api_key: environment.tmdb.apiKey, query };
+    return this.http.get<TmdbSearchResponse>(this.url, { params }).pipe(
+      map((response) =>
+        this.mapToSearchResults(
+          (response.results || []).filter(
+            (result): result is TmdbSearchResult =>
+              result.media_type === 'movie' || result.media_type === 'tv',
+          ),
+        ),
+      ),
+    );
+  }
+
+  /**
+   * The TMDB record behind an IMDb `tt…` id. Exact by construction — this is
+   * what makes an IMDb export import without guessing at titles. Returns an
+   * array so callers can treat it like any other candidate list; TMDB gives at
+   * most one hit per id, and none for a title it doesn't carry.
+   */
+  findByImdbId(imdbId: string): Observable<SearchResult[]> {
+    const url = `https://api.themoviedb.org/3/find/${imdbId}`;
+    const params = { api_key: environment.tmdb.apiKey, external_source: 'imdb_id' };
+    return this.http.get<TmdbFindResponse>(url, { params }).pipe(
+      map(({ movie_results = [], tv_results = [] }) =>
+        this.mapToSearchResults([
+          ...movie_results.map((r) => ({ ...r, media_type: 'movie' as const })),
+          ...tv_results.map((r) => ({ ...r, media_type: 'tv' as const })),
+        ]),
+      ),
     );
   }
 
