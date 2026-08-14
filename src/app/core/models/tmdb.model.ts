@@ -26,6 +26,15 @@ export interface TmdbPersonResult {
   popularity: number;
 }
 
+/**
+ * /find/{external_id} — results split by kind instead of carrying media_type,
+ * so the caller stamps it back on. Only the two kinds we track are declared.
+ */
+export interface TmdbFindResponse {
+  movie_results?: Omit<TmdbSearchResult, 'media_type'>[];
+  tv_results?: Omit<TmdbSearchResult, 'media_type'>[];
+}
+
 export interface TmdbSearchResponse {
   page: number;
   results: (TmdbSearchResult | TmdbPersonResult)[];

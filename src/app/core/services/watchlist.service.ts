@@ -60,6 +60,36 @@ export class WatchlistService {
     return data;
   }
 
+  /**
+   * Adds a batch in one round-trip — an imported list is dozens of titles, and
+   * one insert per title would be dozens of requests for a single user action.
+   *
+   * Upsert rather than insert so a title already saved is skipped instead of
+   * failing the whole batch: the caller filters known duplicates out first, but
+   * its cache can be stale (another device, another tab), and losing 90 titles
+   * to one collision is not a trade worth making. Returns the rows actually
+   * written, so the caller can report what landed.
+   */
+  public async addMany(items: Omit<WatchlistItem, 'id' | 'user_id' | 'added_at'>[]) {
+    if (!items.length) return [];
+    const userId = this.supabase.getCurrentUser()?.id;
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('watchlist_items')
+      .upsert(
+        items.map((item) => ({ ...item, user_id: userId })),
+        { onConflict: 'user_id,external_id,external_source', ignoreDuplicates: true },
+      )
+      .select();
+    if (error) {
+      console.error('Error adding titles to watchlist:', error);
+      return null;
+    }
+    const added = data ?? [];
+    if (added.length) this.watchlistItemsSubject.next([...this.watchlistItemsSubject.value, ...added]);
+    return added;
+  }
+
   public async removeFromWatchlist(id: string) {
     const { error } = await this.supabase.getClient().from('watchlist_items').delete().eq('id', id);
     if (error) {

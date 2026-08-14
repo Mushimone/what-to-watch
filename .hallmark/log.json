@@ -1,5 +1,12 @@
 [
   {
+    "date": "2026-08-14",
+    "macrostructure": "component-scope (import sheet)",
+    "theme": "app-locked (evergreen/malachite dark · display: Bricolage Grotesque)",
+    "enrichment": "none",
+    "brief": "What to Watch · import an IMDb/Letterboxd list export: progress, grouped failures, dedupe against the watchlist"
+  },
+  {
     "date": "2026-07-28",
     "macrostructure": "Stat-Led",
     "theme": "app-locked (evergreen/malachite dark · display: Bricolage Grotesque)",
