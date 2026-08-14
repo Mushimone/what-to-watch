@@ -13,6 +13,7 @@ import { WatchlistAiChatComponent, ChatMode } from './watchlist-ai-chat/watchlis
 import { UsernameDialog } from '../auth/username-dialog/username-dialog';
 import { ProfileService } from '../../core/services/profile.service';
 import { FriendsService } from '../../core/services/friends.service';
+import { SearchService } from '../../core/services/search.service';
 
 export type WatchlistSection = 'list' | 'add' | 'shared' | 'profile';
 
@@ -35,6 +36,7 @@ export class Watchlist implements OnInit {
   private profile = inject(ProfileService);
   private friends = inject(FriendsService);
   private dialog = inject(MatDialog);
+  private search = inject(SearchService);
 
   isDesktop = signal(false);
   /** Which section the content pane shows — same model on desktop and mobile. */
@@ -54,6 +56,10 @@ export class Watchlist implements OnInit {
       .observe('(min-width: 900px)')
       .pipe(takeUntilDestroyed())
       .subscribe((state) => this.isDesktop.set(state.matches));
+
+    // Someone asked for a search — bring the pane that runs it forward. The pane
+    // picks up the query itself; this only owns which section shows.
+    this.search.searchRequests$.pipe(takeUntilDestroyed()).subscribe(() => this.setSection('add'));
   }
 
   /**

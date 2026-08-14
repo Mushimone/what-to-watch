@@ -11,7 +11,7 @@ import {
   TmdbWatchProvider,
   TmdbWatchProvidersResponse,
 } from '../models/tmdb.model';
-import { catchError, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, map, Observable, of, Subject, switchMap } from 'rxjs';
 import { MediaType, SearchResult } from '../models/watchlist-item.model';
 @Injectable({
   providedIn: 'root',
@@ -21,6 +21,18 @@ export class SearchService {
     this.getTmdbGenres();
   }
   url = 'https://api.themoviedb.org/3/search/multi';
+  /**
+   * A search asked for from somewhere that can't reach the Add pane — today the
+   * detail sheet's director link. The shell brings the pane forward, the pane
+   * runs the query. An event, not state: it fires inside the click that asked
+   * for it, so nothing is left over to consume or re-fire later.
+   */
+  private searchRequestSubject = new Subject<string>();
+  searchRequests$ = this.searchRequestSubject.asObservable();
+
+  requestSearch(query: string): void {
+    this.searchRequestSubject.next(query);
+  }
   /** Region used for streaming-availability lookups. */
   readonly watchRegion = 'IT';
   tmdbTvGenreMap: Record<number, string> = {};

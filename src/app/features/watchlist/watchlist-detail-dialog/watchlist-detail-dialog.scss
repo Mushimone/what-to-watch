@@ -131,13 +131,120 @@
   padding-bottom: 2px;
 }
 
-.detail-poster {
+.poster-zoom {
   flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 10px;
+  cursor: zoom-in;
+  transition: transform var(--dur-short) var(--ease-out);
+
+  &:hover,
+  &:focus-visible {
+    transform: scale(1.03);
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+.detail-poster {
+  display: block;
   width: 96px;
   aspect-ratio: 2 / 3;
   object-fit: cover;
   border-radius: 10px;
   box-shadow: var(--shadow-panel);
+}
+
+// ─── Full-screen poster ────────────────────────────────────────────────────────
+// A popover, so the browser owns the top layer, the backdrop, Esc and light
+// dismiss. The element covers the viewport and the image is the only thing in
+// it — pointing anywhere and clicking closes.
+.lightbox {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  opacity: 0;
+  scale: 0.96;
+  transition:
+    opacity var(--dur-med) var(--ease-out),
+    scale var(--dur-med) var(--ease-out),
+    display var(--dur-med) allow-discrete,
+    overlay var(--dur-med) allow-discrete;
+
+  &:popover-open {
+    opacity: 1;
+    scale: 1;
+
+    // Entry side of the same transition — without it the popover pops in at
+    // full size and only the exit animates.
+    @starting-style {
+      opacity: 0;
+      scale: 0.96;
+    }
+  }
+
+  &::backdrop {
+    background: var(--color-scrim-4);
+  }
+}
+
+.lightbox-hit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: var(--space-md);
+  border: 0;
+  background: none;
+  cursor: zoom-out;
+
+  img {
+    max-width: 100%;
+    // Leaves the poster clear of the phone's own edges without shrinking it.
+    max-height: min(100%, 92dvh);
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: var(--shadow-panel);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbox {
+    scale: 1;
+    transition:
+      opacity var(--dur-short) var(--ease-out),
+      display var(--dur-short) allow-discrete,
+      overlay var(--dur-short) allow-discrete;
+
+    &:popover-open {
+      @starting-style {
+        scale: 1;
+      }
+    }
+  }
+
+  .poster-zoom {
+    transition: none;
+
+    &:hover,
+    &:focus-visible,
+    &:active {
+      transform: none;
+    }
+  }
 }
 
 .type-badge {
@@ -202,12 +309,56 @@
 }
 
 .detail-director {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
   margin: 0;
   font-size: 0.9rem;
 
   .label {
     color: var(--color-text-muted);
-    margin-right: 6px;
+  }
+}
+
+// Reads as the name it is, with a hairline underline and a search glyph to say
+// it goes somewhere — not a button pretending the name is a control.
+.director-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-hairline);
+  transition:
+    color var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out);
+
+  mat-icon {
+    font-size: 0.95rem;
+    width: 0.95rem;
+    height: 0.95rem;
+    color: var(--color-text-muted);
+    transition: color var(--dur-short) var(--ease-out);
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+
+    mat-icon {
+      color: var(--color-accent);
+    }
+  }
+
+  &:active {
+    opacity: 0.7;
   }
 }
 

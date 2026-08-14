@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 
 import { WatchlistAdd } from './watchlist-add';
 import { SearchService } from '../../../core/services/search.service';
@@ -21,9 +21,11 @@ describe('WatchlistAdd', () => {
   let component: WatchlistAdd;
   let fixture: ComponentFixture<WatchlistAdd>;
   let saved: BehaviorSubject<WatchlistItem[]>;
+  let searchRequests$: Subject<string>;
 
   beforeEach(async () => {
     saved = new BehaviorSubject<WatchlistItem[]>([]);
+    searchRequests$ = new Subject<string>();
 
     await TestBed.configureTestingModule({
       imports: [WatchlistAdd],
@@ -31,6 +33,7 @@ describe('WatchlistAdd', () => {
         {
           provide: SearchService,
           useValue: {
+            searchRequests$,
             // Page 2 repeats Dune on purpose — TMDB does, and duplicate keys throw.
             searchTmdb: (_query: string, page = 1) =>
               of(
@@ -116,6 +119,16 @@ describe('WatchlistAdd', () => {
     // Nothing left to page in — the sentinel is gone, but a stray call is a no-op.
     component.loadMore();
     expect(component.state().results.length).toBe(3);
+  });
+
+  // The detail sheet's director link — it can't reach this pane, so the request
+  // comes through the service and has to land in the field like any other query.
+  it('runs a search requested from elsewhere', () => {
+    searchRequests$.next('Denis Villeneuve');
+    vi.advanceTimersByTime(300);
+
+    expect(component.searchControl.value).toBe('Denis Villeneuve');
+    expect(component.state().status).toBe('success');
   });
 
   it('clears the results as soon as the query is cleared', () => {

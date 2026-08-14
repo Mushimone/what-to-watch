@@ -92,6 +92,13 @@ export class WatchlistAdd {
         takeUntilDestroyed(),
       )
       .subscribe((query) => this.startSearch(query));
+
+    // A search handed over from elsewhere — the detail sheet's director link.
+    // The field is the single source of truth for what's on screen, so it goes
+    // through the control and takes the usual debounced path from there.
+    this.searchService.searchRequests$
+      .pipe(takeUntilDestroyed())
+      .subscribe((query) => this.searchControl.setValue(query));
   }
 
   private startSearch(query: string): void {

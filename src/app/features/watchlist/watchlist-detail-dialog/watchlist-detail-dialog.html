@@ -33,7 +33,15 @@
       <div class="sheet-body">
         <header class="masthead">
           @if (item.poster_url) {
-            <img [src]="item.poster_url" alt="{{ item.title }} poster" class="detail-poster" />
+            <!-- The poster is the one image the sheet shows too small to read. -->
+            <button
+              type="button"
+              class="poster-zoom"
+              popovertarget="poster-full"
+              [attr.aria-label]="'View the ' + item.title + ' poster full screen'"
+            >
+              <img [src]="item.poster_url" alt="" class="detail-poster" />
+            </button>
           }
 
           <div class="masthead-text">
@@ -63,7 +71,20 @@
         </header>
 
         @if (item.director) {
-          <p class="detail-director"><span class="label">Director</span> {{ item.director }}</p>
+          <p class="detail-director">
+            <span class="label">Director</span>
+            <!-- Their name is already a search this app can run — one tap instead
+                 of closing the sheet and retyping it. -->
+            <button
+              type="button"
+              class="director-link"
+              [attr.aria-label]="'Search for titles by ' + item.director"
+              (click)="searchDirector()"
+            >
+              {{ item.director }}
+              <mat-icon>search</mat-icon>
+            </button>
+          </p>
         }
 
         @if (item.genres.length) {
@@ -250,6 +271,23 @@
     } @else {
       <div class="detail-actions">
         <span class="muted small">On your friend's list — add it to your own to react.</span>
+      </div>
+    }
+
+    @if (item.poster_url) {
+      <!-- Native popover: the top layer, Esc-to-close and light dismiss come with
+           it, so the full-screen poster costs no component state at all. The
+           image is the whole hit area, so a tap anywhere closes it. -->
+      <div id="poster-full" popover class="lightbox">
+        <button
+          type="button"
+          class="lightbox-hit"
+          popovertarget="poster-full"
+          popovertargetaction="hide"
+          aria-label="Close the poster"
+        >
+          <img [src]="zoomUrl(item.poster_url)" alt="{{ item.title }} poster" />
+        </button>
       </div>
     }
   </div>

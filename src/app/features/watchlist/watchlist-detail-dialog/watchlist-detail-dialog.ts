@@ -400,6 +400,23 @@ export class WatchlistDetailDialog {
     });
   }
 
+  /** TMDB serves every still at any width; the sheet's w500 crop blows up soft. */
+  zoomUrl(url: string): string {
+    return url.replace(/\/t\/p\/w\d+/, '/t/p/original');
+  }
+
+  /**
+   * The Add pane is a sibling behind the overlay, so the name goes through the
+   * service and the shell brings the pane forward. Multi-search already folds a
+   * director's filmography into a name query — no separate mode needed.
+   */
+  searchDirector(): void {
+    const director = this.item().director;
+    if (!director) return;
+    this.search.requestSearch(director);
+    this.dialogRef.close();
+  }
+
   get year(): string | null {
     return this.item().release_date?.slice(0, 4) || null;
   }
