@@ -46,6 +46,9 @@ Thumbs.db
 # Local planning notes — not for public repo
 PLANNING.md
 
+# Local AI tooling: personal settings + a vendored skill library, not project code
+.claude/
+
 # Local environment file with real API keys — never commit this
 .env
 
