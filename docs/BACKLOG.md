@@ -145,8 +145,7 @@ Titles already on the list carry a ✓. A link inside a detail sheet replaces th
   `buildSimilarMessages`), not in components.
 - `WatchlistAiChatComponent` is signals: `input()`, `viewChild()`, `isOpen` signal with
   `toggle()` / `close()`. The shell calls `chat.toggle()`.
-- **Redeploy `mimo-chat`** for the limits to take effect:
-  `npx supabase functions deploy mimo-chat --project-ref dgjpkelrxttlivivzayl`
+- `mimo-chat` redeployed 2026-11-04 (function version 5, `verify_jwt` on), so the limits are live.
 
 ## Won't do
 
