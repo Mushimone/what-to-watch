@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # The generated environment files are gitignored, and set-env.js only checks
+      # that these exist. Tests and the build never reach the network with them.
+      SUPABASE_URL: https://ci.invalid
+      SUPABASE_ANON_KEY: ci
+      TMDB_API_KEY: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/set-env.js
+      - run: npm test -- --watch=false
+      # Not part of `npm test` (it only walks src/), so it needs its own line.
+      - run: npm run test:functions
+      # Type errors and the 1 MB bundle ceiling only show up in a real build.
+      - run: npm run build

@@ -104,8 +104,11 @@ bootstrap and every component spec fails with `Need to call TestBed.initTestEnvi
 
 `ng test` only walks `src/`, which is why the edge-function parser has its own command. Its
 spec asserts against **verbatim saved markup** from a real Letterboxd page
-(`supabase/functions/import-list/__fixtures__/`), so a redesign on their end fails loudly
-here instead of silently in production.
+(`supabase/functions/import-list/__fixtures__/`). That pins our parser against regressions; it
+cannot notice Letterboxd changing their HTML, because the fixture never changes.
+
+Both commands, plus a build, run in GitHub Actions on every push and PR (`.github/workflows/ci.yml`).
+They do not block the Vercel deploy.
 
 ## Known issues
 
@@ -113,7 +116,7 @@ here instead of silently in production.
   the error threshold is 1 MB.
 - **Two component stylesheets exceed** the 6 kB style budget — the detail sheet by 2 kB,
   the import sheet by ~0.9 kB. Warnings only.
-- **The edge-function tests don't run in `npm test`.** Separate command, easy to forget.
+- **The edge-function tests don't run in `npm test`.** Separate command; CI runs both.
 - **`scripts/set-env.js` generates `environment.ts` from `.env`** — both generated files are
   gitignored. A fresh clone must run `npm start` or `npm run build` before anything else
   works.

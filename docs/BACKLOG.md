@@ -12,8 +12,6 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 
 - [ ] **Delete the merged `feat/list-import` branch** on origin once you're happy with the
       import feature in production.
-- [ ] **Fold `npm run test:functions` into CI** (or into `npm test`), so the edge-function
-      parser can't rot unnoticed. It's the piece most likely to break from the outside.
 - [ ] **Trim the initial bundle back under 500 kB**, or raise the budget deliberately. It is
       1.13 kB over and drifting up with each feature; picking one is better than watching
       the warning scroll past forever.
@@ -36,8 +34,6 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 
 ## Next — decided 2026-11-04, in this order
 
-- [ ] **Run `npm test` and `npm run test:functions` in CI** (already listed above; now wanted).
-
 ## Parked — only if it comes up
 
 - Import a member's watched films (`letterboxd.com/<user>/films/`) — listed under Worth doing.
@@ -54,6 +50,26 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 - [ ] **Undo for a large import.** Adding 96 titles is one tap; taking them back is 96. A
       single "undo this import" needs an import batch id on the rows, which is a migration.
       Worth it only if a bad import actually happens to you.
+
+## Done 2026-11-04 — CI
+
+`.github/workflows/ci.yml` runs on every push to `master` and on every pull request:
+`npm test`, `npm run test:functions`, then `npm run build` (type errors and the 1 MB bundle
+ceiling only show up there). No secrets: `set-env.js` only checks the three variables exist, and
+the workflow gives it dummy values. Checked from a clean copy of the tracked files, not just here.
+
+- **It does not gate the deploy.** Vercel still publishes `master` on its own; CI turns the commit
+  red, it doesn't stop Vercel. Making it block means a GitHub branch protection rule plus Vercel's
+  "wait for checks" setting — a decision, not a default.
+- Some specs build a real Supabase client; in CI it points at an invalid host and logs
+  `fetch failed`. Noise, not failures.
+
+## Parked: a canary for Letterboxd's markup
+
+The `import-list` parser test reads a **saved** page, so it catches our regressions but cannot see
+Letterboxd change their HTML (STATUS used to claim it could). Catching that needs a scheduled
+workflow that fetches one stable public list and runs the parser on it. Worth it only if the
+link import actually gets used.
 
 ## Done 2026-11-04 — taste without reactions, and asking for them
 
