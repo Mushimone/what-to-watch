@@ -9,7 +9,6 @@ import {
 } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { catchError, of, take } from 'rxjs';
-import { OpenAiMessage } from '../../../core/models/openai.models';
 import { TmdbWatchProvider } from '../../../core/models/tmdb.model';
 import { OpenAiService } from '../../../core/services/openai.service';
 import { SearchService } from '../../../core/services/search.service';
@@ -17,6 +16,7 @@ import { SupabaseService } from '../../../core/services/supabase.service';
 import { WatchlistService } from '../../../core/services/watchlist.service';
 import { SearchResult, WatchlistItem } from '../../../core/models/watchlist-item.model';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
+import { buildSimilarMessages } from '../recommend.prompt';
 
 export type DetailDialogData =
   | WatchlistItem
@@ -356,36 +356,7 @@ export class WatchlistDetailDialog {
     this.similarError.set(false);
 
     this.watchlist.watchlistItems$.pipe(take(1)).subscribe((items) => {
-      const it = this.item();
-      const owned = items.map((i) => i.title).join(', ') || 'none';
-      const messages: OpenAiMessage[] = [
-        {
-          role: 'system',
-          content:
-            'You recommend movies and TV shows. Given one title the user likes, suggest exactly 4 ' +
-            'similar titles they would enjoy, matching on plot, tone and themes — not just genre ' +
-            'labels. Prefer well-known, findable titles.\n' +
-            'Open with ONE line of at most 25 words naming the 2–3 specific qualities that make ' +
-            'the source title work — its pace, tone, subject, the feeling it leaves. Pick from ' +
-            'those qualities, not from the genre label; every suggestion must share at least one.\n' +
-            'Then output a markdown bullet list and nothing after it. Each bullet must be ' +
-            'exactly: "**Title (Year)** — reason." where the reason names which of those qualities ' +
-            'it shares, in at most 15 words. Never repeat the source title or any title in the ' +
-            'exclusion list.\n' +
-            `Write the whole reply in the language of locale "${navigator.language}" ` +
-            '(e.g. it-* → Italian, en-* → English).',
-        },
-        {
-          role: 'user',
-          content:
-            `Title I like: "${it.title}" (${it.type}` +
-            `${it.release_date ? `, ${it.release_date.slice(0, 4)}` : ''}` +
-            `${it.genres.length ? `, ${it.genres.join(', ')}` : ''}` +
-            `${it.director ? `, directed by ${it.director}` : ''}).` +
-            `${it.overview ? `\nFor reference, its plot: ${it.overview.slice(0, 240)}` : ''}\n` +
-            `Do not suggest any of these (already in my list): ${owned}.`,
-        },
-      ];
+      const messages = buildSimilarMessages(this.item(), items, navigator.language);
 
       this.openai.chat(messages, { reasoningEffort: 'low' }).subscribe({
         next: (reply) => {

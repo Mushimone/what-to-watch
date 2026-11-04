@@ -1,10 +1,10 @@
 <!-- Floating Action Button -->
-<button mat-fab class="chat-fab" (click)="isOpen = !isOpen" aria-label="AI Assistant">
-  <mat-icon>{{ isOpen ? 'close' : 'auto_awesome' }}</mat-icon>
+<button mat-fab class="chat-fab" (click)="toggle()" aria-label="AI Assistant">
+  <mat-icon>{{ isOpen() ? 'close' : 'auto_awesome' }}</mat-icon>
 </button>
 
 <!-- Chat Panel -->
-@if (isOpen) {
+@if (isOpen()) {
   <div class="chat-panel">
 
     <div class="chat-header">
@@ -28,7 +28,7 @@
           Something new
         </button>
       </div>
-      <button class="chat-close" type="button" (click)="isOpen = false" aria-label="Close assistant">
+      <button class="chat-close" type="button" (click)="close()" aria-label="Close assistant">
         <mat-icon>close</mat-icon>
       </button>
     </div>

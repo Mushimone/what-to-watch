@@ -10,6 +10,14 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+// Any signed-in user can reach this function, so it bounds what one call can
+// cost: whole conversation size, turn count and reply length. Sized above the
+// biggest honest prompt (a capped watchlist dump) with room to spare.
+const MAX_MESSAGES = 40;
+const MAX_CHARS = 60_000;
+// Reasoning tokens count against this, so it is generous.
+const MAX_TOKENS = 4_000;
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -39,6 +47,16 @@ Deno.serve(async (req) => {
     return json({ error: '`messages` must be a non-empty array' }, 400);
   }
 
+  const messages = payload.messages as { content?: unknown }[];
+  const chars = messages.reduce(
+    (n, m) => n + (typeof m?.content === 'string' ? m.content.length : 0),
+    0,
+  );
+  if (messages.length > MAX_MESSAGES || chars > MAX_CHARS) {
+    return json({ error: 'Conversation too long' }, 413);
+  }
+  const maxTokens = Math.min(Number(payload.maxTokens) || MAX_TOKENS, MAX_TOKENS);
+
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -50,7 +68,7 @@ Deno.serve(async (req) => {
       model,
       messages: payload.messages,
       ...(payload.stream ? { stream: true } : {}),
-      ...(payload.maxTokens ? { max_tokens: payload.maxTokens } : {}),
+      max_tokens: maxTokens,
       ...(payload.reasoningEffort ? { reasoning_effort: payload.reasoningEffort } : {}),
     }),
   });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildGroupPickPrompt } from './recommend.prompt';
+import { buildAddPrompt, buildGroupPickPrompt, buildListPrompt, PROMPT_CAP } from './recommend.prompt';
 import { WatchlistItem } from '../../core/models/watchlist-item.model';
 import { SharedPoolEntry } from '../../core/models/shared-pool.model';
 
@@ -46,5 +46,28 @@ describe('buildGroupPickPrompt', () => {
     expect(prompt).toContain('SARA — watched');
     expect(prompt).toContain('Title W');
     expect(prompt).toContain('Title X');
+  });
+});
+
+describe('prompt size', () => {
+  const big = Array.from({ length: 1000 }, (_, n) =>
+    mk(String(n), { watched: n % 2 === 0, vote_average: n % 10, release_date: '2020-01-01' }),
+  );
+
+  it('caps the watched and unwatched dumps and says what was left out', () => {
+    const prompt = buildListPrompt(big);
+    expect(prompt).toContain(`(…and ${500 - PROMPT_CAP.watched} more not shown)`);
+    expect(prompt).toContain(`(…and ${500 - PROMPT_CAP.candidates} more not shown)`);
+  });
+
+  it('keeps 👍 titles when trimming', () => {
+    const liked = mk('LIKED', { watched: true, reaction: 'liked', vote_average: 1 });
+    expect(buildListPrompt([...big, liked])).toContain('Title LIKED');
+  });
+
+  it('still excludes every listed title in add mode, compactly', () => {
+    const prompt = buildAddPrompt(big);
+    expect(prompt).toContain('Title 999 (2020)');
+    expect(prompt).not.toContain('Title 999 (movie');
   });
 });

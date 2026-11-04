@@ -35,7 +35,7 @@
         </button>
 
         <!-- The AI trigger docks in the rail here instead of floating. -->
-        <button class="rail-ai" (click)="chat.isOpen = !chat.isOpen">
+        <button class="rail-ai" (click)="chat.toggle()">
           <mat-icon>auto_awesome</mat-icon>
           <span>Ask AI</span>
         </button>
@@ -92,7 +92,7 @@
     <!-- Add: floating action button, bottom-right. Hidden while already adding,
          and while the chat is up — it sits at z-fab and would punch a hole in
          the panel's bottom-right corner. One floating action at a time. -->
-    @if (activeSection() !== 'add' && !chat.isOpen) {
+    @if (activeSection() !== 'add' && !chat.isOpen()) {
       <button mat-fab class="add-fab" (click)="setSection('add')" aria-label="Add a title">
         <mat-icon>add</mat-icon>
       </button>
