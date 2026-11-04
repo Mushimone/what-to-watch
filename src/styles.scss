@@ -240,9 +240,12 @@ h3,
 }
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
-// Material Symbols Rounded, not the 2014 Material Icons set. The class comes
-// from MAT_ICON_DEFAULT_OPTIONS (app.config.ts) and Google's stylesheet defines
-// it too, so this needs the element as well to outrank the served defaults.
+// Material Symbols Rounded, not the 2014 Material Icons set. <mat-icon> carries
+// the class `material-icons` unless told otherwise, and that class is pointed at
+// the Symbols font here. It used to be set with MAT_ICON_DEFAULT_OPTIONS, but
+// importing that token pulled Material's whole icon module (~15 kB) into the
+// initial bundle, so the font is chosen in CSS instead and no template or config
+// has to repeat it.
 //
 // Outlined is the resting state; FILL 1 is reserved for "this one is on" —
 // the active nav destination, a liked title. It's a second channel next to
@@ -252,14 +255,24 @@ h3,
 // baseline never lands in the middle of the box it's given — it reads high or
 // low by a pixel or two depending on how the box was sized. Centring the line
 // box instead is metric-proof at every size, so no call site needs a nudge.
-mat-icon.material-symbols-rounded {
+mat-icon.material-icons {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
   display: inline-grid;
   place-items: center;
   font-variation-settings: 'FILL' 0, var(--icon-axes);
   transition: font-variation-settings var(--dur-short) var(--ease-out);
 }
 
-mat-icon.material-symbols-rounded.icon-filled {
+mat-icon.material-icons.icon-filled {
   font-variation-settings: 'FILL' 1, var(--icon-axes);
 }
 

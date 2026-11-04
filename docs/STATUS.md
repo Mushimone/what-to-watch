@@ -112,8 +112,7 @@ They do not block the Vercel deploy.
 
 ## Known issues
 
-- **Initial bundle is 1.13 kB over** the 500 kB warning budget (501.13 kB). Warning only;
-  the error threshold is 1 MB.
+- **Initial bundle is 487 kB**, under the 500 kB budget (was 501 before the icon font moved to CSS).
 - **Two component stylesheets exceed** the 6 kB style budget — the detail sheet by 2 kB,
   the import sheet by ~0.9 kB. Warnings only.
 - **The edge-function tests don't run in `npm test`.** Separate command; CI runs both.

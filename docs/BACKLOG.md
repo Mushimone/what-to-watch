@@ -12,9 +12,6 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 
 - [ ] **Delete the merged `feat/list-import` branch** on origin once you're happy with the
       import feature in production.
-- [ ] **Trim the initial bundle back under 500 kB**, or raise the budget deliberately. It is
-      1.13 kB over and drifting up with each feature; picking one is better than watching
-      the warning scroll past forever.
 - [ ] **Refresh or delete `PLANNING.md`.** It's local-only and five months stale — it still
       names Gemini and AniList. Right now it's a trap for future-you.
 
@@ -50,6 +47,20 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 - [ ] **Undo for a large import.** Adding 96 titles is one tap; taking them back is 96. A
       single "undo this import" needs an import batch id on the rows, which is a migration.
       Worth it only if a bad import actually happens to you.
+
+## Done 2026-11-04 — initial bundle back under 500 kB
+
+501.75 → 487.04 kB (raw; 127 kB over the wire). One cause: `app.config.ts` imported
+`MAT_ICON_DEFAULT_OPTIONS` from `@angular/material/icon`, which dragged Material's whole icon module (~15 kB)
+into the first load although icons are only used on lazy routes. The icon font is now chosen in CSS
+(`mat-icon.material-icons` → Material Symbols Rounded in `styles.scss`) instead of a provider. Checked in the
+browser: all 84 icons on the list page render from the Symbols font.
+
+Where the rest of the weight is, if the budget creeps up again (measured with `ng build --stats-json`):
+Angular core 133 kB, **Supabase client ~165 kB** (auth 84, realtime 34, **storage 19 + iceberg 5 — never used
+by the app**, postgrest 14), router 69, common 38, rxjs 22. The unused storage client is the only real fat
+left, and shedding it means assembling the client from `@supabase/auth-js`, `postgrest-js`, `functions-js`
+and `realtime-js` instead of `createClient` — a rewrite of `SupabaseService`, not worth it for ~30 kB today.
 
 ## Done 2026-11-04 — chat latency: turn MiMo's thinking off
 
