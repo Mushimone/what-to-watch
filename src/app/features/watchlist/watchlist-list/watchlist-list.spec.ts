@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { BehaviorSubject } from 'rxjs';
+import { vi } from 'vitest';
 
 import { WatchlistList } from './watchlist-list';
 import { WatchlistService } from '../../../core/services/watchlist.service';
@@ -31,6 +33,7 @@ describe('WatchlistList', () => {
           useValue: {
             watchlistItems$: new BehaviorSubject<WatchlistItem[]>(items),
             getWatchlist: () => Promise.resolve(items),
+            toggleWatchedStatus: () => Promise.resolve(true),
           },
         },
       ],
@@ -92,6 +95,27 @@ describe('WatchlistList', () => {
       expect(component.updateCount()).toBe(2);
       component.updatesOnly.set(true);
       expect(component.matched().length).toBe(2);
+    });
+  });
+
+  describe('asking for a reaction', () => {
+    const asked = () => {
+      const open = vi.spyOn(TestBed.inject(MatSnackBar), 'openFromComponent');
+      open.mockReturnValue(undefined as never);
+      return open;
+    };
+
+    it('asks after the card marks a title watched', async () => {
+      const open = asked();
+      await component.toggleWatched({ ...items[0], watched: false });
+      expect(open).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not ask when un-watching, or when there is already a reaction', async () => {
+      const open = asked();
+      await component.toggleWatched({ ...items[0], watched: true });
+      await component.toggleWatched({ ...items[0], watched: false, reaction: 'liked' });
+      expect(open).not.toHaveBeenCalled();
     });
   });
 });

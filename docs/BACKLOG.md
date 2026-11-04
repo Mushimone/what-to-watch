@@ -36,8 +36,6 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 
 ## Next — decided 2026-11-04, in this order
 
-- [ ] **Ask 👍/👎 after marking something watched.** The recommender is only as good as the
-      reactions it can read.
 - [ ] **Run `npm test` and `npm run test:functions` in CI** (already listed above; now wanted).
 
 ## Parked — only if it comes up
@@ -56,6 +54,28 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 - [ ] **Undo for a large import.** Adding 96 titles is one tap; taking them back is 96. A
       single "undo this import" needs an import batch id on the rows, which is a migration.
       Worth it only if a bad import actually happens to you.
+
+## Done 2026-11-04 — taste without reactions, and asking for them
+
+Only 10 of 115 watched titles in production had a 👍/👎 (14 users), so the recommender cannot
+lean on them. Prompts now build a taste from what is always there:
+
+- A **PROFILE** block counted over *every* watched title (top genres, directors seen twice or
+  more, film/series mix, reactions given and an explicit "no reaction is not a dislike"), so a
+  trimmed sample still carries the whole history. Solo and group-pick prompts both have it.
+- Trimming keeps 👍/👎 first, then the **most recently added**; candidates are ranked by **genre
+  fit** to the watched list, ★ only as a tiebreak. Before, no reactions meant "highest TMDB score".
+- A show begun but not finished is tagged `[started: 2/5 seasons]` — interest without a button.
+- The method text no longer treats ★ as the user's rating (it is TMDB's score).
+
+And the reaction itself is now asked for: marking a title watched **from the card's eye** opens a
+snackbar, "Watched · Title", with ♥ and 👎 (same glyphs as the sheet, 6 s, replaces itself).
+Not asked when un-watching, when the title already has a reaction, or from the sheet.
+
+## Parked: "rate what you've watched"
+
+A one-card-at-a-time pass over the ~100 watched titles with no reaction. Biggest lever left for
+the recommender; build it only if the snackbar doesn't move the 9% much.
 
 ## Done 2026-11-04 — new-season notice
 

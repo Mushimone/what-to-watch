@@ -4,12 +4,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { WatchlistService } from '../../../core/services/watchlist.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { InfiniteScroll } from '../../../core/directives/infinite-scroll';
 import { WatchlistItem } from '../../../core/models/watchlist-item.model';
+import { ReactionSnack } from '../reaction-snack/reaction-snack';
 import { WatchlistDetailDialog } from '../watchlist-detail-dialog/watchlist-detail-dialog';
 import { WatchlistTimePickerDialog } from '../watchlist-time-picker-dialog/watchlist-time-picker-dialog';
 
@@ -33,6 +35,7 @@ const PAGE = 24;
 export class WatchlistList {
   private watchlist = inject(WatchlistService);
   private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
   // The three type filters live behind the Filter button; "Not watched" stays out
   // as its own toggle since it's the default view and the one flipped most often.
   typeFilters = [
@@ -127,8 +130,12 @@ export class WatchlistList {
     this.watchlist.removeFromWatchlist(id);
   }
 
-  toggleWatched(item: WatchlistItem) {
-    this.watchlist.toggleWatchedStatus(item.id, !item.watched);
+  async toggleWatched(item: WatchlistItem) {
+    const watched = !item.watched;
+    const done = await this.watchlist.toggleWatchedStatus(item.id, watched);
+    // Only the card's eye asks — the sheet already shows the reaction buttons,
+    // and un-watching asks nothing.
+    if (done && watched) ReactionSnack.ask(this.snackBar, item);
   }
   /** Picking the active type again clears it — the menu doubles as its own reset. */
   applyType(key: string) {
