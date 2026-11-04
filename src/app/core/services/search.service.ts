@@ -40,6 +40,8 @@ export interface ListFetch {
   items: string[];
   viewing?: { rating: number | null; liked: boolean }[];
   truncated: boolean;
+  /** Pages after the first that Letterboxd would not serve — what came back is incomplete. */
+  skipped: number;
 }
 
 @Injectable({
@@ -148,6 +150,7 @@ export class SearchService {
       items: data.items ?? [],
       viewing: data.viewing,
       truncated: !!data.truncated,
+      skipped: data.skipped ?? 0,
     };
   }
 

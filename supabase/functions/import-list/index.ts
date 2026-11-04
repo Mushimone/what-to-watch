@@ -90,6 +90,11 @@ Deno.serve(async (req) => {
 
   const total = lastPage(first);
   const found = read(first);
+  // Pages after the first that Letterboxd would not serve us. A member's films
+  // page answers page 2 onward with a Cloudflare challenge — a bot check put up on
+  // purpose, which this function does not try to get past — so the count is
+  // reported rather than hidden, and the client says what it means.
+  let skipped = 0;
 
   // Pages 2..N in small batches, in order, so the list arrives as the owner
   // arranged it. A page that fails is skipped rather than failing the import —
@@ -99,8 +104,16 @@ Deno.serve(async (req) => {
     for (let i = page; i < page + PAGE_CONCURRENCY && i <= total; i++) {
       batch.push(fetchPage(url, i));
     }
-    for (const html of await Promise.all(batch)) {
+    const got = await Promise.all(batch);
+    for (const html of got) {
       if (html) found.push(...read(html));
+      else skipped++;
+    }
+    // A whole batch refused means the rest will be too — stop asking rather than
+    // knock on a door that has been shut on purpose.
+    if (got.every((html) => !html)) {
+      skipped += Math.max(0, total - (page + batch.length - 1));
+      break;
     }
   }
 
@@ -114,7 +127,15 @@ Deno.serve(async (req) => {
       viewing: found.map(({ rating, liked }) => ({ rating, liked })),
       pages: total,
       truncated: total >= MAX_PAGES,
+      skipped,
     });
   }
-  return json({ kind: 'list', name: listName(first), items, pages: total, truncated: total >= MAX_PAGES });
+  return json({
+    kind: 'list',
+    name: listName(first),
+    items,
+    pages: total,
+    truncated: total >= MAX_PAGES,
+    skipped,
+  });
 });

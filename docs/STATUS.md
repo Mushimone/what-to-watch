@@ -95,7 +95,9 @@ Two ways in, because they have different costs:
 - **CSV export** — no backend at all. IMDb's export carries the `tt` id, so those match
   exactly; Letterboxd's carries title and year.
 - **Public Letterboxd link** — needs `import-list`, because letterboxd.com sends no CORS
-  headers. A member's `/films/` page also returns each film's rating and heart; the client turns
+  headers. A member's `/films/` page also returns each film's rating and heart — but Letterboxd puts a
+  Cloudflare challenge in front of page 2 onward, which we don't get past, so the link brings in only the
+  latest 72 (the sheet says so); the client turns
   those into watched + a reaction (heart or 4★+ → ♥, 2★ or less → 👎), and brings titles already
   on the list up to date instead of skipping them. `boxd.it` short links are resolved; view-mode tails (`/detail/`, `/by/rating/`,
   `/page/3/`) are normalised away.

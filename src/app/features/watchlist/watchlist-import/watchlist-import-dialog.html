@@ -153,7 +153,21 @@
           }
         </p>
 
-        @if (truncated()) {
+        @if (skipped() > 0) {
+          <p class="notice" role="status">
+            <mat-icon>info_outline</mat-icon>
+            <span>
+              @if (kind() === 'films') {
+                Letterboxd only lets other sites read the first page of someone’s films, so these are
+                just the latest {{ total() }}. For the whole history, use your export: unzip it and
+                drop <em>watched.csv</em> here.
+              } @else {
+                Letterboxd wouldn’t serve {{ skipped() }} of that list’s pages, so this is only part
+                of it. Try again in a while.
+              }
+            </span>
+          </p>
+        } @else if (truncated()) {
           <p class="notice" role="status">
             <mat-icon>info_outline</mat-icon>
             <span>

@@ -26,6 +26,12 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 
 ## Next — decided 2026-11-04, in this order
 
+- [ ] **Full watched history from the Letterboxd export.** The link is capped at 72 by their bot check (above), so
+      the whole history has to come from the export's CSVs: `watched.csv` (Name, Year, URI) and
+      `ratings.csv` (adds Rating), optionally `likes/films.csv` for the hearts, joined on the Letterboxd URI.
+      The resolver, the review sheet, `reactionFrom` and `markWatchedMany` already exist; what's new is
+      recognising the files and merging them. Needs a grill first: one file at a time or several at once?
+
 ## Parked — only if it comes up
 
 - Paste raw text as an import source — listed under Worth doing.
@@ -62,8 +68,14 @@ neighbour's. The client brings them in as **watched**, with the reaction they im
 - The review sheet says whose films these are ("Films watched by **name**…") and how many ♥ / 👎 it will
   set, before anything is written. Another member's public films import the same way — made explicit, not
   blocked.
-- Same cap as lists: 30 pages = 2,160 films, and the sheet says when it was cut. No CSV path for this yet
-  (`watched.csv` / `ratings.csv` from the export would need to be read together).
+- **The link only reaches the first page (72 films).** Found on the live check, after the first deploy:
+  Letterboxd answers `/<member>/films/page/2/` and beyond with a **Cloudflare challenge** (`403`,
+  `cf-mitigated: challenge`) — a bot check put up on purpose, on this page type only (list pages 2+ still
+  answer 200). Same rule as IMDb: it is not worked around (no spoofed User-Agent, no solving the
+  challenge). `import-list` now stops after a batch that is entirely refused instead of knocking on 28
+  more doors, reports `skipped`, and the sheet says why it only has the latest N and points at the export.
+  So the **link is a "latest 72 watched, with reactions" import; the full history needs the CSV route**
+  (`watched.csv` + `ratings.csv` from the Letterboxd export, read together) — not built, see Next.
 - Tested: parser against a trimmed real films page (`__fixtures__/letterboxd-films.html`), `reactionFrom`,
   `entriesFromFilms`, and the owned-vs-update rule. The review sheet was exercised in the browser with a
   stubbed response and nothing written. **The live function needs `import-list` deployed**; until then a
@@ -241,6 +253,10 @@ Titles already on the list carry a ✓. A link inside a detail sheet replaces th
 - `mimo-chat` redeployed 2026-11-04 (function version 5, `verify_jwt` on), so the limits are live.
 
 ## Won't do
+
+- **Reading a member's films past page 1 by getting round Cloudflare.** Letterboxd serves `/<member>/films/`
+  page 2+ only after a bot challenge. Defeating a countermeasure the site put up deliberately is the thing
+  this project doesn't do (same as IMDb below). The export is the sanctioned route. Verified 2026-11-04.
 
 - **A "rate what you've watched" pass.** One card at a time over the watched titles that have no
   reaction. Dropped 2026-11-04: not wanted. The snackbar after "watched" and the taste profile built

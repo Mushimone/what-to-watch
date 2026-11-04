@@ -117,6 +117,8 @@ export class WatchlistImportDialog {
   readonly listUrl = signal('');
   /** Set when a list was longer than the function will walk. */
   readonly truncated = signal(false);
+  /** Pages Letterboxd refused to serve — the list or films page came back incomplete. */
+  readonly skipped = signal(0);
   /**
    * `films` = a member's watched films: rows arrive as watched, with the reaction
    * their rating and heart imply. `list` = a list or file: rows arrive unwatched.
@@ -219,6 +221,7 @@ export class WatchlistImportDialog {
     this.source.set(source);
     this.origin.set(file.name);
     this.truncated.set(false);
+    this.skipped.set(0);
     this.kind.set('list');
     this.owner.set('');
     this.resolve(entries);
@@ -267,6 +270,7 @@ export class WatchlistImportDialog {
     this.source.set('letterboxd');
     this.origin.set(result.name || 'Letterboxd list');
     this.truncated.set(result.truncated);
+    this.skipped.set(result.skipped);
     this.kind.set(films ? 'films' : 'list');
     this.owner.set(films ? (result.owner ?? '') : '');
     this.resolve(entries);
