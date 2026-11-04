@@ -133,11 +133,6 @@ And the reaction itself is now asked for: marking a title watched **from the car
 snackbar, "Watched · Title", with ♥ and 👎 (same glyphs as the sheet, 6 s, replaces itself).
 Not asked when un-watching, when the title already has a reaction, or from the sheet.
 
-## Parked: "rate what you've watched"
-
-A one-card-at-a-time pass over the ~100 watched titles with no reaction. Biggest lever left for
-the recommender; build it only if the snackbar doesn't move the 9% much.
-
 ## Done 2026-11-04 — new-season notice
 
 The badge itself already existed (`has_update`, set by `refresh-series`, shown on the card,
@@ -193,6 +188,10 @@ Titles already on the list carry a ✓. A link inside a detail sheet replaces th
 - `mimo-chat` redeployed 2026-11-04 (function version 5, `verify_jwt` on), so the limits are live.
 
 ## Won't do
+
+- **A "rate what you've watched" pass.** One card at a time over the watched titles that have no
+  reaction. Dropped 2026-11-04: not wanted. The snackbar after "watched" and the taste profile built
+  from what was watched (which doesn't need reactions) cover the same need without a separate flow.
 
 - **IMDb import by link.** Every imdb.com page answers a server fetch with an AWS WAF
   challenge, and their robots.txt forbids automated collection in as many words. Getting
