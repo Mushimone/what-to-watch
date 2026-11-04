@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
   let payload: {
     messages?: unknown;
     maxTokens?: number;
-    reasoningEffort?: string;
+    thinking?: string;
     stream?: boolean;
   };
   try {
@@ -69,7 +69,11 @@ Deno.serve(async (req) => {
       messages: payload.messages,
       ...(payload.stream ? { stream: true } : {}),
       max_tokens: maxTokens,
-      ...(payload.reasoningEffort ? { reasoning_effort: payload.reasoningEffort } : {}),
+      // MiMo's own switch for reasoning (it has no `reasoning_effort`). On by default
+      // for the 2.6 models; 'disabled' answers without thinking.
+      ...(payload.thinking === 'enabled' || payload.thinking === 'disabled'
+        ? { thinking: { type: payload.thinking } }
+        : {}),
     }),
   });
 

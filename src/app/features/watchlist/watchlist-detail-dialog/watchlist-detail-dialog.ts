@@ -366,7 +366,7 @@ export class WatchlistDetailDialog {
     this.watchlist.watchlistItems$.pipe(take(1)).subscribe((items) => {
       const messages = buildSimilarMessages(this.item(), items, navigator.language);
 
-      this.openai.chat(messages, { reasoningEffort: 'low' }).subscribe({
+      this.openai.chat(messages).subscribe({
         next: (reply) => {
           this.similar.set(reply);
           this.similarLoading.set(false);

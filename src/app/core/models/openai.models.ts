@@ -10,4 +10,6 @@ export interface OpenAiChatResponse {
   choices: {
     message: { role: OpenAiRole; content: string };
   }[];
+  /** Token counts, as the provider reports them (prompt/completion/total, plus details). */
+  usage?: Record<string, unknown>;
 }

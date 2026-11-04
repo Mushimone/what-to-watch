@@ -47,7 +47,9 @@ export class WatchlistGroupPickDialog {
           { role: 'system', content: this.data.system },
           { role: 'user', content: 'Pick one for us to watch together tonight.' },
         ],
-        { reasoningEffort: 'medium' },
+        // Weighing two tastes against each other may want the deliberation; not measured
+        // the way the solo chat was, so it keeps the model's default (thinking on).
+        { thinking: 'enabled' },
       )
       .pipe(take(1))
       .subscribe({

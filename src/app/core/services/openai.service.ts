@@ -5,6 +5,17 @@ import { OpenAiChatResponse, OpenAiMessage } from '../models/openai.models';
 import { SupabaseService } from './supabase.service';
 
 /**
+ * `thinking` is MiMo's own reasoning switch (it has no `reasoning_effort`). Off by
+ * default: measured on the real chat prompt, thinking took the first word from a
+ * median ~3 s to ~11 s (worst 35 s) and wrote ~3x the tokens, without better picks.
+ * Turn it on only where a task genuinely needs the deliberation.
+ */
+export interface ChatOptions {
+  maxTokens?: number;
+  thinking?: 'enabled' | 'disabled';
+}
+
+/**
  * Thin client for the chat recommender. The MiMo API key lives server-side in
  * the `mimo-chat` Supabase Edge Function, so nothing sensitive ships to the
  * browser; the caller's Supabase session authorizes the invocation.
@@ -20,19 +31,21 @@ export class OpenAiService {
    */
   chat(
     messages: OpenAiMessage[],
-    options?: { maxTokens?: number; reasoningEffort?: 'low' | 'medium' | 'high' },
+    options?: ChatOptions,
   ): Observable<string> {
+    const started = performance.now();
     return from(
       this.supabase.getClient().functions.invoke<OpenAiChatResponse>('mimo-chat', {
         body: {
           messages,
           ...(options?.maxTokens ? { maxTokens: options.maxTokens } : {}),
-          ...(options?.reasoningEffort ? { reasoningEffort: options.reasoningEffort } : {}),
+          thinking: options?.thinking ?? 'disabled',
         },
       }),
     ).pipe(
       map(({ data, error }) => {
         if (error) throw error;
+        this.report('buffered', started, { usage: data?.usage });
         return data?.choices[0]?.message?.content ?? '';
       }),
     );
@@ -50,7 +63,7 @@ export class OpenAiService {
    */
   stream(
     messages: OpenAiMessage[],
-    options?: { maxTokens?: number; reasoningEffort?: 'low' | 'medium' | 'high' },
+    options?: ChatOptions,
   ): Observable<string> {
     let streamed = false;
     return from(this.readDeltas(messages, options)).pipe(
@@ -67,8 +80,12 @@ export class OpenAiService {
 
   private async *readDeltas(
     messages: OpenAiMessage[],
-    options?: { maxTokens?: number; reasoningEffort?: 'low' | 'medium' | 'high' },
+    options?: ChatOptions,
   ): AsyncGenerator<string> {
+    const started = performance.now();
+    let firstThought: number | null = null;
+    let firstWord: number | null = null;
+    let usage: unknown = null;
     const { data } = await this.supabase.getClient().auth.getSession();
     const res = await fetch(`${environment.supabase.url}/functions/v1/mimo-chat`, {
       method: 'POST',
@@ -81,7 +98,7 @@ export class OpenAiService {
         messages,
         stream: true,
         ...(options?.maxTokens ? { maxTokens: options.maxTokens } : {}),
-        ...(options?.reasoningEffort ? { reasoningEffort: options.reasoningEffort } : {}),
+        thinking: options?.thinking ?? 'disabled',
       }),
     });
     if (!res.ok || !res.body) throw new Error(`mimo-chat failed (${res.status})`);
@@ -101,8 +118,14 @@ export class OpenAiService {
           const payload = line.slice(5).trim();
           if (payload === '[DONE]') return;
           try {
-            const delta = JSON.parse(payload)?.choices?.[0]?.delta?.content;
-            if (delta) yield delta;
+            const frame = JSON.parse(payload);
+            if (frame?.usage) usage = frame.usage;
+            if (frame?.choices?.[0]?.delta?.reasoning_content) firstThought ??= performance.now();
+            const delta = frame?.choices?.[0]?.delta?.content;
+            if (delta) {
+              firstWord ??= performance.now();
+              yield delta;
+            }
           } catch {
             // keep-alive or malformed frame — nothing to render
           }
@@ -110,6 +133,25 @@ export class OpenAiService {
       }
     } finally {
       reader.cancel().catch(() => {});
+      this.report('stream', started, { firstThought, firstWord, usage });
     }
+  }
+
+  /**
+   * Dev only: what a call cost and where the wait went — tokens in/out (and how
+   * many were reasoning or served from cache, if the provider says), time to the
+   * first thought and the first word. Read it in the console while tuning prompts.
+   */
+  private report(
+    kind: 'stream' | 'buffered',
+    started: number,
+    seen: { firstThought?: number | null; firstWord?: number | null; usage?: unknown },
+  ): void {
+    if (environment.production) return;
+    const ms = (t?: number | null) => (t == null ? null : Math.round(t - started));
+    console.info('[mimo]', kind, {
+      usage: seen.usage ?? null,
+      ms: { firstThought: ms(seen.firstThought), firstWord: ms(seen.firstWord), total: ms(performance.now()) },
+    });
   }
 }

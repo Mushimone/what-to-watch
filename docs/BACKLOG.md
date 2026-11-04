@@ -51,6 +51,45 @@ See [STATUS.md](./STATUS.md) for where things stand today.
       single "undo this import" needs an import batch id on the rows, which is a migration.
       Worth it only if a bad import actually happens to you.
 
+## Done 2026-11-04 — chat latency: turn MiMo's thinking off
+
+**What the API actually is.** Production runs `mimo-v2.6-flash` (the `MIMO_MODEL` secret; the response's
+`model` field says so). `mimo-v2.5-pro` and `mimo-v2.5` were retired 2026-10-21
+([MiMo deprecations](https://mimo.mi.com/docs/en-US/updates/deprecate)), so nothing to migrate. MiMo has **no
+`reasoning_effort`** — the field we used to send was silently ignored. Reasoning is `thinking: {type:
+'enabled' | 'disabled'}`, **on by default** for the 2.6 models.
+
+**What was slow.** Not the prompt: a 4,100-token prompt with an empty cache was the *fastest* to start, and the
+provider already caches the prefix (4,096 tokens `cached` across turns and across a reload). Time is
+generation, ~17-30 tokens/s, and in the chat roughly half of the tokens were thinking.
+
+**Measured on the real chat prompt** (32-title list, 5 paired runs, same question per pair, order alternated):
+
+| | first word | total | tokens out |
+|---|---|---|---|
+| thinking on (median / worst) | 10.9 s / 35.3 s | 17.8 s / 38.5 s | 510 / 1141 |
+| thinking off (median / worst) | 3.2 s / 9.1 s | 9.6 s / 17.9 s | 192 / 236 |
+
+Answers were not worse with it off: same picks, shorter, and the thinking-on ones had more slips (a mangled
+title, "Obitario" for *Obituary*, which would have broken its link). Verified in the app afterwards: 0 reasoning
+tokens, first word 4.6 s, total 12.1 s.
+
+- `OpenAiService` now sends `thinking: 'disabled'` unless a caller passes `{ thinking: 'enabled' }`. The
+  `reasoningEffort` option is gone. "More like this" and the chat run with it off.
+- **Group pick keeps thinking on** (`'enabled'`): weighing two tastes may want it, and it wasn't measured. Worth
+  the same 5-pair test if it feels slow.
+- Prompt: added a one-line **critic's pick** ("a lesser-known or acclaimed title that fits my taste") and a
+  120-word cap. It comes from the user's own UNWATCHED list in list mode.
+- Kept the synopsis in the prompt lines: tried-and-checked, the model invents plots for mid-known titles
+  (Tampopo: "a samurai") and only says "I don't know it" for truly obscure ones. Cutting them would not have
+  made anything faster anyway.
+- `[mimo]` console log (dev only): usage, cached and reasoning tokens, time to first thought / first word / total.
+- **Deploy drift:** production runs the function version that accepts `thinking` and still forwards the
+  (ignored) `reasoning_effort`. The repo version drops that line. Harmless; a plain redeploy of `mimo-chat`
+  aligns them.
+- Open: `mimo-v2.6-pro` is the stronger sibling. Not tried — the model comes from the secret, and testing it
+  means either changing `MIMO_MODEL` or a whitelisted per-request override.
+
 ## Done 2026-11-04 — CI
 
 `.github/workflows/ci.yml` runs on every push to `master` and on every pull request:

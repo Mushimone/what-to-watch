@@ -70,4 +70,17 @@ describe('OpenAiService.stream', () => {
 
     expect(await deltasOf(makeService())).toEqual(['ok']);
   });
+
+  it('turns thinking off unless a caller asks for it', async () => {
+    stubFetch(['data: {"choices":[{"delta":{"content":"ok"}}]}\n\ndata: [DONE]\n\n']);
+    await deltasOf(makeService());
+    const body = () => JSON.parse(vi.mocked(fetch).mock.lastCall![1]!.body as string);
+    expect(body().thinking).toBe('disabled');
+
+    stubFetch(['data: {"choices":[{"delta":{"content":"ok"}}]}\n\ndata: [DONE]\n\n']);
+    await lastValueFrom(
+      makeService().stream([{ role: 'user', content: 'hi' }], { thinking: 'enabled' }).pipe(toArray()),
+    );
+    expect(body().thinking).toBe('enabled');
+  });
 });
