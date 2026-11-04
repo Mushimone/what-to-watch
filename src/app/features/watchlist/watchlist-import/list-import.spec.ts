@@ -2,11 +2,13 @@ import { describe, it, expect } from 'vitest';
 import {
   classifyUrl,
   detectSource,
+  entriesFromFilms,
   entriesFromItemNames,
   mapPool,
   normalise,
   parseCsv,
   pickMatch,
+  reactionFrom,
   toEntries,
   toRow,
   ImportEntry,
@@ -331,5 +333,78 @@ describe('mapPool', () => {
 
   it('does nothing for an empty list', async () => {
     expect(await mapPool([], 6, async () => 1, () => {})).toEqual([]);
+  });
+});
+
+describe('reactionFrom — a rating and a heart as ♥ / 👎', () => {
+  it('reads a heart as liked, whatever the stars say', () => {
+    expect(reactionFrom(null, true)).toBe('liked');
+    expect(reactionFrom(2, true)).toBe('liked'); // hearted despite 1★
+  });
+
+  it('reads 4★ and up as liked, 2★ and down as disliked', () => {
+    expect(reactionFrom(8, false)).toBe('liked'); // 4★
+    expect(reactionFrom(10, false)).toBe('liked');
+    expect(reactionFrom(4, false)).toBe('disliked'); // 2★
+    expect(reactionFrom(1, false)).toBe('disliked');
+  });
+
+  it('says nothing for the middle, or for no rating — not a dislike', () => {
+    expect(reactionFrom(5, false)).toBeNull(); // 2.5★
+    expect(reactionFrom(7, false)).toBeNull(); // 3.5★
+    expect(reactionFrom(null, false)).toBeNull();
+    expect(reactionFrom(undefined, undefined)).toBeNull();
+  });
+});
+
+describe('entriesFromFilms', () => {
+  it('pairs each title with its own rating and heart', () => {
+    const entries = entriesFromFilms(
+      ['Heat (1995)', 'Persona (1966)', 'Alien (1979)'],
+      [
+        { rating: 9, liked: true },
+        { rating: null, liked: false },
+        { rating: 3, liked: false },
+      ],
+    );
+    expect(entries.map((e) => [e.name, e.year, e.rating, e.liked])).toEqual([
+      ['Heat', 1995, 9, true],
+      ['Persona', 1966, null, false],
+      ['Alien', 1979, 3, false],
+    ]);
+  });
+
+  it('keeps the first of a film listed twice, and copes with no viewing data', () => {
+    expect(entriesFromFilms(['Heat (1995)', 'Heat (1995)'])).toHaveLength(1);
+    expect(entriesFromFilms(['Heat (1995)'])[0]).toMatchObject({ rating: null, liked: false });
+  });
+});
+
+describe('toRow for a films import — owned is not always a duplicate', () => {
+  const saved = new Set(['tmdb:Persona']);
+  const match = () => pickMatch(entry('Persona'), [film('Persona', '1966')]);
+  const owned = (watched: boolean, reaction: 'liked' | 'disliked' | null = null) =>
+    new Map([['tmdb:Persona', { watched, reaction }]]);
+
+  it('updates an owned title that was never marked watched', () => {
+    const row = toRow(entry('Persona'), match(), saved, owned(false));
+    expect(row.status).toBe('update');
+    expect(row.selected).toBe(true);
+  });
+
+  it('updates an owned, watched title that has no reaction when the import has one', () => {
+    const liked = { ...entry('Persona'), liked: true };
+    expect(toRow(liked, match(), saved, owned(true)).status).toBe('update');
+  });
+
+  it('leaves an owned, watched title alone when there is nothing to add', () => {
+    expect(toRow(entry('Persona'), match(), saved, owned(true)).status).toBe('duplicate');
+    // a reaction already given is never overwritten, so it is nothing to add either
+    const liked = { ...entry('Persona'), liked: true };
+    expect(toRow(liked, match(), saved, owned(true, 'disliked')).status).toBe('duplicate');
+  });
+
+  it('behaves exactly as before for a plain list (no owned map)', () => {
+    expect(toRow(entry('Persona'), match(), saved).status).toBe('duplicate');
   });
 });

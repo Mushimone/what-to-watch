@@ -31,6 +31,17 @@ async function readInvokeError(error: unknown): Promise<string | null> {
     return null;
   }
 }
+/** What `import-list` answers with. `viewing` lines up with `items` and exists only for a films page. */
+export interface ListFetch {
+  kind: 'list' | 'films';
+  name: string;
+  /** The member whose films these are — films pages only. */
+  owner?: string;
+  items: string[];
+  viewing?: { rating: number | null; liked: boolean }[];
+  truncated: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -119,15 +130,10 @@ export class SearchService {
    * strings and nothing else; matching stays here on the client where progress
    * can be counted.
    */
-  async fetchListItems(
-    url: string,
-  ): Promise<{ name: string; items: string[]; truncated: boolean } | { error: string }> {
+  async fetchListItems(url: string): Promise<ListFetch | { error: string }> {
     const { data, error } = await this.supabase
       .getClient()
-      .functions.invoke<{ name: string; items: string[]; truncated: boolean; error?: string }>(
-        'import-list',
-        { body: { url } },
-      );
+      .functions.invoke<ListFetch & { error?: string }>('import-list', { body: { url } });
     // A non-2xx comes back as an error with the body attached; the body's own
     // `error` code is the one worth showing, so dig it out before giving up.
     if (error) {
@@ -135,7 +141,14 @@ export class SearchService {
       return { error: detail ?? 'unreachable' };
     }
     if (!data || data.error) return { error: data?.error ?? 'unreachable' };
-    return { name: data.name, items: data.items ?? [], truncated: !!data.truncated };
+    return {
+      kind: data.kind === 'films' ? 'films' : 'list',
+      name: data.name,
+      owner: data.owner,
+      items: data.items ?? [],
+      viewing: data.viewing,
+      truncated: !!data.truncated,
+    };
   }
 
   /**

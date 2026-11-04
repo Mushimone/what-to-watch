@@ -1,4 +1,4 @@
-import { SearchResult } from '../../../core/models/watchlist-item.model';
+import { SearchResult, WatchlistItem } from '../../../core/models/watchlist-item.model';
 import { normalise } from '../../../shared/normalise';
 
 /**
@@ -14,6 +14,10 @@ export interface ImportEntry {
   year: number | null;
   /** IMDb `tt…` const, when the export carries one. Exact match, no guessing. */
   imdbId: string | null;
+  /** Letterboxd rating in half-stars (2 = ½★ … 10 = 5★) — a member films page only. */
+  rating?: number | null;
+  /** The member's heart on the film — a member films page only. */
+  liked?: boolean;
 }
 
 export type ImportSource = 'imdb' | 'letterboxd' | 'generic';
@@ -104,6 +108,25 @@ export function toEntries(rows: Record<string, string>[]): ImportEntry[] {
   });
 }
 
+export type Reaction = 'liked' | 'disliked' | null;
+
+/**
+ * What a member's Letterboxd rating and heart say in this app's two-word
+ * vocabulary. The heart wins over a low rating — hearting a film you rated
+ * 2★ is the member saying they love it for the wrong reasons, and that is
+ * still love. Four stars or more reads as liked; two or fewer as disliked;
+ * anything in between (or no rating at all) says nothing, and stays unset
+ * rather than guessing, since a missing reaction is not a dislike.
+ * ponytail: fixed thresholds; make them a setting if people's scales differ.
+ */
+export function reactionFrom(rating: number | null | undefined, liked: boolean | undefined): Reaction {
+  if (liked) return 'liked';
+  if (rating == null) return null;
+  if (rating >= 8) return 'liked';
+  if (rating <= 4) return 'disliked';
+  return null;
+}
+
 export type UrlKind = 'letterboxd' | 'imdb' | 'unknown';
 
 /**
@@ -138,6 +161,36 @@ export function entriesFromItemNames(items: string[]): ImportEntry[] {
       return match ? { name: match[1], year: match[2] } : { name: item.trim(), year: '' };
     }),
   );
+}
+
+/**
+ * A member's films, with what they gave each — the same "Title (Year)" strings
+ * as a list, plus the rating and heart that came back alongside by index.
+ * A film listed twice keeps its first appearance, as in `toEntries`.
+ */
+export function entriesFromFilms(
+  items: string[],
+  viewing: { rating: number | null; liked: boolean }[] = [],
+): ImportEntry[] {
+  const seen = new Set<string>();
+  const entries: ImportEntry[] = [];
+  items.forEach((item, i) => {
+    const match = item.trim().match(/^(.*\S)\s+\((\d{4})\)$/);
+    const name = match ? match[1] : item.trim();
+    const year = match ? Number.parseInt(match[2], 10) : null;
+    if (!name) return;
+    const dedupe = `${normalise(name)}|${year}`;
+    if (seen.has(dedupe)) return;
+    seen.add(dedupe);
+    entries.push({
+      name,
+      year: year !== null && year > 1870 ? year : null,
+      imdbId: null,
+      rating: viewing[i]?.rating ?? null,
+      liked: viewing[i]?.liked ?? false,
+    });
+  });
+  return entries;
 }
 
 export { normalise };
@@ -212,9 +265,11 @@ function contains(title: string, wanted: string): boolean {
 
 /**
  * A row's fate in the sheet. `failed` is the only retryable one — the others
- * are answers, not errors, and each gets its own way out.
+ * are answers, not errors, and each gets its own way out. `update` is a films-page
+ * row that is already on the list but unwatched (or has no reaction to carry over):
+ * it is brought up to date rather than skipped.
  */
-export type RowStatus = 'matched' | 'duplicate' | 'ambiguous' | 'not-found' | 'failed';
+export type RowStatus = 'matched' | 'update' | 'duplicate' | 'ambiguous' | 'not-found' | 'failed';
 
 export interface ImportRow {
   entry: ImportEntry;
@@ -236,14 +291,29 @@ export function key(item: { external_source: string; external_id: string | numbe
  * never pre-selected: the point of the sheet is that you can see what a file
  * would do before it does it.
  */
-export function toRow(entry: ImportEntry, match: Match, saved: Set<string>): ImportRow {
-  const duplicate = !!match.result && saved.has(key(match.result));
+export function toRow(
+  entry: ImportEntry,
+  match: Match,
+  saved: Set<string>,
+  /**
+   * Films-page imports only: the rows already on the list. A title there is not a
+   * duplicate if the import has something to add — it was never marked watched,
+   * or it has no reaction and the member gave one.
+   */
+  existing?: Map<string, Pick<WatchlistItem, 'watched' | 'reaction'>>,
+): ImportRow {
+  const found = !!match.result && saved.has(key(match.result));
+  const current = found && existing ? existing.get(key(match.result!)) : undefined;
+  const upgrade =
+    !!current &&
+    (!current.watched || (!current.reaction && !!reactionFrom(entry.rating, entry.liked)));
+  const duplicate = found && !upgrade;
   return {
     entry,
-    status: duplicate ? 'duplicate' : match.status,
+    status: upgrade ? 'update' : duplicate ? 'duplicate' : match.status,
     result: match.result,
     candidates: match.candidates,
-    selected: !duplicate && match.status === 'matched',
+    selected: upgrade || (!duplicate && match.status === 'matched'),
   };
 }
 

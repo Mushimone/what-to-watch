@@ -1,4 +1,4 @@
-// Reads a public Letterboxd list and hands back the titles on it.
+// Reads a public Letterboxd list — or a member's films page — and hands back the titles on it.
 //
 // The browser can't do this itself: letterboxd.com sends no CORS headers, so a
 // fetch from the page is blocked before it starts. That is the only reason this
@@ -16,7 +16,18 @@
 //
 // Deploy with:  supabase functions deploy import-list
 
-import { MAX_PAGES, isShortLink, itemsOn, lastPage, listName, listUrl, pageUrl } from './parse.ts';
+import {
+  MAX_PAGES,
+  filmsOn,
+  isFilmsUrl,
+  isShortLink,
+  itemsOn,
+  lastPage,
+  listName,
+  listUrl,
+  ownerOf,
+  pageUrl,
+} from './parse.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -70,8 +81,15 @@ Deno.serve(async (req) => {
   // out here those are the same thing, and the client says so in those words.
   if (first === null) return json({ error: 'not-public' }, 404);
 
+  // A films page is the same grid as a list, plus what the member gave each film.
+  // Both readers see the same titles in the same order; `viewing` rides alongside
+  // `items` by index and exists only for a films page.
+  const films = isFilmsUrl(url);
+  const read = (html: string) =>
+    films ? filmsOn(html) : itemsOn(html).map((name) => ({ name, rating: null, liked: false }));
+
   const total = lastPage(first);
-  const items = itemsOn(first);
+  const found = read(first);
 
   // Pages 2..N in small batches, in order, so the list arrives as the owner
   // arranged it. A page that fails is skipped rather than failing the import —
@@ -82,9 +100,21 @@ Deno.serve(async (req) => {
       batch.push(fetchPage(url, i));
     }
     for (const html of await Promise.all(batch)) {
-      if (html) items.push(...itemsOn(html));
+      if (html) found.push(...read(html));
     }
   }
 
-  return json({ name: listName(first), items, pages: total, truncated: total >= MAX_PAGES });
+  const items = found.map((film) => film.name);
+  if (films) {
+    return json({
+      kind: 'films',
+      owner: ownerOf(url),
+      name: `${ownerOf(url)}’s films`,
+      items,
+      viewing: found.map(({ rating, liked }) => ({ rating, liked })),
+      pages: total,
+      truncated: total >= MAX_PAGES,
+    });
+  }
+  return json({ kind: 'list', name: listName(first), items, pages: total, truncated: total >= MAX_PAGES });
 });

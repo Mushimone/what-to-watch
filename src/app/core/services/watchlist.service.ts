@@ -90,6 +90,68 @@ export class WatchlistService {
     return added;
   }
 
+  /**
+   * Brings titles that are already on the list up to date from an import of what
+   * someone has watched: marks them watched, and sets a reaction on those that
+   * have none. A reaction already there is never overwritten — it was given on
+   * purpose, here, and the import's guess from a star rating doesn't outrank it.
+   *
+   * A handful of grouped updates, not one per title: a few hundred rows would
+   * otherwise be a few hundred requests. Returns how many it was asked to update,
+   * or null if any step failed (nothing is changed in local state then, so the
+   * list never claims more than the database holds).
+   * ponytail: whole-title watched only — right for films; a series would also want
+   * its season progress filled, as `toggleWatchedStatus` does.
+   */
+  public async markWatchedMany(updates: { id: string; reaction: 'liked' | 'disliked' | null }[]) {
+    if (!updates.length) return 0;
+    const client = this.supabase.getClient();
+    const CHUNK = 100; // ids ride in the URL; keep each request short
+
+    const chunked = <T>(list: T[]) =>
+      Array.from({ length: Math.ceil(list.length / CHUNK) }, (_, i) =>
+        list.slice(i * CHUNK, (i + 1) * CHUNK),
+      );
+
+    const run = async (ids: string[], patch: Record<string, unknown>, onlyUnreacted: boolean) => {
+      for (const part of chunked(ids)) {
+        let query = client.from('watchlist_items').update(patch).in('id', part);
+        if (onlyUnreacted) query = query.is('reaction', null);
+        const { error } = await query;
+        if (error) return false;
+      }
+      return true;
+    };
+
+    const ids = updates.map((u) => u.id);
+    const liked = updates.filter((u) => u.reaction === 'liked').map((u) => u.id);
+    const disliked = updates.filter((u) => u.reaction === 'disliked').map((u) => u.id);
+
+    const ok =
+      (await run(ids, { watched: true, has_update: false }, false)) &&
+      (await run(liked, { reaction: 'liked' }, true)) &&
+      (await run(disliked, { reaction: 'disliked' }, true));
+    if (!ok) {
+      console.error('Error marking imported titles watched');
+      return null;
+    }
+
+    const byId = new Map(updates.map((u) => [u.id, u.reaction]));
+    this.watchlistItemsSubject.next(
+      this.watchlistItemsSubject.value.map((item) =>
+        byId.has(item.id)
+          ? {
+              ...item,
+              watched: true,
+              has_update: false,
+              reaction: item.reaction ?? byId.get(item.id) ?? null,
+            }
+          : item,
+      ),
+    );
+    return updates.length;
+  }
+
   public async removeFromWatchlist(id: string) {
     const { error } = await this.supabase.getClient().from('watchlist_items').delete().eq('id', id);
     if (error) {

@@ -16,10 +16,6 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 
 ## Worth doing
 
-- [ ] **Import a member's watched films** — `letterboxd.com/<user>/films/`. One extra path in
-      `listUrl()`, and because the app already has a `watched` flag those titles can come in
-      already marked watched instead of joining the unwatched pile. This is the only import
-      addition that gains a capability the app can actually express.
 - [ ] **Paste raw text as a third import source** — a column of titles, or a block of `tt`
       ids. The resolver and the review sheet already exist; this is a tokenizer and roughly
       fifteen lines. Deferred during the import build only because nobody had asked for it.
@@ -32,7 +28,6 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 
 ## Parked — only if it comes up
 
-- Import a member's watched films (`letterboxd.com/<user>/films/`) — listed under Worth doing.
 - Paste raw text as an import source — listed under Worth doing.
 - Stream "More like this" like the chat does (it still uses the buffered `chat()`).
 - **Say so when a card action fails.** Removing a title or marking it watched from the card ignores a failed
@@ -50,6 +45,31 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 - [ ] **Undo for a large import.** Adding 96 titles is one tap; taking them back is 96. A
       single "undo this import" needs an import batch id on the rows, which is a migration.
       Worth it only if a bad import actually happens to you.
+
+## Done 2026-11-04 — import a member's watched films
+
+Paste `letterboxd.com/<member>/films/` into the import sheet. `import-list` now accepts that page (same
+`data-item-name` grid as a list, 72 films a page, `/page/N/` paginator; the sorted views the robots.txt
+disallows are normalised away as for lists) and returns, per film, the **rating** (`rated-N`, half-stars
+2-10) and the **heart** (`icon-liked`) read per grid item so a film with no rating can't borrow its
+neighbour's. The client brings them in as **watched**, with the reaction they imply:
+
+- heart → ♥ (the heart beats a low rating); 4★+ → ♥; 2★ or less → 👎; anything else, nothing — a missing
+  reaction is not a dislike. (`reactionFrom`, fixed thresholds.)
+- A title **already on the list** is not skipped: it's marked watched and gets a reaction only if it has
+  none. Rows read "already yours" and are selected by default. `WatchlistService.markWatchedMany` does it in a
+  few grouped updates, never overwriting a reaction that's there.
+- The review sheet says whose films these are ("Films watched by **name**…") and how many ♥ / 👎 it will
+  set, before anything is written. Another member's public films import the same way — made explicit, not
+  blocked.
+- Same cap as lists: 30 pages = 2,160 films, and the sheet says when it was cut. No CSV path for this yet
+  (`watched.csv` / `ratings.csv` from the export would need to be read together).
+- Tested: parser against a trimmed real films page (`__fixtures__/letterboxd-films.html`), `reactionFrom`,
+  `entriesFromFilms`, and the owned-vs-update rule. The review sheet was exercised in the browser with a
+  stubbed response and nothing written. **The live function needs `import-list` deployed**; until then a
+  films link answers "not a list" and nothing breaks.
+- A film in the client's `ImportRow` can now be `update`; the contract between `import-list` and the client
+  grew `kind`, `owner` and `viewing` (all additive — an old client reads a films page as a plain list).
 
 ## Done 2026-11-04 — `PLANNING.md` deleted
 

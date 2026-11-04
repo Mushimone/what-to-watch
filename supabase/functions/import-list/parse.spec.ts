@@ -3,11 +3,14 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   decodeEntities,
+  filmsOn,
+  isFilmsUrl,
   isShortLink,
   itemsOn,
   lastPage,
   listName,
   listUrl,
+  ownerOf,
   pageUrl,
 } from './parse';
 
@@ -15,6 +18,12 @@ import {
 // Letterboxd reshuffles its HTML, and this fixture is what will say so.
 const page = readFileSync(
   fileURLToPath(new URL('./__fixtures__/letterboxd-list.html', import.meta.url)),
+  'utf8',
+);
+
+// A member films page: five grid items verbatim (rated + liked, rated only, neither).
+const films = readFileSync(
+  fileURLToPath(new URL('./__fixtures__/letterboxd-films.html', import.meta.url)),
   'utf8',
 );
 
@@ -50,7 +59,6 @@ describe('listUrl', () => {
       'http://letterboxd.com/crew/list/x/',
       'file:///etc/passwd',
       'https://169.254.169.254/latest/meta-data/',
-      'https://letterboxd.com/crew/films/',
       'https://letterboxd.com/',
       'https://letterboxd.com/crew/listless/',
       'https://boxd.it/h19BQ', // resolved by the handler first, never here
@@ -127,5 +135,48 @@ describe('decodeEntities', () => {
   // it into a live entity.
   it('does not let an escaped ampersand create a second entity', () => {
     expect(decodeEntities('&amp;quot;')).toBe('&quot;');
+  });
+});
+
+describe('a member films page', () => {
+  it('is accepted and normalised to the first page', () => {
+    for (const raw of [
+      'https://letterboxd.com/dave/films/',
+      'https://letterboxd.com/dave/films/page/3/',
+      'https://letterboxd.com/dave/films/by/rating/',
+      'https://www.letterboxd.com/dave/films',
+    ]) {
+      expect(listUrl(raw)?.href).toBe('https://letterboxd.com/dave/films/');
+    }
+    expect(isFilmsUrl(listUrl('https://letterboxd.com/dave/films/page/2/')!)).toBe(true);
+    expect(isFilmsUrl(listUrl('https://letterboxd.com/dave/list/favs/')!)).toBe(false);
+    expect(ownerOf(listUrl('https://letterboxd.com/dave/films/')!)).toBe('dave');
+  });
+
+  it('does not take the site-wide film pages for a member', () => {
+    expect(listUrl('https://letterboxd.com/film/heat-1995/')).toBeNull();
+    expect(listUrl('https://letterboxd.com/films/year/2020/')).toBeNull();
+  });
+
+  it('reads each film with its rating and heart, in page order', () => {
+    expect(filmsOn(films)).toEqual([
+      { name: 'Wildwood (2026)', rating: 9, liked: true },
+      { name: 'Whalefall (2026)', rating: 7, liked: true },
+      { name: 'Clayface (2026)', rating: 6, liked: false },
+      { name: 'Primetime (2026)', rating: 7, liked: false },
+      { name: 'The Punisher: One Last Kill (2026)', rating: null, liked: false },
+    ]);
+  });
+
+  it('lines up with the plain title reader and finds the last page', () => {
+    expect(filmsOn(films).map((f) => f.name)).toEqual(itemsOn(films));
+    expect(lastPage(films)).toBe(30); // 37 in the paginator, capped
+  });
+
+  it('keeps a film with no rating from borrowing its neighbour\'s', () => {
+    const grid =
+      '<li class="griditem"><div data-item-name="A (2000)"></div><p><span class="rating rated-8"></span></p></li>' +
+      '<li class="griditem"><div data-item-name="B (2001)"></div></li>';
+    expect(filmsOn(grid).map((f) => f.rating)).toEqual([8, null]);
   });
 });

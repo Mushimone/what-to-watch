@@ -16,11 +16,13 @@ import {
   RowStatus,
   classifyUrl,
   detectSource,
+  entriesFromFilms,
   entriesFromItemNames,
   key,
   mapPool,
   parseCsv,
   pickMatch,
+  reactionFrom,
   toEntries,
   toRow,
 } from './list-import';
@@ -28,6 +30,8 @@ import {
 /** What the pane needs to know once the sheet closes. */
 export interface ImportOutcome {
   added: number;
+  /** Titles already on the list that were marked watched / given a reaction. */
+  updated?: number;
 }
 
 /** How many TMDB lookups are in flight at once. */
@@ -45,7 +49,7 @@ type Phase = 'pick' | 'reading' | 'matching' | 'review' | 'saving';
 const URL_ERRORS: Record<string, string> = {
   imdb: 'IMDb blocks other sites from reading its pages, so a link can’t work. Open the list on IMDb, choose ⋯ → Export, and drop that .csv here — it also matches exactly, by IMDb id.',
   unsupported:
-    'Paste a link to a public Letterboxd list or watchlist — letterboxd.com/…/list/… or letterboxd.com/…/watchlist/.',
+    'Paste a link to a public Letterboxd list, watchlist or films page — letterboxd.com/…/list/…, …/watchlist/ or …/films/.',
   'unsupported-url':
     'That is a Letterboxd link, but not to a list. Open the list itself and copy the address from there.',
   'not-public':
@@ -113,6 +117,13 @@ export class WatchlistImportDialog {
   readonly listUrl = signal('');
   /** Set when a list was longer than the function will walk. */
   readonly truncated = signal(false);
+  /**
+   * `films` = a member's watched films: rows arrive as watched, with the reaction
+   * their rating and heart imply. `list` = a list or file: rows arrive unwatched.
+   */
+  readonly kind = signal<'list' | 'films'>('list');
+  /** Whose films these are — shown so a stranger's history isn't imported unawares. */
+  readonly owner = signal('');
 
   readonly rows = signal<ImportRow[]>([]);
   readonly done = signal(0);
@@ -123,8 +134,11 @@ export class WatchlistImportDialog {
   private aborted = false;
   /** Watchlist keys as of the start of the run — what "already yours" means. */
   private savedKeys = new Set<string>();
+  /** The same rows by key, so a films import can tell "owned" from "owned, unwatched". */
+  private existing = new Map<string, WatchlistItem>();
   /** Reported back to the pane, so a mid-flow exit still says what landed. */
   private savedThisRun = 0;
+  private updatedThisRun = 0;
 
   readonly sourceLabel = computed(
     () =>
@@ -133,9 +147,10 @@ export class WatchlistImportDialog {
       ],
   );
 
-  private rowsWith = (status: RowStatus) =>
-    computed(() => this.rows().filter((row) => row.status === status));
-  readonly matched = this.rowsWith('matched');
+  private rowsWith = (...statuses: RowStatus[]) =>
+    computed(() => this.rows().filter((row) => statuses.includes(row.status)));
+  /** Ready to write: new titles, and (films pages) owned ones to bring up to date. */
+  readonly matched = this.rowsWith('matched', 'update');
   readonly duplicates = this.rowsWith('duplicate');
   readonly ambiguous = this.rowsWith('ambiguous');
   readonly notFound = this.rowsWith('not-found');
@@ -144,6 +159,19 @@ export class WatchlistImportDialog {
   readonly selectedCount = computed(() => this.matched().filter((row) => row.selected).length);
   readonly allSelected = computed(
     () => this.matched().length > 0 && this.selectedCount() === this.matched().length,
+  );
+  /** How many of the picked rows will carry a ♥ / 👎 — shown before anything is written. */
+  readonly reactionCounts = computed(() => {
+    const counts = { liked: 0, disliked: 0 };
+    for (const row of this.matched()) {
+      if (!row.selected) continue;
+      const reaction = reactionFrom(row.entry.rating, row.entry.liked);
+      if (reaction) counts[reaction]++;
+    }
+    return counts;
+  });
+  readonly updateCount = computed(
+    () => this.matched().filter((row) => row.status === 'update' && row.selected).length,
   );
   readonly progressLabel = computed(() => `Matching titles, ${this.done()} of ${this.total()}`);
 
@@ -191,6 +219,8 @@ export class WatchlistImportDialog {
     this.source.set(source);
     this.origin.set(file.name);
     this.truncated.set(false);
+    this.kind.set('list');
+    this.owner.set('');
     this.resolve(entries);
   }
 
@@ -224,7 +254,10 @@ export class WatchlistImportDialog {
       return;
     }
 
-    const entries = entriesFromItemNames(result.items);
+    const films = result.kind === 'films';
+    const entries = films
+      ? entriesFromFilms(result.items, result.viewing)
+      : entriesFromItemNames(result.items);
     if (!entries.length) {
       this.pickError.set(URL_ERRORS['empty']);
       this.phase.set('pick');
@@ -234,6 +267,8 @@ export class WatchlistImportDialog {
     this.source.set('letterboxd');
     this.origin.set(result.name || 'Letterboxd list');
     this.truncated.set(result.truncated);
+    this.kind.set(films ? 'films' : 'list');
+    this.owner.set(films ? (result.owner ?? '') : '');
     this.resolve(entries);
   }
 
@@ -246,7 +281,8 @@ export class WatchlistImportDialog {
     this.phase.set('matching');
 
     const items = await this.watchlist.getWatchlist();
-    this.savedKeys = new Set(items.map((item: WatchlistItem) => key(item)));
+    this.existing = new Map(items.map((item: WatchlistItem) => [key(item), item]));
+    this.savedKeys = new Set(this.existing.keys());
 
     const rows = await mapPool(
       entries,
@@ -285,7 +321,12 @@ export class WatchlistImportDialog {
     );
     if (candidates === null) return unresolved;
 
-    return toRow(entry, pickMatch(entry, candidates), this.savedKeys);
+    return this.toRowFor(entry, pickMatch(entry, candidates));
+  }
+
+  /** Only a films import cares whether an owned title was ever marked watched. */
+  private toRowFor(entry: ImportEntry, match: Parameters<typeof toRow>[1]): ImportRow {
+    return toRow(entry, match, this.savedKeys, this.kind() === 'films' ? this.existing : undefined);
   }
 
   cancel(): void {
@@ -322,7 +363,7 @@ export class WatchlistImportDialog {
     this.rows.update((rows) =>
       rows.map((r) =>
         r === row
-          ? toRow(r.entry, { status: 'matched', result, candidates: [] }, this.savedKeys)
+          ? this.toRowFor(r.entry, { status: 'matched', result, candidates: [] })
           : r,
       ),
     );
@@ -363,20 +404,50 @@ export class WatchlistImportDialog {
 
     this.saveError.set(false);
     this.phase.set('saving');
-    const added = await this.watchlist.addMany(
-      picked.map((row) => ({ ...row.result!, watched: false })),
-    );
 
-    if (added === null) {
+    const films = this.kind() === 'films';
+    const fresh = picked.filter((row) => row.status === 'matched');
+    const upgrade = picked.filter((row) => row.status === 'update');
+    const reactionOf = (row: ImportRow) => reactionFrom(row.entry.rating, row.entry.liked);
+
+    // A films import arrives as watched, carrying the reaction its rating and
+    // heart imply; a list or file arrives unwatched and untouched, as before.
+    const added = await this.watchlist.addMany(
+      fresh.map((row) => ({
+        ...row.result!,
+        watched: films,
+        ...(films && reactionOf(row) ? { reaction: reactionOf(row) } : {}),
+      })),
+    );
+    // Rows already on the list are brought up to date after, so a failure to add
+    // doesn't leave the owned ones half-changed.
+    const updated =
+      added === null
+        ? null
+        : await this.watchlist.markWatchedMany(
+            upgrade.flatMap((row) => {
+              const id = this.existing.get(key(row.result!))?.id;
+              return id ? [{ id, reaction: reactionOf(row) }] : [];
+            }),
+          );
+
+    if (added === null || updated === null) {
+      // What did land is on the list now; say so rather than pretend otherwise.
+      this.savedThisRun += added?.length ?? 0;
       this.saveError.set(true);
       this.phase.set('review');
       return;
     }
-    this.savedThisRun = added.length;
-    this.dialogRef.close({ added: added.length });
+    this.savedThisRun += added.length;
+    this.updatedThisRun = updated;
+    this.dialogRef.close({ added: added.length, updated });
   }
 
   close(): void {
-    this.dialogRef.close(this.savedThisRun ? { added: this.savedThisRun } : undefined);
+    this.dialogRef.close(
+      this.savedThisRun || this.updatedThisRun
+        ? { added: this.savedThisRun, updated: this.updatedThisRun }
+        : undefined,
+    );
   }
 }

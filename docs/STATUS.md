@@ -37,7 +37,7 @@ them through `toSignal`. There is no store library and no need for one.
 | Deciding | knockout tournament, pick-by-time-available, AI chat over your own list, AI pick for two friends |
 | Assistant | chat in two threads (your list / something new) plus "More like this"; every `**Title (Year)**` it names is a button that opens the saved row or the add-preview, with a ✓ when already listed. See below |
 | Reactions | ♥ / 👎 in the detail sheet, and a snackbar after the card's eye marks a title watched |
-| Import | CSV export or a public Letterboxd link, see below |
+| Import | CSV export, or a public Letterboxd link — a list, a watchlist, or a member's films page (arrives as watched, with ♥/👎 from ratings and hearts). See below |
 | PWA | installable, Angular service worker, plus an Android TWA (`public/.well-known/assetlinks.json`) |
 
 ## Data
@@ -59,7 +59,7 @@ All in `supabase/functions/`, deployed individually with the Supabase CLI (there
 | `mimo-chat` | proxies the chat API so the key never ships to the browser; bounds a call (40 messages, 60k characters, `max_tokens` ≤ 4,000) and forwards `thinking` | `MIMO_API_KEY`, `MIMO_MODEL` |
 | `delete-account` | deletes the caller's own auth user, cascades everything | service role |
 | `refresh-series` | nightly pg_cron job (06:00 UTC); un-marks shows that gained a season and sets `has_update` | `TMDB_API_KEY`, `CRON_SECRET` |
-| `import-list` | reads a public Letterboxd list, returns raw `Title (Year)` strings | none |
+| `import-list` | reads a public Letterboxd list or member films page, returns raw `Title (Year)` strings (plus rating and heart for films) | none |
 
 `import-list` is deliberately thin: it fetches and reads HTML and nothing else. Matching
 happens on the client so the import's progress can be counted honestly.
@@ -95,7 +95,9 @@ Two ways in, because they have different costs:
 - **CSV export** — no backend at all. IMDb's export carries the `tt` id, so those match
   exactly; Letterboxd's carries title and year.
 - **Public Letterboxd link** — needs `import-list`, because letterboxd.com sends no CORS
-  headers. `boxd.it` short links are resolved; view-mode tails (`/detail/`, `/by/rating/`,
+  headers. A member's `/films/` page also returns each film's rating and heart; the client turns
+  those into watched + a reaction (heart or 4★+ → ♥, 2★ or less → 👎), and brings titles already
+  on the list up to date instead of skipping them. `boxd.it` short links are resolved; view-mode tails (`/detail/`, `/by/rating/`,
   `/page/3/`) are normalised away.
 
 **IMDb links are refused on purpose and this will not change.** Every imdb.com page
@@ -117,8 +119,8 @@ questions the user answers, never guessed at.
 ## Tests
 
 ```bash
-npm test               # ng test — 22 files, 117 tests, all passing
-npm run test:functions # vitest over supabase/ — the edge-function parser, 14 tests
+npm test               # ng test — 22 files, 126 tests, all passing
+npm run test:functions # vitest over supabase/ — the edge-function parser, 19 tests
 ```
 
 **Use `npm test`, not `npx vitest run`.** Running vitest directly skips Angular's TestBed

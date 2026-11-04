@@ -2,11 +2,11 @@
 // request handler so they can be tested against a real saved page without a
 // network or a Deno runtime. Everything here is pure.
 
-/** A list page holds 100 films; this caps one import at 3,000. */
+/** A list page holds 100 films (a member films page 72); this caps one import at 3,000 (2,160). */
 export const MAX_PAGES = 30;
 
 /**
- * Only public Letterboxd lists and watchlists. Anything else — another host, a
+ * Only public Letterboxd lists, watchlists and member films pages. Anything else — another host, a
  * private network, a path we don't understand — is refused before a request is
  * made, so this can't be turned into a general-purpose proxy.
  */
@@ -25,10 +25,24 @@ export function listUrl(raw: string): URL | null {
   // the tail is read and discarded rather than rejected, and what comes back is
   // always the canonical first page. Letterboxd's robots.txt disallows the
   // sorted views anyway; normalising here means we never request one.
-  const match = url.pathname.match(/^\/([\w-]+)\/(list\/[\w-]+|watchlist)(?:\/.*)?$/);
+  const match = url.pathname.match(/^\/([\w-]+)\/(list\/[\w-]+|watchlist|films)(?:\/.*)?$/);
   if (!match) return null;
 
   return new URL(`https://letterboxd.com/${match[1]}/${match[2]}/`);
+}
+
+/**
+ * A member's films page — everything they have logged as watched, with the
+ * rating and the heart on each. Same grid as a list, so the same reader works;
+ * what differs is that each item carries `filmsOn` data and means "seen".
+ */
+export function isFilmsUrl(url: URL): boolean {
+  return /^\/[\w-]+\/films\/$/.test(url.pathname);
+}
+
+/** The member a canonical list or films address belongs to. */
+export function ownerOf(url: URL): string {
+  return url.pathname.split('/')[1] ?? '';
 }
 
 /**
@@ -58,6 +72,39 @@ export function itemsOn(html: string): string[] {
     if (name) names.push(name);
   }
   return names;
+}
+
+/** One film off a member's films page. */
+export interface WatchedFilm {
+  /** "Title (Year)", as on a list. */
+  name: string;
+  /** Half-stars, 2 (½★) to 10 (5★); null when the member didn't rate it. */
+  rating: number | null;
+  liked: boolean;
+}
+
+/**
+ * The films on one page of a member's films, in page order, with what the
+ * member gave each. Read per grid item (`<li class="griditem">`) because the
+ * rating and the heart sit in a sibling of the element that carries the name —
+ * reading them with their own page-wide regexes would drift out of step the
+ * moment one film had no rating.
+ */
+export function filmsOn(html: string): WatchedFilm[] {
+  const films: WatchedFilm[] = [];
+  for (const chunk of html.split('<li class="griditem"').slice(1)) {
+    const name = chunk.match(/data-item-name="([^"]*)"/)?.[1];
+    if (!name) continue;
+    const decoded = decodeEntities(name).trim();
+    if (!decoded) continue;
+    const rated = chunk.match(/class="rating[^"]*\brated-(\d+)\b/);
+    films.push({
+      name: decoded,
+      rating: rated ? Number(rated[1]) : null,
+      liked: /\bicon-liked\b/.test(chunk),
+    });
+  }
+  return films;
 }
 
 export function decodeEntities(text: string): string {

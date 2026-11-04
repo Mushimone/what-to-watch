@@ -35,8 +35,8 @@
           <input
             type="url"
             class="url__input"
-            placeholder="letterboxd.com/…/list/…"
-            aria-label="Link to a public Letterboxd list"
+            placeholder="letterboxd.com/…/list/… or …/films/"
+            aria-label="Link to a public Letterboxd list or films page"
             autocomplete="off"
             spellcheck="false"
             [value]="listUrl()"
@@ -55,8 +55,9 @@
           </button>
         </div>
         <p class="url__hint">
-          The list has to be public. Letterboxd only — IMDb blocks other sites from reading its
-          pages, so use its Export instead.
+          The list has to be public. A link to your <em>films</em> page brings in what you’ve
+          watched, with a ♥ for the ones you loved. Letterboxd only — IMDb blocks other sites from
+          reading its pages, so use its Export instead.
         </p>
 
         @if (pickError()) {
@@ -125,8 +126,25 @@
 
       <!-- ── Review ───────────────────────────────────────────────────────── -->
       @default {
+        @if (kind() === 'films') {
+          <p class="notice" role="status">
+            <mat-icon>visibility</mat-icon>
+            <span>
+              Films watched by <strong>{{ owner() }}</strong> on Letterboxd. They’ll be added as
+              <strong>watched</strong>
+              @if (reactionCounts().liked || reactionCounts().disliked) {
+                — ♥ on {{ reactionCounts().liked }}, 👎 on {{ reactionCounts().disliked }}, from
+                their ratings and hearts
+              }
+              @if (updateCount()) {
+                · {{ updateCount() }} already on your list will be marked watched
+              }
+            </span>
+          </p>
+        }
+
         <p class="summary">
-          <strong>{{ total() }}</strong> in {{ sourceLabel() }}’s list ·
+          <strong>{{ total() }}</strong> in {{ sourceLabel() }}’s {{ kind() === 'films' ? 'films' : 'list' }} ·
           <strong>{{ matched().length }}</strong> ready ·
           <strong>{{ duplicates().length }}</strong> already yours
           @if (ambiguous().length + notFound().length + failed().length) {
@@ -168,6 +186,9 @@
                     <ng-container
                       *ngTemplateOutlet="film; context: { $implicit: row.result }"
                     ></ng-container>
+                    @if (row.status === 'update') {
+                      <span class="row__tag">already yours</span>
+                    }
                   </label>
                 </li>
               }

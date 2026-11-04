@@ -196,9 +196,16 @@ export class WatchlistAdd {
     WatchlistImportDialog.open(this.dialog)
       .afterClosed()
       .subscribe((outcome) => {
-        if (!outcome?.added) return;
+        if (!outcome?.added && !outcome?.updated) return;
+        const plural = (n: number) => `${n} ${n === 1 ? 'title' : 'titles'}`;
+        const said = [
+          outcome.added ? `Added ${plural(outcome.added)} to your watchlist` : '',
+          outcome.updated ? `${outcome.added ? 'updated' : 'Updated'} ${plural(outcome.updated)} already on it` : '',
+        ]
+          .filter(Boolean)
+          .join(' and ');
         this.snackBar.open(
-          `Added ${outcome.added} ${outcome.added === 1 ? 'title' : 'titles'} to your watchlist.`,
+          `${said}.`,
           'OK',
           { duration: 4000 },
         );
