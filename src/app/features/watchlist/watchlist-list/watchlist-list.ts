@@ -68,6 +68,8 @@ export class WatchlistList {
   query = signal('');
   activeType = signal<string | null>(null);
   unwatchedOnly = signal(true);
+  /** Only shows the nightly job brought back (a new season or new episodes). */
+  updatesOnly = signal(false);
   activeSort = signal('added_desc');
   isLoading = signal(true);
 
@@ -79,17 +81,34 @@ export class WatchlistList {
   /** Total count regardless of the active filter — drives empty-state messaging. */
   totalCount = computed(() => this.items().length);
   /** Everything matching the filters — what the "x of y" chip counts. */
-  matched = computed(() =>
-    this.sortItems(
-      this.filterItems(this.items(), this.query(), this.activeType(), this.unwatchedOnly()),
+  matched = computed(() => {
+    const sorted = this.sortItems(
+      this.filterItems(
+        this.items(),
+        this.query(),
+        this.activeType(),
+        this.unwatchedOnly(),
+        this.updatesOnly(),
+      ),
       this.activeSort(),
-    ),
-  );
+    );
+    // Shows with something new float to the top whatever the sort — the point of
+    // the nightly check is that you notice. Stable, so each group keeps its order.
+    return [...sorted.filter((i) => i.has_update), ...sorted.filter((i) => !i.has_update)];
+  });
+  /** How many shows carry the flag, for the filter menu. */
+  updateCount = computed(() => this.items().filter((i) => i.has_update).length);
   // The full list is fetched once and filtered in memory, so paging here is
   // rendering only: cards are cheap to keep but not to paint all at once.
   // Any change to the narrowing starts the scroll over at the first page.
   private limit = linkedSignal({
-    source: () => [this.query(), this.activeType(), this.unwatchedOnly(), this.activeSort()],
+    source: () => [
+      this.query(),
+      this.activeType(),
+      this.unwatchedOnly(),
+      this.updatesOnly(),
+      this.activeSort(),
+    ],
     computation: () => PAGE,
   });
   displayedItems = computed(() => this.matched().slice(0, this.limit()));
@@ -120,6 +139,7 @@ export class WatchlistList {
     this.query.set('');
     this.activeType.set(null);
     this.unwatchedOnly.set(false);
+    this.updatesOnly.set(false);
   }
   changeSort(key: string) {
     if (this.activeSortKey === key) {
@@ -133,10 +153,12 @@ export class WatchlistList {
     query: string,
     type: string | null,
     unwatchedOnly: boolean,
+    updatesOnly: boolean,
   ): WatchlistItem[] {
     const needle = query.trim().toLowerCase();
     return items.filter((item) => {
       if (unwatchedOnly && item.watched) return false;
+      if (updatesOnly && !item.has_update) return false;
       if (type === 'movie' && item.type !== 'movie') return false;
       if (type === 'series' && item.type !== 'series') return false;
       if (type === 'animation' && !item.genres.includes('Animation')) return false;

@@ -79,6 +79,7 @@
   }
 
   &__item {
+    position: relative;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -279,4 +280,29 @@
   margin-inline: auto;
   // keep the last row clear of the floating AI button
   padding-bottom: calc(var(--space-xl) * 2);
+}
+
+// How many shows the nightly job brought back. A pill in the rail, a corner
+// mark on the bottom nav's icon.
+.nav-count {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: var(--color-accent);
+  color: var(--color-black);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.nav-item .nav-count {
+  margin-left: auto;
+}
+
+.bottom-nav__item .nav-count {
+  position: absolute;
+  top: 4px;
+  left: calc(50% + 6px);
 }

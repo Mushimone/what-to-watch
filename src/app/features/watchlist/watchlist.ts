@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -14,6 +14,7 @@ import { UsernameDialog } from '../auth/username-dialog/username-dialog';
 import { ProfileService } from '../../core/services/profile.service';
 import { FriendsService } from '../../core/services/friends.service';
 import { SearchService } from '../../core/services/search.service';
+import { WatchlistService } from '../../core/services/watchlist.service';
 
 export type WatchlistSection = 'list' | 'add' | 'shared' | 'profile';
 
@@ -37,6 +38,11 @@ export class Watchlist implements OnInit {
   private friends = inject(FriendsService);
   private dialog = inject(MatDialog);
   private search = inject(SearchService);
+  private watchlist = inject(WatchlistService);
+
+  /** Shows the nightly job brought back; drives the dot on "My list". */
+  private items = toSignal(this.watchlist.watchlistItems$, { initialValue: [] });
+  updateCount = computed(() => this.items().filter((i) => i.has_update).length);
 
   isDesktop = signal(false);
   /** Which section the content pane shows — same model on desktop and mobile. */

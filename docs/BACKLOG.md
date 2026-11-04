@@ -36,8 +36,6 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 
 ## Next — decided 2026-11-04, in this order
 
-- [ ] **New-season notice.** `refresh-series` already un-marks shows that gained a season; surface
-      it (badge first, push later).
 - [ ] **Ask 👍/👎 after marking something watched.** The recommender is only as good as the
       reactions it can read.
 - [ ] **Run `npm test` and `npm run test:functions` in CI** (already listed above; now wanted).
@@ -58,6 +56,30 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 - [ ] **Undo for a large import.** Adding 96 titles is one tap; taking them back is 96. A
       single "undo this import" needs an import batch id on the rows, which is a migration.
       Worth it only if a bad import actually happens to you.
+
+## Done 2026-11-04 — new-season notice
+
+The badge itself already existed (`has_update`, set by `refresh-series`, shown on the card,
+cleared when the sheet opens). What was missing was being *told*:
+
+- Flagged shows **float to the top of the list** whatever the sort, and their card has an accent
+  ring on top of the existing "New season" / "New episodes" badge.
+- **"My list" in the navigation carries a count** of flagged shows (rail pill on desktop, corner
+  mark on the mobile bottom nav).
+- **"New seasons (n)" in the filter menu**, with a chip when active. The entry appears only
+  while something is flagged.
+- Verified 2026-11-04 against production: the pg_cron job `refresh-series-progress` is active,
+  runs 06:00 UTC and has been succeeding nightly; 9 of 141 series rows were flagged. (`succeeded`
+  in `cron.job_run_details` only means the HTTP call was queued — the flagged rows are the proof.)
+- Still true by design: only shows marked *fully watched* are flagged; a half-watched show that
+  gains a season is left alone.
+
+## Parked: push notifications for new seasons
+
+Needs a `push_subscriptions` table, VAPID keys, a push handler in the service worker, a
+permission prompt, and a sender at the end of `refresh-series`. iOS only delivers to an
+*installed* PWA; the Android TWA works. Worth building only if people stop opening the app
+between seasons.
 
 ## Done 2026-11-04 — clickable AI suggestions
 

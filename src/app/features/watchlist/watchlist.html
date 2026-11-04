@@ -19,10 +19,14 @@
           class="nav-item"
           [class.nav-item--active]="activeSection() === 'list'"
           [attr.aria-current]="activeSection() === 'list' ? 'page' : null"
+          [attr.aria-label]="updateCount() ? 'My list, ' + updateCount() + ' with new episodes' : null"
           (click)="setSection('list')"
         >
           <mat-icon>video_library</mat-icon>
           <span>My list</span>
+          @if (updateCount()) {
+            <span class="nav-count" aria-hidden="true">{{ updateCount() }}</span>
+          }
         </button>
         <button
           class="nav-item"
@@ -103,10 +107,14 @@
         class="bottom-nav__item"
         [class.bottom-nav__item--active]="activeSection() === 'list'"
         [attr.aria-current]="activeSection() === 'list' ? 'page' : null"
+        [attr.aria-label]="updateCount() ? 'My list, ' + updateCount() + ' with new episodes' : null"
         (click)="setSection('list')"
       >
         <mat-icon>video_library</mat-icon>
         <span>My list</span>
+        @if (updateCount()) {
+          <span class="nav-count" aria-hidden="true">{{ updateCount() }}</span>
+        }
       </button>
 
       <!-- notch: reserves room for the centred AI button -->

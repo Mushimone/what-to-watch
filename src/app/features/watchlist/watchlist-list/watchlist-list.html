@@ -22,7 +22,7 @@
                 <button
                   type="button"
                   class="icon-btn field-filter"
-                  [class.icon-btn--on]="activeType() || unwatchedOnly()"
+                  [class.icon-btn--on]="activeType() || unwatchedOnly() || updatesOnly()"
                   [matMenuTriggerFor]="filterMenu"
                   matTooltip="Filter"
                   aria-label="Filter"
@@ -38,6 +38,15 @@
                     <mat-icon>{{ type.icon }}</mat-icon>
                     {{ type.label }}
                     @if (activeType() === type.key) {
+                      <mat-icon class="menu-tail">check</mat-icon>
+                    }
+                  </button>
+                }
+                @if (updateCount() > 0 || updatesOnly()) {
+                  <button mat-menu-item (click)="updatesOnly.set(!updatesOnly())" [class.menu-on]="updatesOnly()">
+                    <mat-icon>new_releases</mat-icon>
+                    New seasons ({{ updateCount() }})
+                    @if (updatesOnly()) {
                       <mat-icon class="menu-tail">check</mat-icon>
                     }
                   </button>
@@ -83,6 +92,8 @@
             <div class="list-note">
               @if (query()) {
                 <p>Nothing in your list matches “{{ query() }}”.</p>
+              } @else if (updatesOnly()) {
+                <p>Nothing new right now.</p>
               } @else if (unwatchedOnly() && !activeType()) {
                 <p>You've watched everything. Turn off “Not watched” to see the full list.</p>
               } @else {
@@ -109,6 +120,12 @@
                   <mat-icon>close</mat-icon>
                 </button>
               }
+              @if (updatesOnly()) {
+                <button type="button" class="chip" (click)="updatesOnly.set(false)">
+                  New seasons
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
               @if (activeTypeLabel; as label) {
                 <button type="button" class="chip" (click)="activeType.set(null)">
                   {{ label }}
@@ -122,7 +139,7 @@
             <ul class="watchlist-grid">
               @for (item of items; track item.id) {
                 <li>
-                  <div class="card" (click)="openDetail(item)">
+                  <div class="card" [class.card--updated]="item.has_update" (click)="openDetail(item)">
                     <img [class.watched]="item.watched" [src]="item.poster_url" alt="{{ item.title }} poster" class="poster" />
                     <div class="details">
                       <span class="type-badge">{{ item.type }}</span>

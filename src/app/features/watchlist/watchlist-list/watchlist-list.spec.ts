@@ -62,4 +62,36 @@ describe('WatchlistList', () => {
     expect(component.matched().length).toBe(30);
     expect(component.displayedItems().length).toBe(24);
   });
+
+  describe('shows with something new', () => {
+    beforeEach(() => {
+      // The two oldest rows were flagged by the nightly job.
+      const flagged = items.map((it, n) => (n < 2 ? { ...it, has_update: true } : it));
+      (TestBed.inject(WatchlistService).watchlistItems$ as BehaviorSubject<WatchlistItem[]>).next(
+        flagged,
+      );
+    });
+
+    it('float to the top whatever the sort, each group keeping its own order', () => {
+      // added_desc would put Title 29 first; the flagged pair leads instead.
+      expect(component.displayedItems().slice(0, 3).map((i) => i.title)).toEqual([
+        'Title 1',
+        'Title 0',
+        'Title 29',
+      ]);
+
+      component.changeSort('title');
+      expect(component.displayedItems().slice(0, 3).map((i) => i.title)).toEqual([
+        'Title 0',
+        'Title 1',
+        'Title 10',
+      ]);
+    });
+
+    it('can be filtered down to, and counted', () => {
+      expect(component.updateCount()).toBe(2);
+      component.updatesOnly.set(true);
+      expect(component.matched().length).toBe(2);
+    });
+  });
 });
