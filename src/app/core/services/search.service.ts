@@ -306,7 +306,11 @@ export class SearchService {
     }
   }
   getTmdbGenres() {
-    this.getTmdbTvGenres().subscribe((genres) => {
+    // Run once at startup. If TMDB is unreachable (or the key is bad) genres stay
+    // "Unknown" until reload — better than an unhandled error on every launch.
+    // ponytail: no retry; add one if a flaky first load ever matters.
+    const genresOrNone = <T>(source: Observable<T[]>) => source.pipe(catchError(() => of([] as T[])));
+    genresOrNone(this.getTmdbTvGenres()).subscribe((genres) => {
       this.tmdbTvGenreMap = genres.reduce(
         (acc: Record<number, string>, genre) => {
           acc[genre.id] = genre.name;
@@ -315,7 +319,7 @@ export class SearchService {
         {} as Record<number, string>,
       );
     });
-    this.getTmdbMovieGenres().subscribe((genres) => {
+    genresOrNone(this.getTmdbMovieGenres()).subscribe((genres) => {
       this.tmdbMovieGenreMap = genres.reduce(
         (acc: Record<number, string>, genre) => {
           acc[genre.id] = genre.name;
