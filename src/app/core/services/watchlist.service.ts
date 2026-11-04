@@ -168,6 +168,8 @@ export class WatchlistService {
     // so the two stay consistent (all seasons watched ⇔ watched=true).
     const current = this.watchlistItemsSubject.value.find((item) => item.id === id);
     const patch: Partial<WatchlistItem> = { watched };
+    // Marking it watched is also "I've seen the news" — don't leave it pinned with a strip.
+    if (watched) patch.has_update = false;
     // Keep whichever progress track the show uses in sync with the whole-series flag.
     if ((current?.season_count ?? 0) >= 2) {
       patch.watched_seasons = watched

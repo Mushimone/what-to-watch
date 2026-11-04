@@ -31,6 +31,11 @@ li {
     opacity: 1;
   }
 
+  &:hover .update-strip,
+  &:focus-within .update-strip {
+    opacity: 0;
+  }
+
   // On touch the overlay is always up and hover never fires, so this press is
   // the card's only acknowledgement of a tap.
   &:active {
@@ -143,6 +148,22 @@ li {
   // The badge says what changed; the ring says it from across the grid.
   outline: 2px solid var(--color-accent);
   outline-offset: -2px;
+}
+
+.update-strip {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-accent);
+  color: var(--color-black);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+  pointer-events: none;
+  transition: opacity var(--dur-med) var(--ease-out);
 }
 
 .new-season-badge {

@@ -172,6 +172,11 @@
                       }
                       <p class="genres">{{ item.genres.join(', ') }}</p>
                     </div>
+                    <!-- The badge above lives in the hover overlay; this strip is the part
+                         that is there without hovering, and gives way to the overlay. -->
+                    @if (item.has_update) {
+                      <span class="update-strip" aria-hidden="true">{{ (item.season_count ?? 0) >= 2 ? 'New season' : 'New episodes' }}</span>
+                    }
                   </div>
                 </li>
               }
