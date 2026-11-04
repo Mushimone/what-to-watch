@@ -34,6 +34,25 @@ See [STATUS.md](./STATUS.md) for where things stand today.
       backfill-details.js` exists — decide whether the import should trigger it, or whether
       lazy enrichment is genuinely fine (it probably is).
 
+## Next — decided 2026-11-04, in this order
+
+- [ ] **Clickable AI suggestions.** In the chat and in "More like this", render each
+      `**Title (Year)**` as a button: resolve it with `SearchService.searchTitles()`, then open
+      `WatchlistDetailDialog` in preview mode (or the saved row if it's already on the list).
+      Strip the `Watch this:` prefix before matching. Consider TMDB `/recommendations` as a
+      no-AI fallback. Put the string → title → sheet logic in one place, not in two components.
+- [ ] **New-season notice.** `refresh-series` already un-marks shows that gained a season; surface
+      it (badge first, push later).
+- [ ] **Ask 👍/👎 after marking something watched.** The recommender is only as good as the
+      reactions it can read.
+- [ ] **Run `npm test` and `npm run test:functions` in CI** (already listed above; now wanted).
+
+## Parked — only if it comes up
+
+- Import a member's watched films (`letterboxd.com/<user>/films/`) — listed under Worth doing.
+- Paste raw text as an import source — listed under Worth doing.
+- Stream "More like this" like the chat does (it still uses the buffered `chat()`).
+
 ## Bigger — design it before building it
 
 - [ ] **Keep a watchlist following a Letterboxd list.** Save the list URL, re-check it on a
@@ -44,6 +63,22 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 - [ ] **Undo for a large import.** Adding 96 titles is one tap; taking them back is 96. A
       single "undo this import" needs an import batch id on the rows, which is a migration.
       Worth it only if a bad import actually happens to you.
+
+## Done 2026-11-04 — architecture pass
+
+- Chat prompt capped (`PROMPT_CAP` in `recommend.prompt.ts`): 60 watched, 150 candidates,
+  👍 then 👎 then ★ first, with a "…and N more not shown" line. A 1,000-title import used to be
+  re-sent whole on every message. Add mode lists the whole library as `Title (Year)` only, since
+  that is the exclusion set. **Group-pick's shared pool is still uncapped** (only the two watched
+  lists are).
+- `mimo-chat` bounds one call: 40 messages, 60k characters, `max_tokens` ≤ 4,000. The client sends
+  the system prompt plus the last 30 turns.
+- All prompts now live in `recommend.prompt.ts` (`buildListPrompt`, `buildAddPrompt`,
+  `buildSimilarMessages`), not in components.
+- `WatchlistAiChatComponent` is signals: `input()`, `viewChild()`, `isOpen` signal with
+  `toggle()` / `close()`. The shell calls `chat.toggle()`.
+- **Redeploy `mimo-chat`** for the limits to take effect:
+  `npx supabase functions deploy mimo-chat --project-ref dgjpkelrxttlivivzayl`
 
 ## Won't do
 
