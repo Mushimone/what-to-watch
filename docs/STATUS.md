@@ -6,10 +6,6 @@ The [README](../README.md) says what the app is and how to run it. This file say
 state it is in — what's built, what's deployed, what's known to be wrong. When the two
 disagree, the README is the pitch and this is the truth.
 
-> `PLANNING.md` (untracked, local only) was last touched 2026-03-19 and has since gone
-> stale — it still names Gemini for AI and AniList for anime, neither of which shipped.
-> Read it as history, not as a plan.
-
 ---
 
 ## Shape of the thing

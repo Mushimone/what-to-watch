@@ -12,8 +12,7 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 
 - [ ] **Delete the merged `feat/list-import` branch** on origin once you're happy with the
       import feature in production.
-- [ ] **Refresh or delete `PLANNING.md`.** It's local-only and five months stale — it still
-      names Gemini and AniList. Right now it's a trap for future-you.
+
 
 ## Worth doing
 
@@ -51,6 +50,12 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 - [ ] **Undo for a large import.** Adding 96 titles is one tap; taking them back is 96. A
       single "undo this import" needs an import batch id on the rows, which is a migration.
       Worth it only if a bad import actually happens to you.
+
+## Done 2026-11-04 — `PLANNING.md` deleted
+
+The local, untracked March plan (Gemini, AniList, tab shell) was deleted at the owner's say-so: nearly every
+open box in it had since shipped, and `STATUS.md` + this file say where things stand. Its one live finding
+(no feedback when a card action fails) was moved to Parked above.
 
 ## Done 2026-11-04 — initial bundle back under 500 kB
 
