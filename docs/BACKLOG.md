@@ -56,6 +56,19 @@ into the first load although icons are only used on lazy routes. The icon font i
 (`mat-icon.material-icons` → Material Symbols Rounded in `styles.scss`) instead of a provider. Checked in the
 browser: all 84 icons on the list page render from the Symbols font.
 
+**Lesson, learned the hard way the same day.** The first version of that CSS copied the font family but not
+`font-size: 24px` / `line-height: 1`, which Google's stylesheet had been supplying through the same class. Icons
+with no size of their own then inherited the surrounding text (14px nav icons) and shipped that way until it was
+spotted. The fix keeps those two properties in a **class-only** rule (`.material-icons`, specificity 0,1,0) and
+leaves `display` and the FILL axis on `mat-icon.material-icons`. That specificity is deliberate: component
+styles such as `.card-icon-btn mat-icon { font-size: … }` carry an attribute selector and must still outrank the
+default, so only unsized icons get 24px.
+
+When a stylesheet is replaced rather than moved, diff what it *computed*, not what it *declared*: dump
+`getComputedStyle` (font-size, width, line-height) for every `mat-icon` on a page before and after, and compare.
+That is how the fix was verified — 21 icon/parent combinations on the list page, zero differences. Dialog and
+snackbar icons weren't covered; they use the same global rule.
+
 Where the rest of the weight is, if the budget creeps up again (measured with `ng build --stats-json`):
 Angular core 133 kB, **Supabase client ~165 kB** (auth 84, realtime 34, **storage 19 + iceberg 5 — never used
 by the app**, postgrest 14), router 69, common 38, rxjs 22. The unused storage client is the only real fat
