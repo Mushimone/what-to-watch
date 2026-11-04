@@ -187,7 +187,7 @@
         <div class="similar-section" aria-live="polite">
           @if (similar(); as suggestions) {
             <span class="section-label">More like this</span>
-            <div class="similar-content" [innerHTML]="suggestions | markdown"></div>
+            <div class="similar-content" titleLinks closesSheet [innerHTML]="suggestions | markdown: ownedTitles()"></div>
           } @else {
             <button
               mat-stroked-button

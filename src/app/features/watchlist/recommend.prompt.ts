@@ -63,7 +63,7 @@ HOW TO RECOMMEND:
 3. Match against BOTH my request and my taste profile, using your real knowledge of each title's plot, tone and atmosphere. Genre tags are rough; the year, director, ★rating and short synopsis are only there to help you identify the exact title and gauge what I like.
 4. Before you name ANY title, open with ONE short line (max 25 words): what I'm in the mood for, and the thread in my taste it should match. The pick has to follow from that line — don't decide first and justify after.
 5. Then be adaptive and decisive about the shape of your answer:
-   - If I'm asking what to watch / for help picking / for a specific mood: ONE confident top pick on its own line as "**Watch this: Title (Year)**" and a reason, then offer 2–3 shorter alternates.
+   - If I'm asking what to watch / for help picking / for a specific mood: ONE confident top pick on its own line as "Watch this: **Title (Year)**" and a reason, then offer 2–3 shorter alternates.
    - If I'm clearly browsing or asking for options/a list: give a ranked shortlist of up to 4, best first.
 6. Every reason must connect the pick to what I asked AND, whenever possible, to something specific I've watched (e.g. "you rated Sicario highly").
 7. If my request is vague, make a sensible assumption and recommend — don't interrogate me with clarifying questions.
@@ -192,7 +192,7 @@ HOW TO PICK:
 2. Find the ONE candidate BOTH will enjoy — the overlap of the two tastes, not just one person's favourite. Prefer a title marked "★ both lists" when one genuinely fits; only reach past it if none does.
 3. Use your real knowledge of each title's plot, tone and atmosphere. Genre tags are rough; year, director, ★ and synopsis are only there to identify the title and gauge taste.
 4. Before you name ANY title, open with ONE short line (max 25 words) naming the taste both friends actually share. The pick has to follow from that line — don't decide first and justify after.
-5. Then give ONE confident pick on its own line as "**Watch this: Title (Year)**" and a reason that connects to BOTH friends' tastes (name a specific title each has watched when you can). Then offer 1–2 shorter alternates.
+5. Then give ONE confident pick on its own line as "Watch this: **Title (Year)**" and a reason that connects to BOTH friends' tastes (name a specific title each has watched when you can). Then offer 1–2 shorter alternates.
 6. Recommend ONLY from the CANDIDATES below. Never invent a title or suggest anything outside the pool.
 
 ${RECOMMEND_STYLE}

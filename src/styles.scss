@@ -652,3 +652,33 @@ mat-icon.search-icon {
     width: 100%;
   }
 }
+
+// A title the assistant named, rendered by MarkdownPipe inside innerHTML — so
+// global, since component styles don't reach it.
+.title-link {
+  all: unset;
+  cursor: pointer;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent-muted);
+  text-underline-offset: 3px;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--color-accent);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  &[aria-busy='true'] {
+    opacity: 0.5;
+    cursor: progress;
+  }
+  // Already on the list.
+  &--owned::after {
+    content: ' ✓';
+    color: var(--color-accent);
+  }
+}

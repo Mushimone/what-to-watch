@@ -10,6 +10,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { take } from 'rxjs';
@@ -17,7 +18,8 @@ import { OpenAiMessage } from '../../../core/models/openai.models';
 import { WatchlistItem } from '../../../core/models/watchlist-item.model';
 import { OpenAiService } from '../../../core/services/openai.service';
 import { WatchlistService } from '../../../core/services/watchlist.service';
-import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
+import { MarkdownPipe, ownedKey } from '../../../shared/pipes/markdown.pipe';
+import { TitleLinksDirective } from '../title-links/title-links';
 import { buildAddPrompt, buildListPrompt } from '../recommend.prompt';
 
 /** Turns kept per request; mimo-chat refuses more than 40 messages. */
@@ -38,6 +40,7 @@ export interface ChatMessage {
     MatIconModule,
     FormsModule,
     MarkdownPipe,
+    TitleLinksDirective,
   ],
   templateUrl: './watchlist-ai-chat.html',
   styleUrls: ['./watchlist-ai-chat.scss'],
@@ -63,6 +66,12 @@ export class WatchlistAiChatComponent {
   activeMode = signal<ChatMode>('list');
 
   readonly isOpen = signal(false);
+
+  private items = toSignal(this.watchlist.watchlistItems$, { initialValue: [] as WatchlistItem[] });
+  /** Titles already on the list, so a link to one reads as such. */
+  readonly ownedTitles = computed(
+    () => new Set(this.items().map((i) => ownedKey(i.title, i.release_date?.slice(0, 4) ?? ''))),
+  );
 
   /**
    * Rebuild context every time the panel opens — avoids the empty-on-init

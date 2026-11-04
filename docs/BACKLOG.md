@@ -36,11 +36,6 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 
 ## Next — decided 2026-11-04, in this order
 
-- [ ] **Clickable AI suggestions.** In the chat and in "More like this", render each
-      `**Title (Year)**` as a button: resolve it with `SearchService.searchTitles()`, then open
-      `WatchlistDetailDialog` in preview mode (or the saved row if it's already on the list).
-      Strip the `Watch this:` prefix before matching. Consider TMDB `/recommendations` as a
-      no-AI fallback. Put the string → title → sheet logic in one place, not in two components.
 - [ ] **New-season notice.** `refresh-series` already un-marks shows that gained a season; surface
       it (badge first, push later).
 - [ ] **Ask 👍/👎 after marking something watched.** The recommender is only as good as the
@@ -63,6 +58,21 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 - [ ] **Undo for a large import.** Adding 96 titles is one tap; taking them back is 96. A
       single "undo this import" needs an import batch id on the rows, which is a migration.
       Worth it only if a bad import actually happens to you.
+
+## Done 2026-11-04 — clickable AI suggestions
+
+`**Title (Year)**` in the chat, "More like this" and the group-pick result is a button
+(`MarkdownPipe` → `title-link`; one `titleLinks` click handler on the container →
+`TitleLinks.open()`). It resolves with `searchTitles()` + the import's `pickMatch`, then opens
+the saved row if the title is on the list, otherwise the add-preview. No match → snackbar.
+Titles already on the list carry a ✓. A link inside a detail sheet replaces that sheet.
+
+- The prompts now put `Watch this:` *outside* the bold (`Watch this: **Title (Year)**`), so a
+  translated prefix can't end up in the search. The pipe still tolerates the old form.
+- The ✓ matches on normalised title + exact year; a model that is a year off shows no tick but
+  still opens the right film.
+- Not exercised in a browser (login is Google OAuth) — worth one click-through on a deployed build.
+- TMDB `/recommendations` was left out on purpose; if wanted, it is its own entry.
 
 ## Done 2026-11-04 — architecture pass
 

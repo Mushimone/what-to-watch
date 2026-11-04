@@ -1,5 +1,6 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
@@ -15,7 +16,8 @@ import { SearchService } from '../../../core/services/search.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { WatchlistService } from '../../../core/services/watchlist.service';
 import { SearchResult, WatchlistItem } from '../../../core/models/watchlist-item.model';
-import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
+import { MarkdownPipe, ownedKey } from '../../../shared/pipes/markdown.pipe';
+import { TitleLinksDirective } from '../title-links/title-links';
 import { buildSimilarMessages } from '../recommend.prompt';
 
 export type DetailDialogData =
@@ -27,7 +29,7 @@ export type DetailDialogStatus = 'duplicate' | 'error';
 
 @Component({
   selector: 'app-watchlist-detail-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, DecimalPipe, MarkdownPipe],
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, DecimalPipe, MarkdownPipe, TitleLinksDirective],
   templateUrl: './watchlist-detail-dialog.html',
   styleUrl: './watchlist-detail-dialog.scss',
 })
@@ -86,6 +88,12 @@ export class WatchlistDetailDialog {
 
   providers = signal<TmdbWatchProvider[]>([]);
   providersLoading = signal(false);
+
+  private items = toSignal(this.watchlist.watchlistItems$, { initialValue: [] as WatchlistItem[] });
+  /** Titles already on the list, so a link to one reads as such. */
+  ownedTitles = computed(
+    () => new Set(this.items().map((i) => ownedKey(i.title, i.release_date?.slice(0, 4) ?? ''))),
+  );
 
   similar = signal<string | null>(null);
   similarLoading = signal(false);

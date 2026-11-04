@@ -33,7 +33,7 @@
       </button>
     </div>
 
-    <div class="chat-messages" #messagesContainer role="log" aria-live="polite">
+    <div class="chat-messages" #messagesContainer titleLinks role="log" aria-live="polite">
       @if (displayMessages().length === 0) {
         <div class="chat-empty">
           <p class="chat-empty__lead">{{ activeMode() === 'list'
@@ -45,7 +45,7 @@
       @for (msg of displayMessages(); track $index) {
         <div class="message" [class.user]="msg.role === 'user'" [class.model]="msg.role === 'model'">
           @if (msg.role === 'model') {
-            <div [innerHTML]="msg.text | markdown"></div>
+            <div [innerHTML]="msg.text | markdown: ownedTitles()"></div>
           } @else {
             <p>{{ msg.text }}</p>
           }

@@ -5,6 +5,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { take } from 'rxjs';
 import { OpenAiService } from '../../../core/services/openai.service';
+import { TitleLinksDirective } from '../title-links/title-links';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
 export interface GroupPickData {
@@ -20,6 +21,7 @@ export interface GroupPickData {
     MatIconModule,
     MatProgressSpinnerModule,
     MarkdownPipe,
+    TitleLinksDirective,
   ],
   templateUrl: './watchlist-group-pick-dialog.html',
   styleUrl: './watchlist-group-pick-dialog.scss',

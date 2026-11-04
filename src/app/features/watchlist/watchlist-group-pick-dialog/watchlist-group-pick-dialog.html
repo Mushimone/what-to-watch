@@ -8,7 +8,7 @@
   } @else if (error()) {
     <p>Something went wrong. Please try again.</p>
   } @else {
-    <div class="result" [innerHTML]="result() | markdown"></div>
+    <div class="result" titleLinks [innerHTML]="result() | markdown"></div>
   }
 </mat-dialog-content>
 <mat-dialog-actions align="end">
