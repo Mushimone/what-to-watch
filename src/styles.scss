@@ -255,10 +255,15 @@ h3,
 // baseline never lands in the middle of the box it's given — it reads high or
 // low by a pixel or two depending on how the box was sized. Centring the line
 // box instead is metric-proof at every size, so no call site needs a nudge.
-mat-icon.material-icons {
+// Class-only on purpose, like the rule Google's stylesheet used to supply: a
+// component that sizes its own icons (`.card-icon-btn mat-icon { font-size… }`)
+// outranks this, so only icons with no size of their own get 24px.
+.material-icons {
   font-family: 'Material Symbols Rounded';
   font-weight: normal;
   font-style: normal;
+  font-size: 24px;
+  line-height: 1;
   letter-spacing: normal;
   text-transform: none;
   white-space: nowrap;
@@ -266,6 +271,9 @@ mat-icon.material-icons {
   direction: ltr;
   font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
+}
+
+mat-icon.material-icons {
   display: inline-grid;
   place-items: center;
   font-variation-settings: 'FILL' 0, var(--icon-axes);
