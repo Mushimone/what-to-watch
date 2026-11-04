@@ -18,11 +18,6 @@ const MAX_CHARS = 60_000;
 // Reasoning tokens count against this, so it is generous.
 const MAX_TOKENS = 4_000;
 
-// A caller may pick between these two per request; anything else falls back to the
-// MIMO_MODEL secret. ponytail: a test hook for comparing flash with pro — drop it (or
-// move the choice into the secret) once that is decided.
-const MODELS = new Set(['mimo-v2.6-flash', 'mimo-v2.6-pro']);
-
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -41,7 +36,6 @@ Deno.serve(async (req) => {
     messages?: unknown;
     maxTokens?: number;
     thinking?: string;
-    model?: string;
     stream?: boolean;
   };
   try {
@@ -71,7 +65,7 @@ Deno.serve(async (req) => {
       'api-key': apiKey,
     },
     body: JSON.stringify({
-      model: typeof payload.model === 'string' && MODELS.has(payload.model) ? payload.model : model,
+      model,
       messages: payload.messages,
       ...(payload.stream ? { stream: true } : {}),
       max_tokens: maxTokens,

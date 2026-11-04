@@ -87,8 +87,14 @@ tokens, first word 4.6 s, total 12.1 s.
 - **Deploy drift:** production runs the function version that accepts `thinking` and still forwards the
   (ignored) `reasoning_effort`. The repo version drops that line. Harmless; a plain redeploy of `mimo-chat`
   aligns them.
-- Open: `mimo-v2.6-pro` is the stronger sibling. Not tried — the model comes from the secret, and testing it
-  means either changing `MIMO_MODEL` or a whitelisted per-request override.
+- **`mimo-v2.6-pro` tried, not adopted** (2026-11-04). Compared with flash on the same chat prompt, thinking off,
+  5 paired runs: quality alike (same picks; pro once listed an already-watched title as an alternative), ~200
+  tokens each, cost ~3x. Pro's first word was faster in that session (median 3.6 s vs 8.5 s) but flash had
+  measured 3.2 s an hour earlier — provider load swings more than the gap between the models. No reason to
+  switch; revisit only if flash gets consistently slow. The model is the Supabase secret `MIMO_MODEL`
+  (not a Vercel variable — the client never sees it).
+- The per-request `model` option used for that test was deployed once and is removed from the code; production
+  still has it (harmless: two whitelisted names, ignored otherwise) until the next `mimo-chat` deploy.
 
 ## Done 2026-11-04 — CI
 
