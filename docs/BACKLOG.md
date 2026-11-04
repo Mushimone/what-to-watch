@@ -36,6 +36,10 @@ See [STATUS.md](./STATUS.md) for where things stand today.
 - Import a member's watched films (`letterboxd.com/<user>/films/`) — listed under Worth doing.
 - Paste raw text as an import source — listed under Worth doing.
 - Stream "More like this" like the chat does (it still uses the buffered `chat()`).
+- **Say so when a card action fails.** Removing a title or marking it watched from the card ignores a failed
+  request: the service only updates its state on success, so the list never lies, but nothing tells the user it
+  didn't happen. A snackbar on `false` from `removeFromWatchlist` / `toggleWatchedStatus` is enough. (Found while
+  retiring `PLANNING.md`, whose March review listed it.)
 
 ## Bigger — design it before building it
 
