@@ -41,7 +41,7 @@
 - Node.js `^20.19` · `^22.12` · `≥24` (Angular 21's supported range)
 - A [Supabase](https://supabase.com) project with Google OAuth enabled
 - A [TMDB](https://www.themoviedb.org/settings/api) API key
-- A MiMo API key + model name
+- A MiMo API key + model name — these are **Supabase Edge Function secrets**, not part of the Angular build (see [Deployment](#deployment))
 
 ### Setup
 
@@ -57,9 +57,6 @@ Create a `.env` file in the project root with your keys (read by `scripts/set-en
 SUPABASE_URL=...
 SUPABASE_ANON_KEY=...
 TMDB_API_KEY=...
-MIMO_API_KEY=...
-MIMO_MODEL=...
-# MIMO_BASE_URL is optional (defaults to the MiMo endpoint)
 ```
 
 `environment.example.ts` shows the generated shape for reference.
@@ -70,7 +67,6 @@ export const environment = {
   production: false,
   supabase: { url: 'YOUR_SUPABASE_URL', anonKey: 'YOUR_SUPABASE_ANON_KEY' },
   tmdb: { apiKey: 'YOUR_TMDB_KEY', baseUrl: '...', imageBaseUrl: '...' },
-  mimo: { apiKey: 'YOUR_MIMO_API_KEY', model: 'YOUR_MIMO_MODEL', baseUrl: '...' },
 };
 ```
 
@@ -107,7 +103,7 @@ src/app/
     └── pipes/           # MarkdownPipe (renders AI replies)
 
 supabase/
-├── functions/           # mimo-chat, refresh-series (edge functions)
+├── functions/           # mimo-chat, import-list, refresh-series, delete-account (edge functions)
 └── migrations/          # Schema, RLS policies, cron
 ```
 
@@ -136,7 +132,16 @@ outranks the `html` one the mixin emits).
 
 The app deploys automatically to Vercel on every push to `master`.
 
-To inject keys at build time without committing them, set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `TMDB_API_KEY`, `MIMO_API_KEY` and `MIMO_MODEL` in your Vercel project environment variables — the `prebuild` script (`scripts/set-env.js`) generates `environment.prod.ts` from them before `ng build` runs.
+To inject keys at build time without committing them, set `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `TMDB_API_KEY` in your Vercel project environment variables — the `prebuild` script (`scripts/set-env.js`) generates `environment.prod.ts` from them before `ng build` runs.
+
+The MiMo key and model are **not** Vercel variables — the browser never sees them. They are secrets of the `mimo-chat` edge function on Supabase, which is deployed separately from the app:
+
+```bash
+npx supabase secrets set MIMO_API_KEY=... MIMO_MODEL=... --project-ref <ref>   # MIMO_BASE_URL is optional
+npx supabase functions deploy mimo-chat --project-ref <ref>
+```
+
+Each push also runs the tests and a build in GitHub Actions (`.github/workflows/ci.yml`); that does not block the Vercel deploy.
 
 A GitHub Actions workflow (`.github/workflows/supabase-keep-alive.yml`) pings the database daily to prevent Supabase free-tier pausing.
 
